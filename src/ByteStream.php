@@ -11,9 +11,7 @@ use Thesis\Varint;
 /**
  * @api
  */
-final class ByteStream implements
-    Writer,
-    Reader
+final class ByteStream implements Stream
 {
     private Endian\Order $le = Endian\Order::little;
 
