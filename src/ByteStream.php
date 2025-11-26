@@ -213,19 +213,6 @@ final class ByteStream implements
         return $this->writeVarint($num);
     }
 
-    //    // convert from uint64 to signed int64
-    //    if ($num->compare($two63) >= 0) {
-    //        $num -= $two64;  // signed interpretation
-    //    }
-    //
-    //    // STEP 2: now convert signed int64 → uint64 (for varint)
-    //    if ($num->compare(0) < 0) {
-    //        $num += $two64;
-    //    }
-    //
-    //    // STEP 3: varint encode
-    //    return $this->writeVarint($num);
-
     public function writeUint32(Number $num): static
     {
         /** @var ?Number $p32 */
