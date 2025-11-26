@@ -30,4 +30,12 @@ final class ByteBufferTest extends TestCase
         self::expectException(BufferUnderflow::class);
         $buffer->read(1);
     }
+
+    public function testFlush(): void
+    {
+        $buffer = new ByteBuffer('test');
+        self::assertCount(4, $buffer);
+        self::assertSame('test', $buffer->flush());
+        self::assertCount(0, $buffer);
+    }
 }

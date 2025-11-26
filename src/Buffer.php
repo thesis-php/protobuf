@@ -35,4 +35,9 @@ interface Buffer extends
      * @throws BufferUnderflow
      */
     public function read(int $n): string;
+
+    /**
+     * Flush should discard all data in the buffer and return it.
+     */
+    public function flush(): string;
 }

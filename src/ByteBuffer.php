@@ -50,6 +50,15 @@ final class ByteBuffer implements Buffer
         return $buffer;
     }
 
+    public function flush(): string
+    {
+        $buffer = $this->buffer;
+        $this->buffer = '';
+        $this->length = 0;
+
+        return $buffer;
+    }
+
     public function __toString(): string
     {
         return $this->buffer;
