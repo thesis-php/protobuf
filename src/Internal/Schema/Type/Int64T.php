@@ -10,7 +10,7 @@ use Thesis\Protobuf\Internal\Schema\Type;
 
 /**
  * @internal
- * @template-implements Type<Number>
+ * @template-implements Type<Number|int|numeric-string>
  */
 enum Int64T implements Type
 {
@@ -24,13 +24,10 @@ enum Int64T implements Type
 
     /**
      * @param list<Number|int|numeric-string> $values
-     * @return Protobuf\Value<list<Number>>
+     * @return Protobuf\Value<list<Number|int|numeric-string>>
      */
     public function list(array $values): Protobuf\Value
     {
-        return Protobuf\listOf(
-            $this,
-            array_map(Protobuf\toNumber(...), $values),
-        );
+        return Protobuf\listOf($this, $values);
     }
 }

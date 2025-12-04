@@ -7,10 +7,11 @@ namespace Thesis\Protobuf\Internal\Serde;
 use BcMath\Number;
 use Thesis\Protobuf\Internal\Buffer\ReadBuffer;
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
+use function Thesis\Protobuf\toNumber;
 
 /**
  * @internal
- * @template-implements SerializeValue<Number>
+ * @template-implements SerializeValue<Number|int|numeric-string>
  * @template-implements DeserializeValue<Number>
  */
 enum SerdeInt32 implements
@@ -30,7 +31,7 @@ enum SerdeInt32 implements
         static $p64;
         $p64 ??= new Number(2)->pow(64);
 
-        $num = $value->mod($p32);
+        $num = toNumber($value)->mod($p32);
 
         if ($num->compare($p32->div(2)) >= 0) {
             $num -= $p32;

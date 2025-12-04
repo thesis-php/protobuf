@@ -89,7 +89,7 @@ abstract class DefaultTypeSerializerVisitor implements Visitor
     }
 
     /**
-     * @return SerializeValue<Number>
+     * @return SerializeValue<Number|int|numeric-string>
      */
     #[\Override]
     public function int32(Int32T $type): SerializeValue
@@ -98,7 +98,7 @@ abstract class DefaultTypeSerializerVisitor implements Visitor
     }
 
     /**
-     * @return SerializeValue<Number>
+     * @return SerializeValue<Number|int|numeric-string>
      */
     #[\Override]
     public function uint32(Uint32T $type): SerializeValue
@@ -107,7 +107,7 @@ abstract class DefaultTypeSerializerVisitor implements Visitor
     }
 
     /**
-     * @return SerializeValue<Number>
+     * @return SerializeValue<Number|int|numeric-string>
      */
     #[\Override]
     public function sint32(SInt32T $type): SerializeValue
@@ -116,7 +116,7 @@ abstract class DefaultTypeSerializerVisitor implements Visitor
     }
 
     /**
-     * @return SerializeValue<Number>
+     * @return SerializeValue<Number|int|numeric-string>
      */
     #[\Override]
     public function int64(Int64T $type): SerializeValue
@@ -125,7 +125,7 @@ abstract class DefaultTypeSerializerVisitor implements Visitor
     }
 
     /**
-     * @return SerializeValue<Number>
+     * @return SerializeValue<Number|int|numeric-string>
      */
     #[\Override]
     public function uint64(Uint64T $type): SerializeValue
@@ -134,7 +134,7 @@ abstract class DefaultTypeSerializerVisitor implements Visitor
     }
 
     /**
-     * @return SerializeValue<Number>
+     * @return SerializeValue<Number|int|numeric-string>
      */
     #[\Override]
     public function sint64(SInt64T $type): SerializeValue
@@ -161,7 +161,7 @@ abstract class DefaultTypeSerializerVisitor implements Visitor
     }
 
     /**
-     * @return SerializeValue<Number>
+     * @return SerializeValue<Number|int|numeric-string>
      */
     #[\Override]
     public function fixed64(Fixed64T $type): SerializeValue
@@ -170,7 +170,7 @@ abstract class DefaultTypeSerializerVisitor implements Visitor
     }
 
     /**
-     * @return SerializeValue<Number>
+     * @return SerializeValue<Number|int|numeric-string>
      */
     #[\Override]
     public function sfixed64(SFixed64T $type): SerializeValue

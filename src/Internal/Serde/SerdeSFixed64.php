@@ -8,10 +8,11 @@ use BcMath\Number;
 use Thesis\Endian;
 use Thesis\Protobuf\Internal\Buffer\ReadBuffer;
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
+use function Thesis\Protobuf\toNumber;
 
 /**
  * @internal
- * @template-implements SerializeValue<Number>
+ * @template-implements SerializeValue<Number|int|numeric-string>
  * @template-implements DeserializeValue<Number>
  */
 enum SerdeSFixed64 implements
@@ -23,7 +24,7 @@ enum SerdeSFixed64 implements
     #[\Override]
     public function serialize(WriteBuffer $buffer, mixed $value): void
     {
-        $buffer->write(Endian\Order::little->packInt64($value));
+        $buffer->write(Endian\Order::little->packInt64(toNumber($value)));
     }
 
     #[\Override]
