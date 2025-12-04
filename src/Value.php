@@ -26,56 +26,56 @@ final readonly class Value
 
     /**
      * @param Number|int|numeric-string $num
-     * @return self<Number>
+     * @return self<Number|int|numeric-string>
      */
     public static function int32(Number|int|string $num): self
     {
-        return new self(toNumber($num), int32T);
+        return new self($num, int32T);
     }
 
     /**
      * @param Number|int|numeric-string $num
-     * @return self<Number>
+     * @return self<Number|int|numeric-string>
      */
     public static function int64(Number|int|string $num): self
     {
-        return new self(toNumber($num), int64T);
+        return new self($num, int64T);
     }
 
     /**
      * @param Number|non-negative-int|numeric-string $num
-     * @return self<Number>
+     * @return self<Number|non-negative-int|numeric-string>
      */
     public static function uint32(Number|int|string $num): self
     {
-        return new self(toNumber($num), uint32T);
+        return new self($num, uint32T);
     }
 
     /**
      * @param Number|non-negative-int|numeric-string $num
-     * @return self<Number>
+     * @return self<Number|non-negative-int|numeric-string>
      */
     public static function uint64(Number|int|string $num): self
     {
-        return new self(toNumber($num), uint64T);
+        return new self($num, uint64T);
     }
 
     /**
      * @param Number|int|numeric-string $num
-     * @return self<Number>
+     * @return self<Number|int|numeric-string>
      */
     public static function sint32(Number|int|string $num): self
     {
-        return new self(toNumber($num), sint32T);
+        return new self($num, sint32T);
     }
 
     /**
      * @param Number|int|numeric-string $num
-     * @return self<Number>
+     * @return self<Number|int|numeric-string>
      */
     public static function sint64(Number|int|string $num): self
     {
-        return new self(toNumber($num), sint64T);
+        return new self($num, sint64T);
     }
 
     /**
@@ -98,20 +98,20 @@ final readonly class Value
 
     /**
      * @param Number|int|numeric-string $num
-     * @return self<Number>
+     * @return self<Number|int|numeric-string>
      */
     public static function fixed64(Number|int|string $num): self
     {
-        return new self(toNumber($num), fixed64T);
+        return new self($num, fixed64T);
     }
 
     /**
      * @param Number|int|numeric-string $num
-     * @return self<Number>
+     * @return self<Number|int|numeric-string>
      */
     public static function sfixed64(Number|int|string $num): self
     {
-        return new self(toNumber($num), sfixed64T);
+        return new self($num, sfixed64T);
     }
 
     /**
