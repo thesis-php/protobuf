@@ -19,6 +19,10 @@ $config = new Config()
     ->setParallelConfig(ParallelConfigFactory::detect())
     ->setCacheFile(__DIR__ . '/var/' . basename(__FILE__) . '.cache');
 
-new PhpCsFixerCodingStandard()->applyTo($config);
+new PhpCsFixerCodingStandard()->applyTo($config, [
+    'final_public_method_for_abstract_class' => false,
+    'fully_qualified_strict_types' => false,
+    'phpdoc_scalar' => false,
+]);
 
 return $config;

@@ -7,6 +7,8 @@ namespace Thesis\Protobuf;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
+use Thesis\Protobuf\Internal\Tag;
+use Thesis\Protobuf\Internal\WireType;
 
 #[CoversClass(Tag::class)]
 final class TagTest extends TestCase

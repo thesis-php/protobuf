@@ -2,12 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Thesis\Protobuf;
+namespace Thesis\Protobuf\Internal\Buffer;
+
+use Thesis\Protobuf\BufferUnderflow;
 
 /**
- * @api
+ * @internal
  */
-final class ByteBuffer implements Buffer
+final class ByteBuffer implements
+    WriteBuffer,
+    ReadBuffer,
+    \Stringable
 {
     /** @var non-negative-int */
     private int $length;
@@ -18,12 +23,14 @@ final class ByteBuffer implements Buffer
         $this->length = \strlen($this->buffer);
     }
 
+    #[\Override]
     public function write(string $value): void
     {
         $this->buffer .= $value;
         $this->length += \strlen($value);
     }
 
+    #[\Override]
     public function peek(int $n): string
     {
         $value = substr($this->buffer, 0, $n);
@@ -34,6 +41,7 @@ final class ByteBuffer implements Buffer
         return $value;
     }
 
+    #[\Override]
     public function read(int $n): string
     {
         if ($this->length < $n) {
@@ -50,6 +58,7 @@ final class ByteBuffer implements Buffer
         return $buffer;
     }
 
+    #[\Override]
     public function flush(): string
     {
         $buffer = $this->buffer;
@@ -59,14 +68,13 @@ final class ByteBuffer implements Buffer
         return $buffer;
     }
 
+    #[\Override]
     public function __toString(): string
     {
         return $this->buffer;
     }
 
-    /**
-     * @return non-negative-int
-     */
+    #[\Override]
     public function count(): int
     {
         return $this->length;

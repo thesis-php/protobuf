@@ -31,7 +31,11 @@
     "autoload": {
         "psr-4": {
             "Thesis\\Protobuf\\": "src/"
-        }
+        },
+        "files": [
+            "src/constructors.php",
+            "src/Internal/Serde/serde.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {

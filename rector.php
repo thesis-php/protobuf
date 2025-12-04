@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Rector\Config\RectorConfig;
 use Rector\Php80\Rector\Class_\StringableForToStringRector;
+use Rector\Php73\Rector\ConstFetch\SensitiveConstantNameRector;
 use Rector\Php83\Rector\ClassMethod\AddOverrideAttributeToOverriddenMethodsRector;
 
 return RectorConfig::configure()
@@ -17,4 +18,5 @@ return RectorConfig::configure()
     ->withSkip([
         StringableForToStringRector::class,
         AddOverrideAttributeToOverriddenMethodsRector::class,
+        SensitiveConstantNameRector::class,
     ]);

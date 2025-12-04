@@ -2,12 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Thesis\Protobuf;
+namespace Thesis\Protobuf\Internal;
 
 use BcMath\Number;
+use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
+use Thesis\Protobuf\Internal\Serde\SerdeVarint;
 
 /**
- * @api
+ * @internal
  */
 final class Tag
 {
@@ -27,6 +29,11 @@ final class Tag
             $num,
             WireType::from($type),
         );
+    }
+
+    public function serialize(WriteBuffer $buffer): void
+    {
+        SerdeVarint::T->serialize($buffer, $this->number);
     }
 
     /**

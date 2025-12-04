@@ -2,20 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Thesis\Protobuf;
+namespace Thesis\Protobuf\Internal\Buffer;
+
+use Thesis\Protobuf\BufferUnderflow;
 
 /**
- * @api
+ * @internal
  */
-interface Buffer extends
-    \Countable,
-    \Stringable
+interface ReadBuffer extends \Countable
 {
-    /**
-     * @param non-empty-string $value
-     */
-    public function write(string $value): void;
-
     /**
      * Peek should not move the cursor or remove data from the buffer.
      * It should only return a `non-empty-string` of up to `n` bytes in size or throw an exception only if the buffer is empty.
@@ -36,8 +31,5 @@ interface Buffer extends
      */
     public function read(int $n): string;
 
-    /**
-     * Flush should discard all data in the buffer and return it.
-     */
     public function flush(): string;
 }
