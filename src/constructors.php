@@ -282,9 +282,13 @@ function mapOf(
  * @param Type<K> $keyT
  * @param Type<V> $valueT
  * @return Type\MapT<K, V>
+ * @throws \UnexpectedValueException
  */
 function mapT(Type $keyT, Type $valueT): Type\MapT
 {
+    $keyT->accept(new Type\Visitor\ValidateMapKeyTypeVisitor());
+    $valueT->accept(new Type\Visitor\ValidateMapValueTypeVisitor());
+
     return new Type\MapT($keyT, $valueT);
 }
 

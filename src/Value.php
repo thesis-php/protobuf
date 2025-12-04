@@ -184,12 +184,16 @@ final readonly class Value
      * @param Type<V> $valueT
      * @param array<K, V> $values
      * @return self<list<Message>>
+     * @throws \UnexpectedValueException
      */
     public static function mapOf(
         Type $keyT,
         Type $valueT,
         array $values,
     ): self {
+        $keyT->accept(new Type\Visitor\ValidateMapKeyTypeVisitor());
+        $valueT->accept(new Type\Visitor\ValidateMapValueTypeVisitor());
+
         return self::listOf(
             messageT(
                 fieldT(1, $keyT),
