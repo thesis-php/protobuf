@@ -157,10 +157,7 @@ final readonly class Value
     {
         return new self(
             $message,
-            messageT(...array_map(
-                static fn(FieldDescriptor $ds): Type\Field => new Type\Field($ds->num, $ds->value->type),
-                $message->fields,
-            )),
+            $message->type(),
         );
     }
 
@@ -186,16 +183,26 @@ final readonly class Value
      * @param Type<K> $keyT
      * @param Type<V> $valueT
      * @param array<K, V> $values
-     * @return self<array<K, V>>
+     * @return self<list<Message>>
      */
     public static function mapOf(
         Type $keyT,
         Type $valueT,
         array $values,
     ): self {
-        return new self(
-            $values,
-            mapT($keyT, $valueT),
+        return self::listOf(
+            messageT(
+                fieldT(1, $keyT),
+                fieldT(2, $valueT),
+            ),
+            array_map(
+                static fn(mixed $key, mixed $value) => message(
+                    fieldOf(1, new self($key, $keyT)),
+                    fieldOf(2, new self($value, $valueT)),
+                ),
+                array_keys($values),
+                array_values($values),
+            ),
         );
     }
 

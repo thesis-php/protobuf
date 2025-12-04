@@ -261,7 +261,7 @@ function listT(Type $element): Type\ListT
  * @param Type<K> $keyT
  * @param Type<V> $valueT
  * @param array<K, V> $values
- * @return Value<array<K, V>>
+ * @return Value<list<Message>>
  */
 function mapOf(
     Type $keyT,
