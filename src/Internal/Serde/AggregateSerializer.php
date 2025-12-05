@@ -52,6 +52,7 @@ final readonly class AggregateSerializer implements SerializeValue
         return new self(...array_values($map));
     }
 
+    #[\Override]
     public function serialize(WriteBuffer $buffer, mixed $value): void
     {
         foreach ($this->serializers as $serializer) {

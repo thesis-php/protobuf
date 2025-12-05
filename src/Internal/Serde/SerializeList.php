@@ -22,7 +22,7 @@ final readonly class SerializeList implements SerializeValue
     public function __construct(
         private SerializeValue $serializer,
         private Tag $tag,
-        private bool $isPacked,
+        private bool $isPacked = false,
     ) {}
 
     #[\Override]

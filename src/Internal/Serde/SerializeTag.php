@@ -18,6 +18,7 @@ final readonly class SerializeTag implements SerializeValue
         private Tag $tag,
     ) {}
 
+    #[\Override]
     public function serialize(WriteBuffer $buffer, mixed $value): void
     {
         $this->tag->serialize($buffer);

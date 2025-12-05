@@ -17,11 +17,15 @@ final readonly class MapT implements Type
     /**
      * @param Type<K> $keyT
      * @param Type<V> $valueT
+     * @throws \UnexpectedValueException
      */
     public function __construct(
         public Type $keyT,
         public Type $valueT,
-    ) {}
+    ) {
+        $this->keyT->accept(new Type\Visitor\ValidateMapKeyTypeVisitor());
+        $this->valueT->accept(new Type\Visitor\ValidateMapValueTypeVisitor());
+    }
 
     #[\Override]
     public function accept(Visitor $visitor): mixed

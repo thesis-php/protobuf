@@ -13,12 +13,18 @@ use Thesis\Protobuf\Message;
  */
 final readonly class MessageT implements Type
 {
+    /** @var list<Field<*>> */
+    public array $fields;
+
     /**
-     * @param list<Field<*>> $fields
+     * @no-named-arguments
+     * @param Field<*> ...$fields
      */
     public function __construct(
-        public array $fields,
-    ) {}
+        Field ...$fields,
+    ) {
+        $this->fields = $fields;
+    }
 
     #[\Override]
     public function accept(Visitor $visitor): mixed

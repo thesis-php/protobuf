@@ -22,7 +22,7 @@ final class ValidateMapKeyTypeVisitorTest extends TestCase
     #[TestWith([new Type\ListT(Type\StringT::T), 'Key in map fields cannot be list.'])]
     #[TestWith([new Type\MapT(Type\StringT::T, Type\Fixed64T::T), 'Key in map fields cannot be map.'])]
     #[TestWith([new Type\EnumT(TestMapKeyEnum::class), 'Key in map fields cannot be enum.'])]
-    #[TestWith([new Type\MessageT([]), 'Key in map fields cannot be message.'])]
+    #[TestWith([new Type\MessageT(), 'Key in map fields cannot be message.'])]
     public function testKeyTypeNotAllowed(Type $type, string $exceptionMessage): void
     {
         self::expectException(\UnexpectedValueException::class);

@@ -43,7 +43,7 @@ final class ValidateMapValueTypeVisitorTest extends TestCase
     #[TestWith([Type\Uint32T::T])]
     #[TestWith([Type\Uint64T::T])]
     #[TestWith([new Type\EnumT(TestMapValueEnum::class)])]
-    #[TestWith([new Type\MessageT([])])]
+    #[TestWith([new Type\MessageT()])]
     public function testValueTypeAllowed(Type $type): void
     {
         $type->accept(new ValidateMapValueTypeVisitor());

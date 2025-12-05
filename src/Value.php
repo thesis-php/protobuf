@@ -183,7 +183,7 @@ final readonly class Value
      * @param Type<K> $keyT
      * @param Type<V> $valueT
      * @param array<K, V> $values
-     * @return self<list<Message>>
+     * @return self<array<K, V>>
      * @throws \UnexpectedValueException
      */
     public static function mapOf(
@@ -191,30 +191,18 @@ final readonly class Value
         Type $valueT,
         array $values,
     ): self {
-        $keyT->accept(new Type\Visitor\ValidateMapKeyTypeVisitor());
-        $valueT->accept(new Type\Visitor\ValidateMapValueTypeVisitor());
-
-        return self::listOf(
-            messageT(
-                fieldT(1, $keyT),
-                fieldT(2, $valueT),
-            ),
-            array_map(
-                static fn(mixed $key, mixed $value) => message(
-                    fieldOf(1, new self($key, $keyT)),
-                    fieldOf(2, new self($value, $valueT)),
-                ),
-                array_keys($values),
-                array_values($values),
-            ),
+        return new self(
+            $values,
+            mapT($keyT, $valueT),
         );
     }
 
     /**
+     * @internal
      * @param T $value
      * @param Type<T> $type
      */
-    private function __construct(
+    public function __construct(
         public mixed $value,
         public Type $type,
     ) {}

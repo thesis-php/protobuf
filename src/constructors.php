@@ -226,7 +226,7 @@ function messageOf(FieldDescriptor ...$fields): Value
  */
 function messageT(Type\Field ...$fields): Type\MessageT
 {
-    return new Type\MessageT($fields);
+    return new Type\MessageT(...$fields);
 }
 
 /**
@@ -261,7 +261,8 @@ function listT(Type $element): Type\ListT
  * @param Type<K> $keyT
  * @param Type<V> $valueT
  * @param array<K, V> $values
- * @return Value<list<Message>>
+ * @return Value<array<K, V>>
+ * @throws \UnexpectedValueException
  */
 function mapOf(
     Type $keyT,
@@ -286,9 +287,6 @@ function mapOf(
  */
 function mapT(Type $keyT, Type $valueT): Type\MapT
 {
-    $keyT->accept(new Type\Visitor\ValidateMapKeyTypeVisitor());
-    $valueT->accept(new Type\Visitor\ValidateMapValueTypeVisitor());
-
     return new Type\MapT($keyT, $valueT);
 }
 

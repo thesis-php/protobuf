@@ -9,6 +9,7 @@ use Thesis\Endian;
 use Thesis\Protobuf\Internal\Schema\Type\BoolT;
 use Thesis\Protobuf\Internal\Schema\Type\DoubleT;
 use Thesis\Protobuf\Internal\Schema\Type\EnumT;
+use Thesis\Protobuf\Internal\Schema\Type\Field;
 use Thesis\Protobuf\Internal\Schema\Type\Fixed32T;
 use Thesis\Protobuf\Internal\Schema\Type\Fixed64T;
 use Thesis\Protobuf\Internal\Schema\Type\FloatT;
@@ -42,6 +43,7 @@ use Thesis\Protobuf\Internal\Serde\SerdeUint32;
 use Thesis\Protobuf\Internal\Serde\SerdeUint64;
 use Thesis\Protobuf\Internal\Serde\SerializeEnum;
 use Thesis\Protobuf\Internal\Serde\SerializeList;
+use Thesis\Protobuf\Internal\Serde\SerializeMap;
 use Thesis\Protobuf\Internal\Serde\SerializeMessage;
 use Thesis\Protobuf\Internal\Serde\SerializeTag;
 use Thesis\Protobuf\Internal\Serde\SerializeValue;
@@ -203,10 +205,26 @@ abstract class DefaultTypeSerializerVisitor implements Visitor
         );
     }
 
+    /**
+     * @return SerializeValue<array<array-key, mixed>>
+     */
     #[\Override]
-    public function map(MapT $type): never
+    public function map(MapT $type): SerializeValue
     {
-        throw new \BadMethodCallException(__METHOD__);
+        $messageT = new MessageT(
+            new Field(1, $type->keyT),
+            new Field(2, $type->valueT),
+        );
+
+        return new SerializeMap(
+            new SerializeList(
+                $messageT
+                    ->accept(new ListElementTypeSerializerVisitor($this->tag))
+                    ->without(SerializeTag::class),
+                $this->tag,
+            ),
+            $type,
+        );
     }
 
     /**
