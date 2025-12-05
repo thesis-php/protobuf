@@ -18,17 +18,16 @@ final readonly class Serializer
     {
         $buffer = new ByteBuffer();
 
-        /** @var FieldDescriptor<*> $field */
         foreach ($message->fields as $field) {
             $type = $field->value->type;
 
-            $tag = new Tag(
-                $field->num,
-                $type->accept(DetermineWireType::Visitor),
-            );
-
-            $serializer = $type->accept(new TypeSerializerVisitor($tag));
-            $serializer->serialize($buffer, $field->value->value);
+            $type
+                ->accept(
+                    new TypeSerializerVisitor(
+                        new Tag($field->num, $type->accept(DetermineWireType::Visitor)),
+                    ),
+                )
+                ->serialize($buffer, $field->value->value);
         }
 
         return $buffer->flush();

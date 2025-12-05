@@ -157,7 +157,13 @@ final readonly class Value
     {
         return new self(
             $message,
-            $message->type(),
+            messageT(...array_map(
+                static fn(FieldDescriptor $ds) => new Type\Field(
+                    $ds->num,
+                    $ds->value->type,
+                ),
+                $message->fields,
+            )),
         );
     }
 
