@@ -9,7 +9,6 @@ use Thesis\Endian;
 use Thesis\Protobuf\Internal\Schema\Type\BoolT;
 use Thesis\Protobuf\Internal\Schema\Type\DoubleT;
 use Thesis\Protobuf\Internal\Schema\Type\EnumT;
-use Thesis\Protobuf\Internal\Schema\Type\Field;
 use Thesis\Protobuf\Internal\Schema\Type\Fixed32T;
 use Thesis\Protobuf\Internal\Schema\Type\Fixed64T;
 use Thesis\Protobuf\Internal\Schema\Type\FloatT;
@@ -49,6 +48,8 @@ use Thesis\Protobuf\Internal\Serde\SerializeTag;
 use Thesis\Protobuf\Internal\Serde\SerializeValue;
 use Thesis\Protobuf\Internal\Tag;
 use Thesis\Protobuf\Message;
+use function Thesis\Protobuf\fieldT;
+use function Thesis\Protobuf\messageT;
 
 /**
  * @internal
@@ -211,9 +212,9 @@ abstract class DefaultTypeSerializerVisitor implements Visitor
     #[\Override]
     public function map(MapT $type): SerializeValue
     {
-        $messageT = new MessageT(
-            new Field(1, $type->keyT),
-            new Field(2, $type->valueT),
+        $messageT = messageT(
+            fieldT(1, $type->keyT),
+            fieldT(2, $type->valueT),
         );
 
         return new SerializeMap(
