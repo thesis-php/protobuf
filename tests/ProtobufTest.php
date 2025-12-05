@@ -10,8 +10,8 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Thesis\Protobuf\Internal\Buffer\ByteBuffer;
 use Thesis\Protobuf\Internal\Schema\Type\Visitor\DetermineWireType;
+use Thesis\Protobuf\Internal\Schema\Type\Visitor\TypeSerializerVisitor;
 use Thesis\Protobuf\Internal\Schema\Type\Visitor\ValueTypeDeserializerVisitor;
-use Thesis\Protobuf\Internal\Schema\Type\Visitor\ValueTypeSerializerVisitor;
 use Thesis\Protobuf\Internal\Serde\SerdeBool;
 use Thesis\Protobuf\Internal\Serde\SerdeDouble;
 use Thesis\Protobuf\Internal\Serde\SerdeFixed32;
@@ -67,7 +67,7 @@ final class ProtobufTest extends TestCase
         self::assertCount(0, $buffer);
 
         $type
-            ->accept(new ValueTypeSerializerVisitor(new Tag(1, $type->accept(DetermineWireType::Visitor))))
+            ->accept(new TypeSerializerVisitor(new Tag(1, $type->accept(DetermineWireType::Visitor))))
             ->without(SerializeTag::class)
             ->serialize($buffer, $expected);
         self::assertSame($data->hex, bin2hex((string) $buffer));

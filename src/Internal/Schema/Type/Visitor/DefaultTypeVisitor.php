@@ -142,7 +142,7 @@ abstract class DefaultTypeVisitor implements Visitor
 
     /**
      * @template T
-     * @param Type<T> $type
+     * @param Type<T, *, *, *> $type
      * @retrun TResult
      */
     abstract protected function default(Type $type): mixed;

@@ -4,29 +4,25 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Internal\Schema\Type;
 
-use Thesis\Protobuf;
 use Thesis\Protobuf\Internal\Schema\Type;
 
 /**
  * @internal
  * @template-implements Type<bool>
+ * @template-implements Listable<bool>
  */
-enum BoolT implements Type
+enum BoolT implements
+    Type,
+    Listable
 {
+    /** @use Listed<bool> */
+    use Listed;
+
     case T;
 
     #[\Override]
     public function accept(Visitor $visitor): mixed
     {
         return $visitor->bool($this);
-    }
-
-    /**
-     * @param list<bool> $values
-     * @return Protobuf\Value<list<bool>>
-     */
-    public function list(array $values): Protobuf\Value
-    {
-        return Protobuf\listOf($this, $values);
     }
 }

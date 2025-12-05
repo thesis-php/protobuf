@@ -9,11 +9,17 @@ use Thesis\Protobuf\Message;
 
 /**
  * @internal
- * @template-implements Type<Message>
+ * @template-implements Type<Message, 'repeatable', 'not-indexed'>
+ * @template-implements Listable<Message>
  */
-final readonly class MessageT implements Type
+final readonly class MessageT implements
+    Type,
+    Listable
 {
-    /** @var list<Field<*>> */
+    /** @use Listed<Message> */
+    use Listed;
+
+    /** @var array<positive-int, Field<*>> */
     public array $fields;
 
     /**
@@ -23,7 +29,13 @@ final readonly class MessageT implements Type
     public function __construct(
         Field ...$fields,
     ) {
-        $this->fields = $fields;
+        $map = [];
+
+        foreach ($fields as $field) {
+            $map[$field->num] = $field;
+        }
+
+        $this->fields = $map;
     }
 
     #[\Override]

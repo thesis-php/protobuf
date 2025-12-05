@@ -13,6 +13,7 @@ use Thesis\Protobuf\Internal\Serde\SerdeVarint;
  */
 final class Tag
 {
+    /** @phpstan-ignore property.uninitialized */
     public private(set) Number $number {
         get => $this->number ??= new Number($this->num << 3 | $this->type->value);
     }

@@ -9,12 +9,12 @@ use Thesis\Protobuf\Internal\Schema\Type;
 /**
  * @internal
  * @template T
- * @template-implements Type<list<T>>
+ * @template-implements Type<list<T>, 'not-repeatable', 'not-indexed', 'not-map-value'>
  */
 final readonly class ListT implements Type
 {
     /**
-     * @param Type<T> $element
+     * @param Type<T, 'repeatable', *, *> $element
      */
     public function __construct(
         public Type $element,

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Internal\Schema\Type\Visitor;
 
-use BcMath\Number;
 use Thesis\Endian;
 use Thesis\Protobuf\Internal\Schema\Type\BoolT;
 use Thesis\Protobuf\Internal\Schema\Type\DoubleT;
@@ -47,7 +46,6 @@ use Thesis\Protobuf\Internal\Serde\SerializeMessage;
 use Thesis\Protobuf\Internal\Serde\SerializeTag;
 use Thesis\Protobuf\Internal\Serde\SerializeValue;
 use Thesis\Protobuf\Internal\Tag;
-use Thesis\Protobuf\Message;
 use function Thesis\Protobuf\fieldT;
 use function Thesis\Protobuf\messageT;
 
@@ -58,157 +56,111 @@ use function Thesis\Protobuf\messageT;
  * @phpstan-import-type Int32 from Endian\Order
  * @template-implements Visitor<AggregateSerializer<T>>
  */
-abstract class DefaultTypeSerializerVisitor implements Visitor
+final readonly class TypeSerializerVisitor implements Visitor
 {
-    final public function __construct(
-        private readonly Tag $tag,
+    public function __construct(
+        private Tag $tag,
     ) {}
 
-    /**
-     * @return SerializeValue<bool>
-     */
     #[\Override]
     public function bool(BoolT $type): SerializeValue
     {
         return $this->tagged(SerdeBool::T);
     }
 
-    /**
-     * @return SerializeValue<float>
-     */
     #[\Override]
     public function float(FloatT $type): SerializeValue
     {
         return $this->tagged(SerdeFloat::T);
     }
 
-    /**
-     * @return SerializeValue<float>
-     */
     #[\Override]
     public function double(DoubleT $type): SerializeValue
     {
         return $this->tagged(SerdeDouble::T);
     }
 
-    /**
-     * @return SerializeValue<Number|int|numeric-string>
-     */
     #[\Override]
     public function int32(Int32T $type): SerializeValue
     {
         return $this->tagged(SerdeInt32::T);
     }
 
-    /**
-     * @return SerializeValue<Number|int|numeric-string>
-     */
     #[\Override]
     public function uint32(Uint32T $type): SerializeValue
     {
         return $this->tagged(SerdeUint32::T);
     }
 
-    /**
-     * @return SerializeValue<Number|int|numeric-string>
-     */
     #[\Override]
     public function sint32(SInt32T $type): SerializeValue
     {
         return $this->tagged(SerdeSInt32::T);
     }
 
-    /**
-     * @return SerializeValue<Number|int|numeric-string>
-     */
     #[\Override]
     public function int64(Int64T $type): SerializeValue
     {
         return $this->tagged(SerdeInt64::T);
     }
 
-    /**
-     * @return SerializeValue<Number|int|numeric-string>
-     */
     #[\Override]
     public function uint64(Uint64T $type): SerializeValue
     {
         return $this->tagged(SerdeUint64::T);
     }
 
-    /**
-     * @return SerializeValue<Number|int|numeric-string>
-     */
     #[\Override]
     public function sint64(SInt64T $type): SerializeValue
     {
         return $this->tagged(SerdeSInt64::T);
     }
 
-    /**
-     * @return SerializeValue<Uint32>
-     */
     #[\Override]
     public function fixed32(Fixed32T $type): SerializeValue
     {
         return $this->tagged(SerdeFixed32::T);
     }
 
-    /**
-     * @return SerializeValue<Int32>
-     */
     #[\Override]
     public function sfixed32(SFixed32T $type): SerializeValue
     {
         return $this->tagged(SerdeSFixed32::T);
     }
 
-    /**
-     * @return SerializeValue<Number|int|numeric-string>
-     */
     #[\Override]
     public function fixed64(Fixed64T $type): SerializeValue
     {
         return $this->tagged(SerdeFixed64::T);
     }
 
-    /**
-     * @return SerializeValue<Number|int|numeric-string>
-     */
     #[\Override]
     public function sfixed64(SFixed64T $type): SerializeValue
     {
         return $this->tagged(SerdeSFixed64::T);
     }
 
-    /**
-     * @return SerializeValue<non-empty-string>
-     */
     #[\Override]
     public function string(StringT $type): SerializeValue
     {
         return $this->tagged(SerdeString::T);
     }
 
-    /**
-     * @return SerializeValue<mixed>
-     */
     #[\Override]
     public function list(ListT $type): SerializeValue
     {
-        /** @phpstan-ignore return.type */
-        return new SerializeList(
-            $type->element
-                ->accept(new ListElementTypeSerializerVisitor($this->tag))
-                ->without(SerializeTag::class),
-            $this->tag,
-            $type->element->accept(new IsPacked()),
+        return $this->aggregated(
+            new SerializeList(
+                $type
+                    ->element
+                    ->accept(new self($this->tag))
+                    ->without(SerializeTag::class),
+                $this->tag,
+                $type->element->accept(new IsPacked()),
+            ),
         );
     }
 
-    /**
-     * @return SerializeValue<array<array-key, mixed>>
-     */
     #[\Override]
     public function map(MapT $type): SerializeValue
     {
@@ -217,29 +169,26 @@ abstract class DefaultTypeSerializerVisitor implements Visitor
             fieldT(2, $type->valueT),
         );
 
-        return new SerializeMap(
-            new SerializeList(
-                $messageT
-                    ->accept(new ListElementTypeSerializerVisitor($this->tag))
-                    ->without(SerializeTag::class),
-                $this->tag,
+        return $this->aggregated(
+            /** @phpstan-ignore argument.type */
+            new SerializeMap(
+                new SerializeList(
+                    $messageT
+                        ->accept(new self($this->tag))
+                        ->without(SerializeTag::class),
+                    $this->tag,
+                ),
+                $type,
             ),
-            $type,
         );
     }
 
-    /**
-     * @return SerializeValue<\BackedEnum>
-     */
     #[\Override]
     public function enum(EnumT $type): SerializeValue
     {
         return $this->tagged(SerializeEnum::T);
     }
 
-    /**
-     * @return SerializeValue<Message>
-     */
     #[\Override]
     public function message(MessageT $type): SerializeValue
     {
@@ -250,16 +199,25 @@ abstract class DefaultTypeSerializerVisitor implements Visitor
      * @template E
      * @no-named-arguments
      * @param SerializeValue<E> ...$serializers
-     * @return SerializeValue<E>
+     * @return AggregateSerializer<T>
      */
-    private function tagged(SerializeValue ...$serializers): SerializeValue
+    private function tagged(SerializeValue ...$serializers): AggregateSerializer
     {
         /** @var SerializeTag<E> $tagged */
         $tagged = new SerializeTag($this->tag);
 
-        return new AggregateSerializer(
-            $tagged,
-            ...$serializers,
-        );
+        return $this->aggregated($tagged, ...$serializers);
+    }
+
+    /**
+     * @template E
+     * @no-named-arguments
+     * @param SerializeValue<E> ...$serializers
+     * @return AggregateSerializer<T>
+     */
+    private function aggregated(SerializeValue ...$serializers): AggregateSerializer
+    {
+        /** @var AggregateSerializer<T> */
+        return new AggregateSerializer(...$serializers);
     }
 }

@@ -188,7 +188,7 @@ function fieldOf(int $num, Value $value): FieldDescriptor
  * @api
  * @template T
  * @param positive-int $num
- * @param Type<T> $type
+ * @param Type<T, *, *, *> $type
  * @return Type\Field<T>
  */
 function fieldT(int $num, Type $type): Type\Field
@@ -232,7 +232,7 @@ function messageT(Type\Field ...$fields): Type\MessageT
 /**
  * @api
  * @template E
- * @param Type<E> $type
+ * @param Type<E, 'repeatable', *> $type
  * @param list<E> $values
  * @return Value<list<E>>
  */
@@ -246,7 +246,7 @@ function listOf(
 /**
  * @api
  * @template T
- * @param Type<T> $element
+ * @param Type<T, 'repeatable', *, *> $element
  * @return Type\ListT<T>
  */
 function listT(Type $element): Type\ListT
@@ -258,8 +258,8 @@ function listT(Type $element): Type\ListT
  * @api
  * @template K of array-key
  * @template V
- * @param Type<K> $keyT
- * @param Type<V> $valueT
+ * @param Type<K, *, 'indexed'> $keyT
+ * @param Type<V, *, *> $valueT
  * @param array<K, V> $values
  * @return Value<array<K, V>>
  * @throws \UnexpectedValueException
@@ -280,8 +280,8 @@ function mapOf(
  * @api
  * @template K of array-key
  * @template V
- * @param Type<K> $keyT
- * @param Type<V> $valueT
+ * @param Type<K, *, 'indexed'> $keyT
+ * @param Type<V, *, *, 'map-value'> $valueT
  * @return Type\MapT<K, V>
  * @throws \UnexpectedValueException
  */

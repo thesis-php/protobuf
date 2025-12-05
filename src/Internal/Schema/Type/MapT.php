@@ -4,32 +4,40 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Internal\Schema\Type;
 
+use Thesis\Protobuf;
 use Thesis\Protobuf\Internal\Schema\Type;
 
 /**
  * @internal
  * @template K of array-key
  * @template V
- * @template-implements Type<array<K, V>>
+ * @template-implements Type<array<K, V>, 'not-repeatable', 'not-indexed', 'not-map-value'>
+ * @template-implements Mappable<K, V>
  */
-final readonly class MapT implements Type
+final readonly class MapT implements Type, Mappable
 {
     /**
-     * @param Type<K> $keyT
-     * @param Type<V> $valueT
-     * @throws \UnexpectedValueException
+     * @param Type<K, *, 'indexed'> $keyT
+     * @param Type<V, *, *, 'map-value'> $valueT
      */
     public function __construct(
         public Type $keyT,
         public Type $valueT,
-    ) {
-        $this->keyT->accept(new Type\Visitor\ValidateMapKeyTypeVisitor());
-        $this->valueT->accept(new Type\Visitor\ValidateMapValueTypeVisitor());
-    }
+    ) {}
 
     #[\Override]
     public function accept(Visitor $visitor): mixed
     {
         return $visitor->map($this);
+    }
+
+    #[\Override]
+    public function map(array $values): Protobuf\Value
+    {
+        return Protobuf\mapOf(
+            $this->keyT,
+            $this->valueT,
+            $values,
+        );
     }
 }

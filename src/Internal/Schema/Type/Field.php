@@ -14,7 +14,7 @@ final readonly class Field
 {
     /**
      * @param positive-int $num
-     * @param Type<T> $type
+     * @param Type<T, *, *, *> $type
      */
     public function __construct(
         public int $num,

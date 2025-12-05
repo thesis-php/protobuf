@@ -23,6 +23,7 @@ new PhpCsFixerCodingStandard()->applyTo($config, [
     'final_public_method_for_abstract_class' => false,
     'fully_qualified_strict_types' => false,
     'phpdoc_scalar' => false,
+    'class_attributes_separation' => false,
 ]);
 
 return $config;

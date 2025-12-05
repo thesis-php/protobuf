@@ -163,7 +163,7 @@ final readonly class Value
 
     /**
      * @template E
-     * @param Type<E> $type
+     * @param Type<E, 'repeatable', *, *> $type
      * @param list<E> $values
      * @return self<list<E>>
      */
@@ -180,8 +180,8 @@ final readonly class Value
     /**
      * @template K of array-key
      * @template V
-     * @param Type<K> $keyT
-     * @param Type<V> $valueT
+     * @param Type<K, *, 'indexed'> $keyT
+     * @param Type<V, *, *, 'map-value'> $valueT
      * @param array<K, V> $values
      * @return self<array<K, V>>
      * @throws \UnexpectedValueException
@@ -200,7 +200,7 @@ final readonly class Value
     /**
      * @internal
      * @param T $value
-     * @param Type<T> $type
+     * @param Type<T, *, *, *> $type
      */
     public function __construct(
         public mixed $value,

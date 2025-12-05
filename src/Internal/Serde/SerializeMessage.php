@@ -8,7 +8,7 @@ use Thesis\Protobuf\FieldDescriptor;
 use Thesis\Protobuf\Internal\Buffer\ByteBuffer;
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
 use Thesis\Protobuf\Internal\Schema\Type\Visitor\DetermineWireType;
-use Thesis\Protobuf\Internal\Schema\Type\Visitor\ValueTypeSerializerVisitor;
+use Thesis\Protobuf\Internal\Schema\Type\Visitor\TypeSerializerVisitor;
 use Thesis\Protobuf\Internal\Tag;
 use Thesis\Protobuf\Message;
 
@@ -34,7 +34,7 @@ enum SerializeMessage implements SerializeValue
                 $type->accept(DetermineWireType::Visitor),
             );
 
-            $serializer = $type->accept(new ValueTypeSerializerVisitor($tag));
+            $serializer = $type->accept(new TypeSerializerVisitor($tag));
             $serializer->serialize($tmp, $field->value->value);
         }
 

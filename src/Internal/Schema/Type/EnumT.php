@@ -8,10 +8,16 @@ use Thesis\Protobuf\Internal\Schema\Type;
 
 /**
  * @internal
- * @template-implements Type<\BackedEnum>
+ * @template-implements Type<\BackedEnum, 'repeatable', 'not-indexed'>
+ * @template-implements Listable<\BackedEnum>
  */
-final readonly class EnumT implements Type
+final readonly class EnumT implements
+    Type,
+    Listable
 {
+    /** @use Listed<\BackedEnum> */
+    use Listed;
+
     /**
      * @param class-string<\BackedEnum> $enum
      */

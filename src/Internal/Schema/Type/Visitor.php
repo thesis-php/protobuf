@@ -91,6 +91,7 @@ interface Visitor
      * @template K of array-key
      * @template V
      * @param MapT<K, V> $type
+     * @return TResult
      */
     public function map(MapT $type): mixed;
 

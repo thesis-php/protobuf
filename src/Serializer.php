@@ -6,7 +6,7 @@ namespace Thesis\Protobuf;
 
 use Thesis\Protobuf\Internal\Buffer\ByteBuffer;
 use Thesis\Protobuf\Internal\Schema\Type\Visitor\DetermineWireType;
-use Thesis\Protobuf\Internal\Schema\Type\Visitor\ValueTypeSerializerVisitor;
+use Thesis\Protobuf\Internal\Schema\Type\Visitor\TypeSerializerVisitor;
 use Thesis\Protobuf\Internal\Tag;
 
 /**
@@ -27,7 +27,7 @@ final readonly class Serializer
                 $type->accept(DetermineWireType::Visitor),
             );
 
-            $serializer = $type->accept(new ValueTypeSerializerVisitor($tag));
+            $serializer = $type->accept(new TypeSerializerVisitor($tag));
             $serializer->serialize($buffer, $field->value->value);
         }
 
