@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Thesis\Protobuf\Internal;
+namespace Thesis\Protobuf\Internal\Wire;
 
 /**
  * @internal

@@ -7,6 +7,7 @@ namespace Thesis\Protobuf\Internal\Serde;
 use BcMath\Number;
 use Thesis\Protobuf\Internal\Buffer\ReadBuffer;
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
+use Thesis\Protobuf\Internal\Wire;
 use Thesis\Varint;
 
 /**
@@ -29,9 +30,6 @@ enum SerdeVarint implements
     #[\Override]
     public function deserialize(ReadBuffer $buffer): Number
     {
-        $number = Varint\BcMath::Codec->decodeVarintSized($buffer->peek(10));
-        $buffer->read($number->size);
-
-        return $number->value;
+        return Wire\readVarint($buffer);
     }
 }

@@ -23,6 +23,10 @@ use Thesis\Protobuf\Internal\Schema\Type\StringT;
 use Thesis\Protobuf\Internal\Schema\Type\Uint32T;
 use Thesis\Protobuf\Internal\Schema\Type\Uint64T;
 use Thesis\Protobuf\Internal\Schema\Type\Visitor;
+use Thesis\Protobuf\Internal\Serde\DeserializeEnum;
+use Thesis\Protobuf\Internal\Serde\DeserializeList;
+use Thesis\Protobuf\Internal\Serde\DeserializeMap;
+use Thesis\Protobuf\Internal\Serde\DeserializeMessage;
 use Thesis\Protobuf\Internal\Serde\DeserializeValue;
 use Thesis\Protobuf\Internal\Serde\SerdeBool;
 use Thesis\Protobuf\Internal\Serde\SerdeDouble;
@@ -38,13 +42,20 @@ use Thesis\Protobuf\Internal\Serde\SerdeSInt64;
 use Thesis\Protobuf\Internal\Serde\SerdeString;
 use Thesis\Protobuf\Internal\Serde\SerdeUint32;
 use Thesis\Protobuf\Internal\Serde\SerdeUint64;
+use Thesis\Protobuf\Internal\Wire\Tag;
+use function Thesis\Protobuf\fieldT;
+use function Thesis\Protobuf\messageT;
 
 /**
  * @internal
  * @template-implements Visitor<DeserializeValue<*>>
  */
-abstract class DefaultTypeDeserializerVisitor implements Visitor
+final readonly class TypeDeserializerVisitor implements Visitor
 {
+    public function __construct(
+        private Tag $tag,
+    ) {}
+
     #[\Override]
     public function bool(BoolT $type): DeserializeValue
     {
@@ -130,26 +141,44 @@ abstract class DefaultTypeDeserializerVisitor implements Visitor
     }
 
     #[\Override]
-    public function list(ListT $type): never
+    public function list(ListT $type): DeserializeValue
     {
-        throw new \BadMethodCallException(__METHOD__);
+        return new DeserializeList(
+            /** @phpstan-ignore argument.type */
+            $type->element->accept($this),
+            $this->tag,
+            $type->element->accept(new IsPacked()),
+        );
     }
 
     #[\Override]
-    public function map(MapT $type): never
+    public function map(MapT $type): DeserializeValue
     {
-        throw new \BadMethodCallException(__METHOD__);
+        $messageT = messageT(
+            fieldT(1, $type->keyT),
+            fieldT(2, $type->valueT),
+        );
+
+        return new DeserializeMap(
+            /** @phpstan-ignore argument.type */
+            new DeserializeList(
+                /** @phpstan-ignore argument.type */
+                $messageT->accept($this),
+                $this->tag,
+            ),
+            $type,
+        );
     }
 
     #[\Override]
-    public function enum(EnumT $type): never
+    public function enum(EnumT $type): DeserializeValue
     {
-        throw new \BadMethodCallException(__METHOD__);
+        return new DeserializeEnum($type->enum);
     }
 
     #[\Override]
-    public function message(MessageT $type): never
+    public function message(MessageT $type): DeserializeValue
     {
-        throw new \BadMethodCallException(__METHOD__);
+        return new DeserializeMessage($type);
     }
 }

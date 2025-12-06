@@ -8,14 +8,14 @@ use Thesis\Protobuf;
 
 /**
  * @internal
- * @template K of array-key
+ * @template K
  * @template V
  */
 interface Mappable
 {
     /**
-     * @param array<K, V> $values
-     * @return Protobuf\Value<array<K, V>>
+     * @param iterable<K, V> $values
+     * @return Protobuf\Value<iterable<K, V>>
      */
-    public function map(array $values): Protobuf\Value;
+    public function map(iterable $values): Protobuf\Value;
 }

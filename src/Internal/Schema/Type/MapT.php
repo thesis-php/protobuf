@@ -9,9 +9,9 @@ use Thesis\Protobuf\Internal\Schema\Type;
 
 /**
  * @internal
- * @template K of array-key
+ * @template K
  * @template V
- * @template-implements Type<array<K, V>, 'not-repeatable', 'not-indexed', 'not-map-value'>
+ * @template-implements Type<iterable<K, V>, 'not-repeatable', 'not-indexed', 'not-map-value'>
  * @template-implements Mappable<K, V>
  */
 final readonly class MapT implements Type, Mappable
@@ -32,7 +32,7 @@ final readonly class MapT implements Type, Mappable
     }
 
     #[\Override]
-    public function map(array $values): Protobuf\Value
+    public function map(iterable $values): Protobuf\Value
     {
         return Protobuf\mapOf(
             $this->keyT,

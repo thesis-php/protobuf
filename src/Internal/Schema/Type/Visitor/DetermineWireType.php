@@ -23,7 +23,7 @@ use Thesis\Protobuf\Internal\Schema\Type\StringT;
 use Thesis\Protobuf\Internal\Schema\Type\Uint32T;
 use Thesis\Protobuf\Internal\Schema\Type\Uint64T;
 use Thesis\Protobuf\Internal\Schema\Type\Visitor;
-use Thesis\Protobuf\Internal\WireType;
+use Thesis\Protobuf\Internal\Wire\WireType;
 
 /**
  * @internal

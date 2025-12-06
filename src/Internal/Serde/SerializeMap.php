@@ -12,9 +12,9 @@ use function Thesis\Protobuf\message;
 
 /**
  * @internal
- * @template K of array-key
+ * @template K
  * @template V
- * @template-implements SerializeValue<array<K, V>>
+ * @template-implements SerializeValue<iterable<K, V>>
  */
 final readonly class SerializeMap implements SerializeValue
 {
@@ -30,13 +30,15 @@ final readonly class SerializeMap implements SerializeValue
     #[\Override]
     public function serialize(WriteBuffer $buffer, mixed $value): void
     {
-        $this->serializer->serialize($buffer, array_map(
-            fn(mixed $key, mixed $value) => message(
+        $messages = [];
+
+        foreach ($value as $key => $val) {
+            $messages[] = message(
                 fieldOf(1, new Value($key, $this->type->keyT)),
-                fieldOf(2, new Value($value, $this->type->valueT)),
-            ),
-            array_keys($value),
-            array_values($value),
-        ));
+                fieldOf(2, new Value($val, $this->type->valueT)),
+            );
+        }
+
+        $this->serializer->serialize($buffer, $messages);
     }
 }

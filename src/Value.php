@@ -157,13 +157,7 @@ final readonly class Value
     {
         return new self(
             $message,
-            messageT(...array_map(
-                static fn(FieldDescriptor $ds) => new Type\Field(
-                    $ds->num,
-                    $ds->value->type,
-                ),
-                $message->fields,
-            )),
+            $message->type(),
         );
     }
 
@@ -184,18 +178,18 @@ final readonly class Value
     }
 
     /**
-     * @template K of array-key
+     * @template K
      * @template V
      * @param Type<K, *, 'indexed'> $keyT
      * @param Type<V, *, *, 'map-value'> $valueT
-     * @param array<K, V> $values
-     * @return self<array<K, V>>
+     * @param iterable<K, V> $values
+     * @return self<iterable<K, V>>
      * @throws \UnexpectedValueException
      */
     public static function mapOf(
         Type $keyT,
         Type $valueT,
-        array $values,
+        iterable $values,
     ): self {
         return new self(
             $values,

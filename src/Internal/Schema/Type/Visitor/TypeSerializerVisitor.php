@@ -45,7 +45,7 @@ use Thesis\Protobuf\Internal\Serde\SerializeMap;
 use Thesis\Protobuf\Internal\Serde\SerializeMessage;
 use Thesis\Protobuf\Internal\Serde\SerializeTag;
 use Thesis\Protobuf\Internal\Serde\SerializeValue;
-use Thesis\Protobuf\Internal\Tag;
+use Thesis\Protobuf\Internal\Wire\Tag;
 use function Thesis\Protobuf\fieldT;
 use function Thesis\Protobuf\messageT;
 
@@ -153,7 +153,7 @@ final readonly class TypeSerializerVisitor implements Visitor
             new SerializeList(
                 $type
                     ->element
-                    ->accept(new self($this->tag))
+                    ->accept($this)
                     ->without(SerializeTag::class),
                 $this->tag,
                 $type->element->accept(new IsPacked()),
@@ -174,7 +174,7 @@ final readonly class TypeSerializerVisitor implements Visitor
             new SerializeMap(
                 new SerializeList(
                     $messageT
-                        ->accept(new self($this->tag))
+                        ->accept($this)
                         ->without(SerializeTag::class),
                     $this->tag,
                 ),

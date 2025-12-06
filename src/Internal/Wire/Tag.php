@@ -2,11 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Thesis\Protobuf\Internal;
+namespace Thesis\Protobuf\Internal\Wire;
 
 use BcMath\Number;
+use Thesis\Protobuf\BufferUnderflow;
+use Thesis\Protobuf\Internal\Buffer\ReadBuffer;
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
 use Thesis\Protobuf\Internal\Serde\SerdeVarint;
+use Thesis\Varint;
 
 /**
  * @internal
@@ -32,9 +35,9 @@ final class Tag
         );
     }
 
-    public function serialize(WriteBuffer $buffer): void
+    public function equal(self $tag): bool
     {
-        SerdeVarint::T->serialize($buffer, $this->number);
+        return $tag->num === $this->num && $tag->type === $this->type;
     }
 
     /**
@@ -44,4 +47,32 @@ final class Tag
         public readonly int $num,
         public readonly WireType $type,
     ) {}
+}
+
+/**
+ * @internal
+ */
+function writeTag(WriteBuffer $buffer, Tag $tag): void
+{
+    SerdeVarint::T->serialize($buffer, $tag->number);
+}
+
+/**
+ * @internal
+ * @throws BufferUnderflow
+ */
+function peekTag(ReadBuffer $buffer): Tag
+{
+    $number = Varint\BcMath::Codec->decodeVarintSized($buffer->peek(10));
+
+    return Tag::from($number->value);
+}
+
+/**
+ * @internal
+ * @throws BufferUnderflow
+ */
+function readTag(ReadBuffer $buffer): Tag
+{
+    return Tag::from(readVarint($buffer));
 }

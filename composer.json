@@ -34,7 +34,9 @@
         },
         "files": [
             "src/constructors.php",
-            "src/Internal/Serde/serde.php"
+            "src/Internal/Buffer/buffer.php",
+            "src/Internal/Wire/Tag.php",
+            "src/Internal/Wire/wire.php"
         ]
     },
     "autoload-dev": {

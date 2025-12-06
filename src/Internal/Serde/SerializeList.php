@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Internal\Serde;
 
+use Thesis\Protobuf\Internal\Buffer;
 use Thesis\Protobuf\Internal\Buffer\ByteBuffer;
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
-use Thesis\Protobuf\Internal\Tag;
-use Thesis\Protobuf\Internal\WireType;
+use Thesis\Protobuf\Internal\Wire;
+use Thesis\Protobuf\Internal\Wire\Tag;
+use Thesis\Protobuf\Internal\Wire\WireType;
 
 /**
  * @internal
@@ -37,12 +39,12 @@ final readonly class SerializeList implements SerializeValue
             }
 
             if (\count($tmp) > 0) {
-                $tag->serialize($buffer);
-                copyBuffer($tmp, $buffer);
+                Wire\writeTag($buffer, $tag);
+                Buffer\copy($tmp, $buffer);
             }
         } else {
             foreach ($value as $it) {
-                $this->tag->serialize($buffer);
+                Wire\writeTag($buffer, $this->tag);
                 $this->serializer->serialize($buffer, $it);
             }
         }

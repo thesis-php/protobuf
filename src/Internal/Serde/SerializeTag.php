@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace Thesis\Protobuf\Internal\Serde;
 
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
-use Thesis\Protobuf\Internal\Tag;
+use Thesis\Protobuf\Internal\Wire;
+use Thesis\Protobuf\Internal\Wire\Tag;
 
 /**
  * @internal
@@ -21,6 +22,6 @@ final readonly class SerializeTag implements SerializeValue
     #[\Override]
     public function serialize(WriteBuffer $buffer, mixed $value): void
     {
-        $this->tag->serialize($buffer);
+        Wire\writeTag($buffer, $this->tag);
     }
 }

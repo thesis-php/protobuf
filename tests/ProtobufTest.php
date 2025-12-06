@@ -10,8 +10,8 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Thesis\Protobuf\Internal\Buffer\ByteBuffer;
 use Thesis\Protobuf\Internal\Schema\Type\Visitor\DetermineWireType;
+use Thesis\Protobuf\Internal\Schema\Type\Visitor\TypeDeserializerVisitor;
 use Thesis\Protobuf\Internal\Schema\Type\Visitor\TypeSerializerVisitor;
-use Thesis\Protobuf\Internal\Schema\Type\Visitor\ValueTypeDeserializerVisitor;
 use Thesis\Protobuf\Internal\Serde\SerdeBool;
 use Thesis\Protobuf\Internal\Serde\SerdeDouble;
 use Thesis\Protobuf\Internal\Serde\SerdeFixed32;
@@ -27,7 +27,7 @@ use Thesis\Protobuf\Internal\Serde\SerdeString;
 use Thesis\Protobuf\Internal\Serde\SerdeUint32;
 use Thesis\Protobuf\Internal\Serde\SerdeUint64;
 use Thesis\Protobuf\Internal\Serde\SerializeTag;
-use Thesis\Protobuf\Internal\Tag;
+use Thesis\Protobuf\Internal\Wire\Tag;
 
 #[CoversClass(SerdeBool::class)]
 #[CoversClass(SerdeInt32::class)]
@@ -53,7 +53,11 @@ final class ProtobufTest extends TestCase
         $type = $data->value->type;
         $expected = $data->value->value;
 
-        $actual = $type->accept(new ValueTypeDeserializerVisitor())->deserialize($buffer);
+        $tag = new Tag(1, $type->accept(DetermineWireType::Visitor));
+
+        $actual = $type
+            ->accept(new TypeDeserializerVisitor($tag))
+            ->deserialize($buffer);
 
         if ($expected instanceof Number) {
             self::assertEquals($expected, $actual);
@@ -67,7 +71,7 @@ final class ProtobufTest extends TestCase
         self::assertCount(0, $buffer);
 
         $type
-            ->accept(new TypeSerializerVisitor(new Tag(1, $type->accept(DetermineWireType::Visitor))))
+            ->accept(new TypeSerializerVisitor($tag))
             ->without(SerializeTag::class)
             ->serialize($buffer, $expected);
         self::assertSame($data->hex, bin2hex((string) $buffer));

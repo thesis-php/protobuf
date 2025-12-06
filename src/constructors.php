@@ -256,18 +256,18 @@ function listT(Type $element): Type\ListT
 
 /**
  * @api
- * @template K of array-key
+ * @template K
  * @template V
  * @param Type<K, *, 'indexed'> $keyT
  * @param Type<V, *, *> $valueT
- * @param array<K, V> $values
- * @return Value<array<K, V>>
+ * @param iterable<K, V> $values
+ * @return Value<iterable<K, V>>
  * @throws \UnexpectedValueException
  */
 function mapOf(
     Type $keyT,
     Type $valueT,
-    array $values,
+    iterable $values,
 ): Value {
     return Value::mapOf(
         $keyT,
@@ -278,7 +278,7 @@ function mapOf(
 
 /**
  * @api
- * @template K of array-key
+ * @template K
  * @template V
  * @param Type<K, *, 'indexed'> $keyT
  * @param Type<V, *, *, 'map-value'> $valueT

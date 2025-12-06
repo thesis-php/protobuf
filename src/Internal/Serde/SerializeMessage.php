@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace Thesis\Protobuf\Internal\Serde;
 
 use Thesis\Protobuf\FieldDescriptor;
+use Thesis\Protobuf\Internal\Buffer;
 use Thesis\Protobuf\Internal\Buffer\ByteBuffer;
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
 use Thesis\Protobuf\Internal\Schema\Type\Visitor\DetermineWireType;
 use Thesis\Protobuf\Internal\Schema\Type\Visitor\TypeSerializerVisitor;
-use Thesis\Protobuf\Internal\Tag;
+use Thesis\Protobuf\Internal\Wire\Tag;
 use Thesis\Protobuf\Message;
 
 /**
@@ -38,6 +39,6 @@ enum SerializeMessage implements SerializeValue
             $serializer->serialize($tmp, $field->value->value);
         }
 
-        copyBuffer($tmp, $buffer);
+        Buffer\copy($tmp, $buffer);
     }
 }

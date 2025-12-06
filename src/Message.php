@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf;
 
+use Thesis\Protobuf\Internal\Schema\Type\Field;
+use Thesis\Protobuf\Internal\Schema\Type\MessageT;
+
 /**
  * @api
  * @template-implements \IteratorAggregate<array-key, FieldDescriptor<*>>
@@ -12,7 +15,7 @@ final readonly class Message implements
     \IteratorAggregate,
     \Countable
 {
-    /** @var list<FieldDescriptor<*>> */
+    /** @var array<positive-int, FieldDescriptor<*>> */
     public array $fields;
 
     /**
@@ -22,7 +25,24 @@ final readonly class Message implements
     public function __construct(
         FieldDescriptor ...$fields,
     ) {
-        $this->fields = $fields;
+        $map = [];
+
+        foreach ($fields as $field) {
+            $map[$field->num] = $field;
+        }
+
+        $this->fields = $map;
+    }
+
+    public function type(): MessageT
+    {
+        return messageT(...array_map(
+            static fn(FieldDescriptor $ds) => new Field(
+                $ds->num,
+                $ds->value->type,
+            ),
+            $this->fields,
+        ));
     }
 
     #[\Override]
