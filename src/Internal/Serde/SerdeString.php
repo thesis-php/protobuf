@@ -5,14 +5,13 @@ declare(strict_types=1);
 namespace Thesis\Protobuf\Internal\Serde;
 
 use BcMath\Number;
-use Thesis\Protobuf\BufferUnderflow;
 use Thesis\Protobuf\Internal\Buffer\ReadBuffer;
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
 
 /**
  * @internal
- * @template-implements SerializeValue<non-empty-string>
- * @template-implements DeserializeValue<non-empty-string>
+ * @template-implements SerializeValue<string>
+ * @template-implements DeserializeValue<string>
  */
 enum SerdeString implements
     SerializeValue,
@@ -24,7 +23,10 @@ enum SerdeString implements
     public function serialize(WriteBuffer $buffer, mixed $value): void
     {
         SerdeVarint::T->serialize($buffer, new Number(\strlen($value)));
-        $buffer->write($value);
+
+        if ($value !== '') {
+            $buffer->write($value);
+        }
     }
 
     #[\Override]
@@ -32,7 +34,7 @@ enum SerdeString implements
     {
         $length = (int) SerdeVarint::T->deserialize($buffer)->value;
         if ($length <= 0) {
-            throw new BufferUnderflow();
+            return '';
         }
 
         return $buffer->read($length);

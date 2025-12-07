@@ -162,8 +162,7 @@ const doubleT = Type\DoubleT::T;
 
 /**
  * @api
- * @param non-empty-string $value
- * @return Value<non-empty-string>
+ * @return Value<string>
  */
 function stringOf(string $value): Value
 {
@@ -171,6 +170,17 @@ function stringOf(string $value): Value
 }
 
 const stringT = Type\StringT::T;
+
+/**
+ * @api
+ * @return Value<string>
+ */
+function bytesOf(string $value): Value
+{
+    return stringOf($value);
+}
+
+const bytesT = stringT;
 
 /**
  * @api

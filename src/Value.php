@@ -131,8 +131,7 @@ final readonly class Value
     }
 
     /**
-     * @param non-empty-string $value
-     * @return self<non-empty-string>
+     * @return self<string>
      */
     public static function string(string $value): self
     {
