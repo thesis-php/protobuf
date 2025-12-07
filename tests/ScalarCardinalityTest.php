@@ -43,10 +43,10 @@ use Thesis\Protobuf\Internal\Wire\Tag;
 #[CoversClass(SerdeFloat::class)]
 #[CoversClass(SerdeDouble::class)]
 #[CoversClass(SerdeString::class)]
-final class ProtobufTest extends TestCase
+final class ScalarCardinalityTest extends TestCase
 {
     #[DataProvider('provideRoundTripCases')]
-    public function testRoundTrip(TestData $data): void
+    public function testRoundTrip(ScalarTestData $data): void
     {
         $buffer = new ByteBuffer((string) hex2bin($data->hex));
 
@@ -78,11 +78,11 @@ final class ProtobufTest extends TestCase
     }
 
     /**
-     * @return iterable<array{TestData}>
+     * @return iterable<array{ScalarTestData}>
      */
     public static function provideRoundTripCases(): iterable
     {
-        $f = fopen(__DIR__ . '/testdata/testcases.csv', 'r');
+        $f = fopen(__DIR__ . '/testdata/scalar_testcases.csv', 'r');
         if (!\is_resource($f)) {
             throw new \RuntimeException('Could not open file with testcases.');
         }
@@ -99,7 +99,7 @@ final class ProtobufTest extends TestCase
             [$type, $hex, $value] = $row;
 
             yield [
-                new TestData(
+                new ScalarTestData(
                     match ($type) {
                         'bool' => Value::bool(filter_var($value, FILTER_VALIDATE_BOOLEAN)),
                         /** @phpstan-ignore argument.type */
@@ -133,7 +133,7 @@ final class ProtobufTest extends TestCase
 /**
  * @internal
  */
-final readonly class TestData
+final readonly class ScalarTestData
 {
     /**
      * @param Value<*> $value
