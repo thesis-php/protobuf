@@ -37,7 +37,6 @@ final readonly class Serializer
     }
 
     /**
-     * @param non-empty-string $bytes
      * @throws BufferUnderflow
      */
     public function deserialize(MessageT $type, string $bytes): Message
