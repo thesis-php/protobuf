@@ -8,14 +8,14 @@ use Thesis\Protobuf\Internal\Schema\Type;
 
 /**
  * @internal
- * @template-implements Type<non-empty-string>
- * @template-implements Listable<non-empty-string>
+ * @template-implements Type<string>
+ * @template-implements Listable<string>
  */
 enum StringT implements
     Type,
     Listable
 {
-    /** @use Listed<non-empty-string> */
+    /** @use Listed<string> */
     use Listed;
 
     case T;

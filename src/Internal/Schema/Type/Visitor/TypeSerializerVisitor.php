@@ -170,7 +170,6 @@ final readonly class TypeSerializerVisitor implements Visitor
         );
 
         return $this->aggregated(
-            /** @phpstan-ignore argument.type */
             new SerializeMap(
                 new SerializeList(
                     $messageT

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Thesis\Protobuf\Internal\Schema\Type;
+namespace Thesis\Protobuf\Reflection;
 
 /**
- * @internal
+ * @api
  * @template-covariant TResult
  */
 interface Visitor
@@ -81,6 +81,11 @@ interface Visitor
     public function string(StringT $type): mixed;
 
     /**
+     * @return TResult
+     */
+    public function bytes(BytesT $type): mixed;
+
+    /**
      * @template T
      * @param ListT<T> $type
      * @return TResult
@@ -96,12 +101,16 @@ interface Visitor
     public function map(MapT $type): mixed;
 
     /**
+     * @template T of \BackedEnum
+     * @param EnumT<T> $type
      * @return TResult
      */
     public function enum(EnumT $type): mixed;
 
     /**
+     * @template T of object
+     * @param ObjectT<T> $type
      * @return TResult
      */
-    public function message(MessageT $type): mixed;
+    public function object(ObjectT $type): mixed;
 }
