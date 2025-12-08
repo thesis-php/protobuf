@@ -32,7 +32,7 @@ use Thesis\Protobuf\Reflection\Visitor;
  * @internal
  * @template-implements Visitor<Type<mixed, *, *, *>>
  */
-final readonly class ToProtobufTypeVisitor implements Visitor
+final readonly class ToProtobufTypeTypeVisitor implements Visitor
 {
     public function __construct(
         private Reflector $reflector,

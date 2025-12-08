@@ -36,7 +36,8 @@
             "src/constructors.php",
             "src/Internal/Buffer/buffer.php",
             "src/Internal/Wire/Tag.php",
-            "src/Internal/Wire/wire.php"
+            "src/Internal/Wire/wire.php",
+            "src/Reflection/Internal/numeric.php"
         ]
     },
     "autoload-dev": {

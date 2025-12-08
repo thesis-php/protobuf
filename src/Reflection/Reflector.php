@@ -9,25 +9,27 @@ use Thesis\Protobuf\Internal\Schema\Type;
 use Thesis\Protobuf\Message;
 use Thesis\Protobuf\Reflection\Internal\Api\ClassReflector;
 use Thesis\Protobuf\Reflection\Internal\Visitor\IsValueEmpty;
-use Thesis\Protobuf\Reflection\Internal\Visitor\ToProtobufTypeVisitor;
-use Thesis\Protobuf\Reflection\Internal\Visitor\ToProtobufValueVisitor;
+use Thesis\Protobuf\Reflection\Internal\Visitor\ToDefaultValueTypeVisitor;
+use Thesis\Protobuf\Reflection\Internal\Visitor\ToProtobufTypeTypeVisitor;
+use Thesis\Protobuf\Reflection\Internal\Visitor\ToProtobufValueTypeVisitor;
+use Thesis\Protobuf\Reflection\Internal\Visitor\ToValueTypeVisitor;
 
 /**
  * @api
  */
 final readonly class Reflector
 {
-    private ToProtobufTypeVisitor $typeVisitor;
+    private ToProtobufTypeTypeVisitor $typeVisitor;
 
-    /** @var ToProtobufValueVisitor<*> */
-    private ToProtobufValueVisitor $valueVisitor;
+    /** @var ToProtobufValueTypeVisitor<*> */
+    private ToProtobufValueTypeVisitor $valueVisitor;
 
     private ClassReflector $classReflector;
 
     public function __construct()
     {
-        $this->typeVisitor = new ToProtobufTypeVisitor($this);
-        $this->valueVisitor = new ToProtobufValueVisitor($this);
+        $this->typeVisitor = new ToProtobufTypeTypeVisitor($this);
+        $this->valueVisitor = new ToProtobufValueTypeVisitor($this);
         $this->classReflector = new ClassReflector();
     }
 
@@ -108,9 +110,60 @@ final readonly class Reflector
      * @template T of object
      * @param class-string<T> $class
      * @return T
+     * @throws \ReflectionException
      */
     public function map(Message $message, string $class): object
     {
-        throw new \BadMethodCallException('Not implemented yet.');
+        $classReflection = $this->classReflector->reflect($class);
+        $object = $classReflection->class->newInstanceWithoutConstructor();
+
+        foreach ($classReflection->properties as $property) {
+            $propertyType = $property->reflection->getType();
+            \assert($propertyType !== null);
+
+            if ($property->attributes->has(Field::class)) {
+                $field = $property->attributes->get(Field::class);
+
+                $descriptor = $message->fields[$field->num] ?? null;
+                $property->reflection->setValue(
+                    $object,
+                    match (true) {
+                        $descriptor !== null => $field
+                            ->type
+                            ->accept(new ToValueTypeVisitor(
+                                $propertyType,
+                                $this,
+                                $descriptor->value->value,
+                            )),
+                        $property->reflection->hasDefaultValue() => $property->reflection->getDefaultValue(),
+                        $propertyType->allowsNull() === true => null,
+                        default => $field
+                            ->type
+                            ->accept(new ToDefaultValueTypeVisitor($propertyType)),
+                    },
+                );
+            } elseif ($property->attributes->has(OneOf::class)) {
+                $oneof = $property->attributes->get(OneOf::class);
+
+                foreach ($oneof->variants as $it) {
+                    $variantType = $this->reflect($it);
+
+                    foreach ($variantType->fields as $num => $_) {
+                        if (isset($message->fields[$num])) {
+                            $property->reflection->setValue(
+                                $object,
+                                $this->map($message, $it),
+                            );
+
+                            continue 3;
+                        }
+                    }
+                }
+
+                $property->reflection->setValue($object, null);
+            }
+        }
+
+        return $object;
     }
 }

@@ -33,14 +33,14 @@ use Thesis\Protobuf\Reflection\Visitor;
  * @template T
  * @template-implements Visitor<\Closure(T): Protobuf\Value<T>>
  */
-final readonly class ToProtobufValueVisitor implements Visitor
+final readonly class ToProtobufValueTypeVisitor implements Visitor
 {
-    private ToProtobufTypeVisitor $typeVisitor;
+    private ToProtobufTypeTypeVisitor $typeVisitor;
 
     public function __construct(
         private Reflector $reflector,
     ) {
-        $this->typeVisitor = new ToProtobufTypeVisitor($reflector);
+        $this->typeVisitor = new ToProtobufTypeTypeVisitor($reflector);
     }
 
     #[\Override]
