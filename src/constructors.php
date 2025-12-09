@@ -241,6 +241,15 @@ function messageT(Type\Field ...$fields): Type\MessageT
 
 /**
  * @api
+ * @param \Closure(): Type\MessageT $continuation
+ */
+function recursionT(\Closure $continuation): Type\RecursionT
+{
+    return new Type\RecursionT($continuation);
+}
+
+/**
+ * @api
  * @template E
  * @param Type<E, 'repeatable', *> $type
  * @param list<E> $values

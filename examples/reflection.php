@@ -104,7 +104,7 @@ final readonly class Developer
     ) {}
 }
 
-$reflector  = new Reflection\Reflector();
+$reflector  = Reflection\Reflector::build();
 $serializer = new Protobuf\Serializer();
 
 $message = $reflector->value(new Developer(

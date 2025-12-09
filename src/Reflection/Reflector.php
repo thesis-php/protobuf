@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Reflection;
 
+use Psr\SimpleCache\CacheInterface;
 use Thesis\Protobuf;
 use Thesis\Protobuf\Internal\Schema\Type;
 use Thesis\Protobuf\Message;
 use Thesis\Protobuf\Reflection\Internal\Api\ClassReflector;
+use Thesis\Protobuf\Reflection\Internal\Cache\Cache;
+use Thesis\Protobuf\Reflection\Internal\Cache\InMemoryPsr16Cache;
 use Thesis\Protobuf\Reflection\Internal\Visitor\IsValueEmpty;
+use Thesis\Protobuf\Reflection\Internal\Visitor\RecursionBreakTypeVisitor;
 use Thesis\Protobuf\Reflection\Internal\Visitor\ToDefaultValueTypeVisitor;
 use Thesis\Protobuf\Reflection\Internal\Visitor\ToProtobufTypeTypeVisitor;
 use Thesis\Protobuf\Reflection\Internal\Visitor\ToProtobufValueTypeVisitor;
@@ -17,17 +21,31 @@ use Thesis\Protobuf\Reflection\Internal\Visitor\ToValueTypeVisitor;
 /**
  * @api
  */
-final readonly class Reflector
+final class Reflector
 {
-    private ToProtobufTypeTypeVisitor $typeVisitor;
+    private readonly ToProtobufTypeTypeVisitor $typeVisitor;
 
     /** @var ToProtobufValueTypeVisitor<*> */
-    private ToProtobufValueTypeVisitor $valueVisitor;
+    private readonly ToProtobufValueTypeVisitor $valueVisitor;
 
-    private ClassReflector $classReflector;
+    private readonly ClassReflector $classReflector;
 
-    public function __construct()
-    {
+    /** @var array<class-string, true> */
+    private array $visited = [];
+
+    public static function build(
+        ?CacheInterface $cache = null,
+    ): self {
+        return new self(
+            cache: new Cache(
+                $cache ?? new InMemoryPsr16Cache(),
+            ),
+        );
+    }
+
+    private function __construct(
+        private readonly Cache $cache,
+    ) {
         $this->typeVisitor = new ToProtobufTypeTypeVisitor($this);
         $this->valueVisitor = new ToProtobufValueTypeVisitor($this);
         $this->classReflector = new ClassReflector();
@@ -49,12 +67,13 @@ final readonly class Reflector
             if ($property->attributes->has(Field::class)) {
                 $field = $property->attributes->get(Field::class);
 
-                if (!$field->type->accept(new IsValueEmpty($value))) {
-                    $descriptors[] = Protobuf\fieldOf(
-                        $field->num,
-                        $field->type->accept($this->valueVisitor)($value),
-                    );
-                }
+                // TODO: how to serialize maps keeping empty values?
+                // if (!$field->type->accept(new IsValueEmpty($value))) {
+                $descriptors[] = Protobuf\fieldOf(
+                    $field->num,
+                    $field->type->accept($this->valueVisitor)($value),
+                );
+                // }
             } elseif ($property->attributes->has(OneOf::class)) {
                 $oneof = $property->attributes->get(OneOf::class);
 
@@ -79,6 +98,12 @@ final readonly class Reflector
      */
     public function reflect(string $class): Type\MessageT
     {
+        if (($messageT = $this->cache->get($class)) !== null) {
+            return $messageT;
+        }
+
+        $this->visited[$class] = true;
+
         $classReflection = $this->classReflector->reflect($class);
 
         $fields = [];
@@ -89,7 +114,11 @@ final readonly class Reflector
 
                 $fields[] = Protobuf\fieldT(
                     $field->num,
-                    $field->type->accept($this->typeVisitor),
+                    $field->type->accept(new RecursionBreakTypeVisitor(
+                        $this,
+                        $this->typeVisitor,
+                        $this->visited,
+                    )),
                 );
             } elseif ($property->attributes->has(OneOf::class)) {
                 $oneof = $property->attributes->get(OneOf::class);
@@ -103,7 +132,12 @@ final readonly class Reflector
             }
         }
 
-        return Protobuf\messageT(...$fields);
+        unset($this->visited[$class]);
+
+        $messageT = Protobuf\messageT(...$fields);
+        $this->cache->set($class, $messageT);
+
+        return $messageT;
     }
 
     /**
