@@ -12,7 +12,7 @@ use Thesis\Protobuf\Internal\Schema\Type;
  * @api
  * @phpstan-import-type Int32 from Endian\Order
  * @phpstan-import-type Uint32 from Endian\Order
- * @template-covariant T
+ * @template T
  */
 final readonly class Value
 {
