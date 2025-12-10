@@ -24,6 +24,7 @@ new PhpCsFixerCodingStandard()->applyTo($config, [
     'fully_qualified_strict_types' => false,
     'phpdoc_scalar' => false,
     'class_attributes_separation' => false,
+    'numeric_literal_separator' => false,
 ]);
 
 return $config;
