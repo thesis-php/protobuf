@@ -1,0 +1,24 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Thesis\Protobuf\Compiler;
+
+use Thesis\Protobuf\Reflection;
+
+/**
+ * @api
+ */
+final readonly class CompilerVersion
+{
+    public function __construct(
+        #[Reflection\Field(1, Reflection\Int32T::T)]
+        public ?int $major = null,
+        #[Reflection\Field(2, Reflection\Int32T::T)]
+        public ?int $minor = null,
+        #[Reflection\Field(3, Reflection\Int32T::T)]
+        public ?int $patch = null,
+        #[Reflection\Field(4, Reflection\StringT::T)]
+        public ?string $suffix = null,
+    ) {}
+}

@@ -8,6 +8,7 @@ use Thesis\Protobuf\Reflection;
 
 /**
  * @api
+ * @see https://github.com/protocolbuffers/protobuf/blob/main/src/google/protobuf/descriptor.proto
  */
 final readonly class FileDescriptorSet
 {
