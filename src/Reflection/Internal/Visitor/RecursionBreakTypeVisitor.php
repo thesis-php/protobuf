@@ -6,6 +6,8 @@ namespace Thesis\Protobuf\Reflection\Internal\Visitor;
 
 use Thesis\Protobuf;
 use Thesis\Protobuf\Internal\Schema;
+use Thesis\Protobuf\Reflection\ListT;
+use Thesis\Protobuf\Reflection\MapT;
 use Thesis\Protobuf\Reflection\ObjectT;
 use Thesis\Protobuf\Reflection\Reflector;
 use Thesis\Protobuf\Reflection\Type;
@@ -26,6 +28,24 @@ final class RecursionBreakTypeVisitor extends DefaultTypeVisitor
         private readonly Visitor $fallback,
         private readonly array $visited,
     ) {}
+
+    #[\Override]
+    public function list(ListT $type): mixed
+    {
+        /** @phpstan-ignore argument.type */
+        return Protobuf\listT($type->element->accept($this));
+    }
+
+    #[\Override]
+    public function map(MapT $type): mixed
+    {
+        return Protobuf\mapT(
+            /** @phpstan-ignore argument.type */
+            $type->keyT->accept($this),
+            /** @phpstan-ignore argument.type */
+            $type->valueT->accept($this),
+        );
+    }
 
     #[\Override]
     public function object(ObjectT $type): mixed
