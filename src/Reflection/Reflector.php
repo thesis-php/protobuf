@@ -165,10 +165,10 @@ final class Reflector
                         $descriptor !== null => $field
                             ->type
                             ->accept(new ToValueTypeVisitor(
-                                $propertyType,
                                 $this,
                                 $descriptor->value->value,
                             )),
+                        $field->default !== null => $field->default,
                         $property->reflection->hasDefaultValue() => $property->reflection->getDefaultValue(),
                         $propertyType->allowsNull() === true => null,
                         default => $field

@@ -14,9 +14,11 @@ final readonly class Field
      * @template T
      * @param positive-int $num
      * @param Type<T, *, *, *> $type
+     * @param ?T $default
      */
     public function __construct(
         public int $num,
         public Type $type,
+        public mixed $default = null,
     ) {}
 }
