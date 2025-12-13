@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Thesis\Protobuf\Compiler;
+namespace Thesis\Protobuf\Compiler\GeneratedCodeInfo;
 
 use Thesis\Protobuf\Reflection;
 
@@ -23,7 +23,7 @@ final readonly class Annotation
         public ?int $begin = null,
         #[Reflection\Field(4, Reflection\Int32T::T)]
         public ?int $end = null,
-        #[Reflection\Field(5, new Reflection\EnumT(AnnotationSemantic::class))]
-        public ?AnnotationSemantic $semantic = null,
+        #[Reflection\Field(5, new Reflection\EnumT(Annotation\Semantic::class))]
+        public ?Annotation\Semantic $semantic = null,
     ) {}
 }

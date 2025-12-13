@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Thesis\Protobuf\Compiler;
+namespace Thesis\Protobuf\Compiler\DescriptorProto;
 
 use Thesis\Protobuf\Reflection;
 
 /**
  * @api
  */
-final readonly class EnumReservedRange
+final readonly class ReservedRange
 {
     public function __construct(
         #[Reflection\Field(1, Reflection\Int32T::T)]

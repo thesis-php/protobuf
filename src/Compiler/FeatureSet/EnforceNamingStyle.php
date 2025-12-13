@@ -9,7 +9,7 @@ namespace Thesis\Protobuf\Compiler\FeatureSet;
  */
 enum EnforceNamingStyle: int
 {
-    case Unknown = 0;
-    case Style2024 = 1;
-    case StyleLegacy = 2;
+    case ENFORCE_NAMING_STYLE_UNKNOWN = 0;
+    case STYLE2024 = 1;
+    case STYLE_LEGACY = 2;
 }

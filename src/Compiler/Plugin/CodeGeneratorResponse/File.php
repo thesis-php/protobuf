@@ -2,14 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Thesis\Protobuf\Compiler;
+namespace Thesis\Protobuf\Compiler\Plugin\CodeGeneratorResponse;
 
+use Thesis\Protobuf\Compiler\GeneratedCodeInfo;
 use Thesis\Protobuf\Reflection;
 
 /**
  * @api
  */
-final readonly class GeneratedFile
+final readonly class File
 {
     public function __construct(
         #[Reflection\Field(1, Reflection\StringT::T)]

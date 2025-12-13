@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Thesis\Protobuf\Compiler;
+namespace Thesis\Protobuf\Compiler\Plugin;
 
 use Thesis\Protobuf\Reflection;
 
@@ -13,7 +13,7 @@ use Thesis\Protobuf\Reflection;
 final readonly class CodeGeneratorResponse
 {
     /**
-     * @param list<GeneratedFile> $files
+     * @param list<CodeGeneratorResponse\File> $files
      */
     public function __construct(
         #[Reflection\Field(1, Reflection\StringT::T)]
@@ -25,7 +25,7 @@ final readonly class CodeGeneratorResponse
         #[Reflection\Field(4, Reflection\Int32T::T)]
         public ?int $maximumEdition = null,
         #[Reflection\Field(15, new Reflection\ListT(
-            new Reflection\ObjectT(GeneratedFile::class),
+            new Reflection\ObjectT(CodeGeneratorResponse\File::class),
         ))]
         public array $files = [],
     ) {}

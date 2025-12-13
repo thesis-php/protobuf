@@ -9,7 +9,7 @@ namespace Thesis\Protobuf\Compiler\FeatureSet;
  */
 enum MessageEncoding: int
 {
-    case Unknown = 0;
-    case LengthPrefixed = 1;
-    case Delimited = 2;
+    case MESSAGE_ENCODING_UNKNOWN = 0;
+    case LENGTH_PREFIXED = 1;
+    case DELIMITED = 2;
 }

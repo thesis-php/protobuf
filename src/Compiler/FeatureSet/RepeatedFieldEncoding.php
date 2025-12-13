@@ -9,7 +9,7 @@ namespace Thesis\Protobuf\Compiler\FeatureSet;
  */
 enum RepeatedFieldEncoding: int
 {
-    case Unknown = 0;
-    case Packed = 1;
-    case Expanded = 2;
+    case REPEATED_FIELD_ENCODING_UNKNOWN = 0;
+    case PACKED = 1;
+    case EXPANDED = 2;
 }

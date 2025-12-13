@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Thesis\Protobuf\Compiler;
+namespace Thesis\Protobuf\Compiler\FeatureSetDefaults;
 
+use Thesis\Protobuf\Compiler\Edition;
+use Thesis\Protobuf\Compiler\FeatureSet;
 use Thesis\Protobuf\Reflection;
 
 /**

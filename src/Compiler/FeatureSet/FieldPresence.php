@@ -9,8 +9,8 @@ namespace Thesis\Protobuf\Compiler\FeatureSet;
  */
 enum FieldPresence: int
 {
-    case Unknown = 0;
-    case Explicit = 1;
-    case Implicit = 2;
-    case LegacyRequired = 3;
+    case FIELD_PRESENCE_UNKNOWN = 0;
+    case EXPLICIT = 1;
+    case IMPLICIT = 2;
+    case LEGACY_REQUIRED = 3;
 }

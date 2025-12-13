@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Compiler;
 
+use Thesis\Protobuf\Compiler\FieldOptions\FeatureSupport;
 use Thesis\Protobuf\Reflection;
 
 /**

@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Thesis\Protobuf\Compiler;
+namespace Thesis\Protobuf\Compiler\Plugin;
 
+use Thesis\Protobuf\Compiler\FileDescriptorProto;
 use Thesis\Protobuf\Reflection;
 
 /**
@@ -30,7 +31,7 @@ final readonly class CodeGeneratorRequest
             new Reflection\ObjectT(FileDescriptorProto::class),
         ))]
         public array $sourceFileDescriptors = [],
-        #[Reflection\Field(3, new Reflection\ObjectT(CompilerVersion::class))]
-        public ?CompilerVersion $compilerVersion = null,
+        #[Reflection\Field(3, new Reflection\ObjectT(Version::class))]
+        public ?Version $compilerVersion = null,
     ) {}
 }

@@ -16,9 +16,9 @@ final readonly class DescriptorProto
      * @param list<FieldDescriptorProto> $extensions
      * @param list<DescriptorProto> $nestedTypes
      * @param list<EnumDescriptorProto> $enumTypes
-     * @param list<DescriptorProtoExtensionRange> $extensionRanges
+     * @param list<DescriptorProto\ExtensionRange> $extensionRanges
      * @param list<OneofDescriptorProto> $oneofs
-     * @param list<DescriptorProtoReservedRange> $reservedRanges
+     * @param list<DescriptorProto\ReservedRange> $reservedRanges
      * @param list<string> $reservedNames
      */
     public function __construct(
@@ -41,7 +41,7 @@ final readonly class DescriptorProto
         ))]
         public array $enumTypes = [],
         #[Reflection\Field(5, new Reflection\ListT(
-            new Reflection\ObjectT(DescriptorProtoExtensionRange::class),
+            new Reflection\ObjectT(DescriptorProto\ExtensionRange::class),
         ))]
         public array $extensionRanges = [],
         #[Reflection\Field(8, new Reflection\ListT(
@@ -51,7 +51,7 @@ final readonly class DescriptorProto
         #[Reflection\Field(7, new Reflection\ObjectT(MessageOptions::class))]
         public ?MessageOptions $options = null,
         #[Reflection\Field(9, new Reflection\ListT(
-            new Reflection\ObjectT(DescriptorProtoReservedRange::class),
+            new Reflection\ObjectT(DescriptorProto\ReservedRange::class),
         ))]
         public array $reservedRanges = [],
         #[Reflection\Field(10, new Reflection\ListT(Reflection\StringT::T))]

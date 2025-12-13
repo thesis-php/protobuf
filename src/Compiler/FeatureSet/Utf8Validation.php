@@ -9,7 +9,7 @@ namespace Thesis\Protobuf\Compiler\FeatureSet;
  */
 enum Utf8Validation: int
 {
-    case Unknown = 0;
-    case Verify = 2;
-    case None = 3;
+    case UTF8_VALIDATION_UNKNOWN = 0;
+    case VERIFY = 2;
+    case NONE = 3;
 }

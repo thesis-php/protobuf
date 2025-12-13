@@ -9,7 +9,7 @@ namespace Thesis\Protobuf\Compiler\FeatureSet;
  */
 enum EnumType: int
 {
-    case Unknown = 0;
-    case Open = 1;
-    case Closed = 2;
+    case ENUM_TYPE_UNKNOWN = 0;
+    case OPEN = 1;
+    case CLOSED = 2;
 }

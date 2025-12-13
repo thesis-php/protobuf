@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Thesis\Protobuf\Compiler;
+namespace Thesis\Protobuf\Compiler\ExtensionRangeOptions;
 
 use Thesis\Protobuf\Reflection;
 
 /**
  * @api
  */
-final readonly class ExtensionDeclaration
+final readonly class Declaration
 {
     public function __construct(
         #[Reflection\Field(1, Reflection\Int32T::T)]

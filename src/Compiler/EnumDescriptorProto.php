@@ -13,7 +13,7 @@ final readonly class EnumDescriptorProto
 {
     /**
      * @param list<EnumValueDescriptorProto> $values
-     * @param list<EnumReservedRange> $reservedRanges
+     * @param list<EnumDescriptorProto\EnumReservedRange> $reservedRanges
      * @param list<string> $reservedNames
      */
     public function __construct(
@@ -26,7 +26,7 @@ final readonly class EnumDescriptorProto
         #[Reflection\Field(3, new Reflection\ObjectT(EnumOptions::class))]
         public ?EnumOptions $options = null,
         #[Reflection\Field(4, new Reflection\ListT(
-            new Reflection\ObjectT(EnumReservedRange::class),
+            new Reflection\ObjectT(EnumDescriptorProto\EnumReservedRange::class),
         ))]
         public array $reservedRanges = [],
         #[Reflection\Field(5, new Reflection\ListT(Reflection\StringT::T))]

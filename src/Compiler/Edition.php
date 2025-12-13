@@ -9,17 +9,17 @@ namespace Thesis\Protobuf\Compiler;
  */
 enum Edition: int
 {
-    case EditionUnknown = 0;
-    case EditionLegacy = 900;
-    case EditionProto2 = 998;
-    case EditionProto3 = 999;
-    case Edition2023 = 1000;
-    case Edition2024 = 1001;
-    case EditionUnstable = 9999;
-    case Edition1TestOnly = 1;
-    case Edition2TestOnly = 2;
-    case Edition99997TestOnly = 99997;
-    case Edition99998TestOnly = 99998;
-    case Edition99999TestOnly = 99999;
-    case EditionMax = 0x7FFFFFFF;
+    case EDITION_UNKNOWN = 0;
+    case EDITION_LEGACY = 900;
+    case EDITION_PROTO2 = 998;
+    case EDITION_PROTO3 = 999;
+    case EDITION_2023 = 1000;
+    case EDITION_2024 = 1001;
+    case EDITION_UNSTABLE = 9999;
+    case EDITION_1_TEST_ONLY = 1;
+    case EDITION_2_TEST_ONLY = 2;
+    case EDITION_99997_TEST_ONLY = 99997;
+    case EDITION_99998_TEST_ONLY = 99998;
+    case EDITION_99999_TEST_ONLY = 99999;
+    case EDITION_MAX = 0x7FFFFFFF;
 }

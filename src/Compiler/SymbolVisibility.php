@@ -9,7 +9,7 @@ namespace Thesis\Protobuf\Compiler;
  */
 enum SymbolVisibility: int
 {
-    case Unset = 0;
-    case Local = 1;
-    case Export = 2;
+    case VISIBILITY_UNSET = 0;
+    case VISIBILITY_LOCAL = 1;
+    case VISIBILITY_EXPORT = 2;
 }

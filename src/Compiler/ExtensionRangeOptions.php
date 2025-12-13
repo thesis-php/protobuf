@@ -13,7 +13,7 @@ final readonly class ExtensionRangeOptions
 {
     /**
      * @param list<UninterpretedOption> $uninterpretedOptions
-     * @param list<ExtensionDeclaration> $declarations
+     * @param list<ExtensionRangeOptions\Declaration> $declarations
      */
     public function __construct(
         #[Reflection\Field(999, new Reflection\ListT(
@@ -21,12 +21,12 @@ final readonly class ExtensionRangeOptions
         ))]
         public array $uninterpretedOptions = [],
         #[Reflection\Field(2, new Reflection\ListT(
-            new Reflection\ObjectT(ExtensionDeclaration::class),
+            new Reflection\ObjectT(ExtensionRangeOptions\Declaration::class),
         ))]
         public array $declarations = [],
         #[Reflection\Field(50, new Reflection\ObjectT(FeatureSet::class))]
         public ?FeatureSet $features = null,
-        #[Reflection\Field(3, new Reflection\EnumT(ExtensionVerificationState::class))]
-        public ExtensionVerificationState $verification = ExtensionVerificationState::Unverified,
+        #[Reflection\Field(3, new Reflection\EnumT(ExtensionRangeOptions\VerificationState::class), ExtensionRangeOptions\VerificationState::UNVERIFIED)]
+        public ExtensionRangeOptions\VerificationState $verification = ExtensionRangeOptions\VerificationState::UNVERIFIED,
     ) {}
 }

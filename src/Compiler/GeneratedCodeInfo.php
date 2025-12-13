@@ -12,11 +12,11 @@ use Thesis\Protobuf\Reflection;
 final class GeneratedCodeInfo
 {
     /**
-     * @param list<Annotation> $annotations
+     * @param list<GeneratedCodeInfo\Annotation> $annotations
      */
     public function __construct(
         #[Reflection\Field(1, new Reflection\ListT(
-            new Reflection\ObjectT(Annotation::class),
+            new Reflection\ObjectT(GeneratedCodeInfo\Annotation::class),
         ))]
         public array $annotations,
     ) {}

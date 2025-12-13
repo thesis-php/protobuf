@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Thesis\Protobuf\Compiler;
+namespace Thesis\Protobuf\Compiler\SourceCodeInfo;
 
 use Thesis\Protobuf\Reflection;
 

@@ -12,11 +12,11 @@ use Thesis\Protobuf\Reflection;
 final readonly class UninterpretedOption
 {
     /**
-     * @param list<UninterpretedOptionNamePart> $name
+     * @param list<UninterpretedOption\NamePart> $name
      */
     public function __construct(
         #[Reflection\Field(2, new Reflection\ListT(
-            new Reflection\ObjectT(UninterpretedOptionNamePart::class),
+            new Reflection\ObjectT(UninterpretedOption\NamePart::class),
         ))]
         public array $name = [],
         #[Reflection\Field(3, Reflection\StringT::T)]

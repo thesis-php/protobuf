@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Compiler;
 
+use BcMath\Number;
 use Thesis\Protobuf\Reflection;
 
 /**
@@ -15,11 +16,11 @@ final readonly class FieldDescriptorProto
         #[Reflection\Field(1, Reflection\StringT::T)]
         public ?string $name = null,
         #[Reflection\Field(3, Reflection\Int32T::T)]
-        public ?int $number = null,
-        #[Reflection\Field(4, new Reflection\EnumT(FieldDescriptorProtoLabel::class))]
-        public ?FieldDescriptorProtoLabel $label = null,
-        #[Reflection\Field(5, new Reflection\EnumT(FieldDescriptorProtoType::class))]
-        public ?FieldDescriptorProtoType $type = null,
+        public ?Number $number = null,
+        #[Reflection\Field(4, new Reflection\EnumT(FieldDescriptorProto\Label::class))]
+        public ?FieldDescriptorProto\Label $label = null,
+        #[Reflection\Field(5, new Reflection\EnumT(FieldDescriptorProto\Type::class))]
+        public ?FieldDescriptorProto\Type $type = null,
         #[Reflection\Field(6, Reflection\StringT::T)]
         public ?string $typeName = null,
         #[Reflection\Field(2, Reflection\StringT::T)]

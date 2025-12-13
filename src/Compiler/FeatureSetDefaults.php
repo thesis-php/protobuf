@@ -12,11 +12,11 @@ use Thesis\Protobuf\Reflection;
 final readonly class FeatureSetDefaults
 {
     /**
-     * @param list<FeatureSetEditionDefault> $defaults
+     * @param list<FeatureSetDefaults\FeatureSetEditionDefault> $defaults
      */
     public function __construct(
         #[Reflection\Field(1, new Reflection\ListT(
-            new Reflection\ObjectT(FeatureSetEditionDefault::class),
+            new Reflection\ObjectT(FeatureSetDefaults\FeatureSetEditionDefault::class),
         ))]
         public array $defaults = [],
         #[Reflection\Field(4, new Reflection\EnumT(Edition::class))]

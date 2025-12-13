@@ -9,7 +9,7 @@ namespace Thesis\Protobuf\Compiler\FeatureSet;
  */
 enum JsonFormat: int
 {
-    case Unknown = 0;
-    case Allow = 1;
-    case LegacyBestEffort = 2;
+    case JSON_FORMAT_UNKNOWN = 0;
+    case ALLOW = 1;
+    case LEGACY_BEST_EFFORT = 2;
 }
