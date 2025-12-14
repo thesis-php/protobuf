@@ -4,20 +4,18 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Internal\Schema\Type;
 
-use Thesis\Endian;
 use Thesis\Protobuf\Internal\Schema\Type;
 
 /**
  * @internal
- * @phpstan-import-type Int32 from Endian\Order
- * @template-implements Type<Int32>
- * @template-implements Listable<Int32>
+ * @template-implements Type<int>
+ * @template-implements Listable<int>
  */
 enum SFixed32T implements
     Type,
     Listable
 {
-    /** @use Listed<Int32> */
+    /** @use Listed<int> */
     use Listed;
 
     case T;

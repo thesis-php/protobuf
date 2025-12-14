@@ -7,11 +7,10 @@ namespace Thesis\Protobuf\Internal\Serde;
 use BcMath\Number;
 use Thesis\Protobuf\Internal\Buffer\ReadBuffer;
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
-use function Thesis\Protobuf\toNumber;
 
 /**
  * @internal
- * @template-implements SerializeValue<Number|int|numeric-string>
+ * @template-implements SerializeValue<Number>
  * @template-implements DeserializeValue<Number>
  */
 enum SerdeUint64 implements
@@ -23,7 +22,7 @@ enum SerdeUint64 implements
     #[\Override]
     public function serialize(WriteBuffer $buffer, mixed $value): void
     {
-        SerdeVarint::T->serialize($buffer, toNumber($value));
+        SerdeVarint::T->serialize($buffer, $value);
     }
 
     #[\Override]

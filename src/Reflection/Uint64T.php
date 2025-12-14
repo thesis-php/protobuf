@@ -8,7 +8,7 @@ use BcMath\Number;
 
 /**
  * @api
- * @template-implements Type<Number|non-negative-int|numeric-string>
+ * @template-implements Type<Number>
  */
 enum Uint64T implements Type
 {

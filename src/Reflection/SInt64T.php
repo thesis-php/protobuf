@@ -8,7 +8,7 @@ use BcMath\Number;
 
 /**
  * @api
- * @template-implements Type<Number|int|numeric-string>
+ * @template-implements Type<Number>
  */
 enum SInt64T implements Type
 {

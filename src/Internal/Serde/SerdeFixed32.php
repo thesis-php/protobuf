@@ -10,9 +10,8 @@ use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
 
 /**
  * @internal
- * @phpstan-import-type Uint32 from Endian\Order
- * @template-implements SerializeValue<Uint32>
- * @template-implements DeserializeValue<Uint32>
+ * @template-implements SerializeValue<int>
+ * @template-implements DeserializeValue<int>
  */
 enum SerdeFixed32 implements
     SerializeValue,
@@ -23,6 +22,7 @@ enum SerdeFixed32 implements
     #[\Override]
     public function serialize(WriteBuffer $buffer, mixed $value): void
     {
+        /** @phpstan-ignore argument.type */
         $buffer->write(Endian\Order::little->packUint32($value));
     }
 

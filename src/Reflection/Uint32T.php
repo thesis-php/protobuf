@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Reflection;
 
-use BcMath\Number;
-
 /**
  * @api
- * @template-implements Type<Number|non-negative-int|numeric-string>
+ * @template-implements Type<int>
  */
 enum Uint32T implements Type
 {

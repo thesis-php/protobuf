@@ -20,10 +20,9 @@ const boolT = Type\BoolT::T;
 
 /**
  * @api
- * @param Number|int|numeric-string $num
- * @return Value<Number|int|numeric-string>
+ * @return Value<int>
  */
-function int32Of(Number|int|string $num): Value
+function int32Of(int $num): Value
 {
     return Value::int32($num);
 }
@@ -32,10 +31,9 @@ const int32T = Type\Int32T::T;
 
 /**
  * @api
- * @param Number|non-negative-int|numeric-string $num
- * @return Value<Number|non-negative-int|numeric-string>
+ * @return Value<int>
  */
-function uint32Of(Number|int|string $num): Value
+function uint32Of(int $num): Value
 {
     return Value::uint32($num);
 }
@@ -44,10 +42,9 @@ const uint32T = Type\Uint32T::T;
 
 /**
  * @api
- * @param Number|int|numeric-string $num
- * @return Value<Number|int|numeric-string>
+ * @return Value<int>
  */
-function sint32Of(Number|int|string $num): Value
+function sint32Of(int $num): Value
 {
     return Value::sint32($num);
 }
@@ -56,10 +53,9 @@ const sint32T = Type\SInt32T::T;
 
 /**
  * @api
- * @param Number|int|numeric-string $num
- * @return Value<Number|int|numeric-string>
+ * @return Value<Number>
  */
-function int64Of(Number|int|string $num): Value
+function int64Of(Number $num): Value
 {
     return Value::int64($num);
 }
@@ -68,10 +64,9 @@ const int64T = Type\Int64T::T;
 
 /**
  * @api
- * @param Number|non-negative-int|numeric-string $num
- * @return Value<Number|non-negative-int|numeric-string>
+ * @return Value<Number>
  */
-function uint64Of(Number|int|string $num): Value
+function uint64Of(Number $num): Value
 {
     return Value::uint64($num);
 }
@@ -80,10 +75,9 @@ const uint64T = Type\Uint64T::T;
 
 /**
  * @api
- * @param Number|int|numeric-string $num
- * @return Value<Number|int|numeric-string>
+ * @return Value<Number>
  */
-function sint64Of(Number|int|string $num): Value
+function sint64Of(Number $num): Value
 {
     return Value::sint64($num);
 }
@@ -92,8 +86,7 @@ const sint64T = Type\SInt64T::T;
 
 /**
  * @api
- * @param int<0, 4294967295> $num
- * @return Value<int<0, 4294967295>>
+ * @return Value<int>
  */
 function fixed32Of(int $num): Value
 {
@@ -104,8 +97,7 @@ const fixed32T = Type\Fixed32T::T;
 
 /**
  * @api
- * @param int<-2147483648, 2147483647> $num
- * @return Value<int<-2147483648, 2147483647>>
+ * @return Value<int>
  */
 function sfixed32Of(int $num): Value
 {
@@ -116,10 +108,9 @@ const sfixed32T = Type\SFixed32T::T;
 
 /**
  * @api
- * @param Number|int|numeric-string $num
- * @return Value<Number|int|numeric-string>
+ * @return Value<Number>
  */
-function fixed64Of(Number|int|string $num): Value
+function fixed64Of(Number $num): Value
 {
     return Value::fixed64($num);
 }
@@ -128,10 +119,9 @@ const fixed64T = Type\Fixed64T::T;
 
 /**
  * @api
- * @param Number|int|numeric-string $num
- * @return Value<Number|int|numeric-string>
+ * @return Value<Number>
  */
-function sfixed64Of(Number|int|string $num): Value
+function sfixed64Of(Number $num): Value
 {
     return Value::sfixed64($num);
 }

@@ -8,11 +8,10 @@ use BcMath\Number;
 use Thesis\Protobuf\Internal\Buffer\ReadBuffer;
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
 use Thesis\Varint;
-use function Thesis\Protobuf\toNumber;
 
 /**
  * @internal
- * @template-implements SerializeValue<Number|int|numeric-string>
+ * @template-implements SerializeValue<Number>
  * @template-implements DeserializeValue<Number>
  */
 enum SerdeSInt64 implements
@@ -24,7 +23,7 @@ enum SerdeSInt64 implements
     #[\Override]
     public function serialize(WriteBuffer $buffer, mixed $value): void
     {
-        SerdeVarint::T->serialize($buffer, Varint\BcMath::Codec->encodeZigZag(toNumber($value)));
+        SerdeVarint::T->serialize($buffer, Varint\BcMath::Codec->encodeZigZag($value));
     }
 
     #[\Override]

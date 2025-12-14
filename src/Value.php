@@ -5,13 +5,10 @@ declare(strict_types=1);
 namespace Thesis\Protobuf;
 
 use BcMath\Number;
-use Thesis\Endian;
 use Thesis\Protobuf\Internal\Schema\Type;
 
 /**
  * @api
- * @phpstan-import-type Int32 from Endian\Order
- * @phpstan-import-type Uint32 from Endian\Order
  * @template T
  */
 final readonly class Value
@@ -25,62 +22,55 @@ final readonly class Value
     }
 
     /**
-     * @param Number|int|numeric-string $num
-     * @return self<Number|int|numeric-string>
+     * @return self<int>
      */
-    public static function int32(Number|int|string $num): self
+    public static function int32(int $num): self
     {
         return new self($num, int32T);
     }
 
     /**
-     * @param Number|int|numeric-string $num
-     * @return self<Number|int|numeric-string>
+     * @return self<Number>
      */
-    public static function int64(Number|int|string $num): self
+    public static function int64(Number $num): self
     {
         return new self($num, int64T);
     }
 
     /**
-     * @param Number|non-negative-int|numeric-string $num
-     * @return self<Number|non-negative-int|numeric-string>
+     * @return self<int>
      */
-    public static function uint32(Number|int|string $num): self
+    public static function uint32(int $num): self
     {
         return new self($num, uint32T);
     }
 
     /**
-     * @param Number|non-negative-int|numeric-string $num
-     * @return self<Number|non-negative-int|numeric-string>
+     * @return self<Number>
      */
-    public static function uint64(Number|int|string $num): self
+    public static function uint64(Number $num): self
     {
         return new self($num, uint64T);
     }
 
     /**
-     * @param Number|int|numeric-string $num
-     * @return self<Number|int|numeric-string>
+     * @return self<int>
      */
-    public static function sint32(Number|int|string $num): self
+    public static function sint32(int $num): self
     {
         return new self($num, sint32T);
     }
 
     /**
-     * @param Number|int|numeric-string $num
-     * @return self<Number|int|numeric-string>
+     * @return self<Number>
      */
-    public static function sint64(Number|int|string $num): self
+    public static function sint64(Number $num): self
     {
         return new self($num, sint64T);
     }
 
     /**
-     * @param Uint32 $num
-     * @return self<Uint32>
+     * @return self<int>
      */
     public static function fixed32(int $num): self
     {
@@ -88,8 +78,7 @@ final readonly class Value
     }
 
     /**
-     * @param Int32 $num
-     * @return self<Int32>
+     * @return self<int>
      */
     public static function sfixed32(int $num): self
     {
@@ -97,19 +86,17 @@ final readonly class Value
     }
 
     /**
-     * @param Number|int|numeric-string $num
-     * @return self<Number|int|numeric-string>
+     * @return self<Number>
      */
-    public static function fixed64(Number|int|string $num): self
+    public static function fixed64(Number $num): self
     {
         return new self($num, fixed64T);
     }
 
     /**
-     * @param Number|int|numeric-string $num
-     * @return self<Number|int|numeric-string>
+     * @return self<Number>
      */
-    public static function sfixed64(Number|int|string $num): self
+    public static function sfixed64(Number $num): self
     {
         return new self($num, sfixed64T);
     }

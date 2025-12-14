@@ -4,12 +4,9 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Reflection;
 
-use Thesis\Endian;
-
 /**
  * @api
- * @phpstan-import-type Uint32 from Endian\Order
- * @template-implements Type<Uint32>
+ * @template-implements Type<int>
  */
 enum Fixed32T implements Type
 {

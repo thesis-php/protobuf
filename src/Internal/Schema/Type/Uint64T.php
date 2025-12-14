@@ -9,14 +9,14 @@ use Thesis\Protobuf\Internal\Schema\Type;
 
 /**
  * @internal
- * @template-implements Type<Number|non-negative-int|numeric-string>
- * @template-implements Listable<Number|non-negative-int|numeric-string>
+ * @template-implements Type<Number>
+ * @template-implements Listable<Number>
  */
 enum Uint64T implements
     Type,
     Listable
 {
-    /** @use Listed<Number|non-negative-int|numeric-string> */
+    /** @use Listed<Number> */
     use Listed;
 
     case T;
