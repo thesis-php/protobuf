@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Compiler;
 
+use BcMath\Number;
 use Thesis\Protobuf\Reflection;
 
 /**
@@ -22,9 +23,9 @@ final readonly class UninterpretedOption
         #[Reflection\Field(3, Reflection\StringT::T)]
         public ?string $identifierValue = null,
         #[Reflection\Field(4, Reflection\Uint64T::T)]
-        public ?int $positiveIntValue = null,
+        public ?Number $positiveIntValue = null,
         #[Reflection\Field(5, Reflection\Int64T::T)]
-        public ?int $negativeIntValue = null,
+        public ?Number $negativeIntValue = null,
         #[Reflection\Field(6, Reflection\DoubleT::T)]
         public ?float $doubleValue = null,
         #[Reflection\Field(7, Reflection\BytesT::T)]

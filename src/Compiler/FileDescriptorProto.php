@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Compiler;
 
+use BcMath\Number;
 use Thesis\Protobuf\Reflection;
 
 /**
@@ -13,8 +14,8 @@ final readonly class FileDescriptorProto
 {
     /**
      * @param list<string> $dependencies
-     * @param list<int> $publicDependencies
-     * @param list<int> $weakDependencies
+     * @param list<Number> $publicDependencies
+     * @param list<Number> $weakDependencies
      * @param list<string> $optionDependencies
      * @param list<DescriptorProto> $messages
      * @param list<EnumDescriptorProto> $enums

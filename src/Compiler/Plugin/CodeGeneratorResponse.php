@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Compiler\Plugin;
 
+use BcMath\Number;
 use Thesis\Protobuf\Reflection;
 
 /**
@@ -19,7 +20,7 @@ final readonly class CodeGeneratorResponse
         #[Reflection\Field(1, Reflection\StringT::T)]
         public ?string $error = null,
         #[Reflection\Field(2, Reflection\Uint64T::T)]
-        public ?int $supportFeatures = null,
+        public ?Number $supportFeatures = null,
         #[Reflection\Field(3, Reflection\Int32T::T)]
         public ?int $minimumEdition = null,
         #[Reflection\Field(4, Reflection\Int32T::T)]
