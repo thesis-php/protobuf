@@ -25,7 +25,7 @@ final readonly class DeserializeMap implements DeserializeValue
     ) {}
 
     #[\Override]
-    public function deserialize(ReadBuffer $buffer): \ArrayAccess
+    public function deserialize(ReadBuffer $buffer): Map
     {
         $values = $this->deserializer->deserialize($buffer);
 

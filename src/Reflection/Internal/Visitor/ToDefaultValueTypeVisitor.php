@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Reflection\Internal\Visitor;
 
+use Thesis\Protobuf\Map;
 use Thesis\Protobuf\Reflection\BoolT;
 use Thesis\Protobuf\Reflection\BytesT;
 use Thesis\Protobuf\Reflection\DoubleT;
@@ -73,7 +74,7 @@ final class ToDefaultValueTypeVisitor extends DefaultTypeVisitor
     #[\Override]
     public function map(MapT $type): mixed
     {
-        return [];
+        return new Map();
     }
 
     #[\Override]

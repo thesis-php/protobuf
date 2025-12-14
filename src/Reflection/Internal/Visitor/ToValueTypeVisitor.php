@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Thesis\Protobuf\Reflection\Internal\Visitor;
 
 use BcMath\Number;
+use Thesis\Protobuf\Map;
 use Thesis\Protobuf\Message;
 use Thesis\Protobuf\Reflection\BoolT;
 use Thesis\Protobuf\Reflection\BytesT;
@@ -147,7 +148,7 @@ final class ToValueTypeVisitor extends DefaultTypeVisitor
     {
         \assert(is_iterable($this->value));
 
-        $map = [];
+        $map = new Map();
 
         foreach ($this->value as $key => $value) {
             /** @var array-key $mapKey */
