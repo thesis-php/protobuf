@@ -6,26 +6,22 @@ namespace Thesis\Protobuf\Internal\Serde;
 
 use Thesis\Protobuf\FieldDescriptor;
 use Thesis\Protobuf\Internal\Buffer\ReadBuffer;
-use Thesis\Protobuf\Internal\Polyfill;
-use Thesis\Protobuf\Internal\Schema\Type;
+use Thesis\Protobuf\Map;
 use Thesis\Protobuf\Message;
-use Thesis\Protobuf\NumberedKeyArray;
 
 /**
  * @internal
  * @template K
  * @template V
- * @template-implements DeserializeValue<\ArrayAccess<K, V>>
+ * @template-implements DeserializeValue<Map<K, V>>
  */
 final readonly class DeserializeMap implements DeserializeValue
 {
     /**
      * @param DeserializeValue<list<Message>> $deserializer
-     * @param Type\MapT<K, V> $type
      */
     public function __construct(
         private DeserializeValue $deserializer,
-        private Type\MapT $type,
     ) {}
 
     #[\Override]
@@ -33,7 +29,8 @@ final readonly class DeserializeMap implements DeserializeValue
     {
         $values = $this->deserializer->deserialize($buffer);
 
-        $map = $this->createArray();
+        /** @var Map<K, V> $map */
+        $map = new Map();
 
         foreach ($values as $value) {
             /** @var ?FieldDescriptor<K> $key */
@@ -47,18 +44,5 @@ final readonly class DeserializeMap implements DeserializeValue
         }
 
         return $map;
-    }
-
-    /**
-     * @return \ArrayAccess<K, V>
-     */
-    private function createArray(): \ArrayAccess
-    {
-        if ($this->type->keyT->accept(new Type\Visitor\IsNumber())) {
-            /** @phpstan-ignore return.type */
-            return new NumberedKeyArray(new Polyfill\NumberedKeySplObjectStorage());
-        }
-
-        return new \ArrayObject();
     }
 }

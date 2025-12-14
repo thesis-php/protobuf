@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf;
 
+use Thesis\Protobuf\Exception\BufferUnderflow;
 use Thesis\Protobuf\Internal\Buffer\ByteBuffer;
 use Thesis\Protobuf\Internal\Schema\Type\MessageT;
 use Thesis\Protobuf\Internal\Schema\Type\Visitor\DetermineWireType;

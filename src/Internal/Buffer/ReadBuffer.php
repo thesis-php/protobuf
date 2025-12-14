@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Internal\Buffer;
 
-use Thesis\Protobuf\BufferUnderflow;
+use Thesis\Protobuf\Exception\BufferUnderflow;
 
 /**
  * @internal

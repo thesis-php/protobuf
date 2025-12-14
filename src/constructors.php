@@ -269,19 +269,19 @@ function listT(Type $element): Type\ListT
  * @template V
  * @param Type<K, *, 'indexed'> $keyT
  * @param Type<V, *, *> $valueT
- * @param iterable<K, V> $values
- * @return Value<iterable<K, V>>
+ * @param Map<K, V> $map
+ * @return Value<Map<K, V>>
  * @throws \UnexpectedValueException
  */
 function mapOf(
     Type $keyT,
     Type $valueT,
-    iterable $values,
+    Map $map,
 ): Value {
     return Value::mapOf(
         $keyT,
         $valueT,
-        $values,
+        $map,
     );
 }
 
@@ -315,17 +315,4 @@ function enumOf(\BackedEnum $enum): Value
 function enumT(string $enum): Type\EnumT
 {
     return new Type\EnumT($enum);
-}
-
-/**
- * @api
- * @param Number|int|numeric-string $num
- */
-function toNumber(Number|int|string $num): Number
-{
-    if (!$num instanceof Number) {
-        $num = new Number($num);
-    }
-
-    return $num;
 }

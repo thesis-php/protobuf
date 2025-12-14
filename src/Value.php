@@ -168,17 +168,17 @@ final readonly class Value
      * @template V
      * @param Type<K, *, 'indexed'> $keyT
      * @param Type<V, *, *, 'map-value'> $valueT
-     * @param iterable<K, V> $values
-     * @return self<iterable<K, V>>
+     * @param Map<K, V> $map
+     * @return self<Map<K, V>>
      * @throws \UnexpectedValueException
      */
     public static function mapOf(
         Type $keyT,
         Type $valueT,
-        iterable $values,
+        Map $map,
     ): self {
         return new self(
-            $values,
+            $map,
             mapT($keyT, $valueT),
         );
     }

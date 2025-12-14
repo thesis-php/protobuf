@@ -166,7 +166,6 @@ final readonly class TypeDeserializerVisitor implements Visitor
                 $messageT->accept($this),
                 $this->tag,
             ),
-            $type,
         );
     }
 

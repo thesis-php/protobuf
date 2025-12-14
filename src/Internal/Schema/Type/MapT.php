@@ -11,7 +11,7 @@ use Thesis\Protobuf\Internal\Schema\Type;
  * @internal
  * @template K
  * @template V
- * @template-implements Type<iterable<K, V>, 'not-repeatable', 'not-indexed', 'not-map-value'>
+ * @template-implements Type<Protobuf\Map<K, V>, 'not-repeatable', 'not-indexed', 'not-map-value'>
  * @template-implements Mappable<K, V>
  */
 final readonly class MapT implements Type, Mappable
@@ -32,12 +32,12 @@ final readonly class MapT implements Type, Mappable
     }
 
     #[\Override]
-    public function map(iterable $values): Protobuf\Value
+    public function map(Protobuf\Map $map): Protobuf\Value
     {
         return Protobuf\mapOf(
             $this->keyT,
             $this->valueT,
-            $values,
+            $map,
         );
     }
 }

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Thesis\Protobuf\Internal\Wire;
 
 use BcMath\Number;
-use Thesis\Protobuf\BufferUnderflow;
+use Thesis\Protobuf\Exception\BufferUnderflow;
 use Thesis\Protobuf\Internal\Buffer\ReadBuffer;
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
 use Thesis\Protobuf\Internal\Serde\SerdeVarint;

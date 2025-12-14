@@ -14,8 +14,8 @@ use Thesis\Protobuf;
 interface Mappable
 {
     /**
-     * @param iterable<K, V> $values
-     * @return Protobuf\Value<iterable<K, V>>
+     * @param Protobuf\Map<K, V> $map
+     * @return Protobuf\Value<Protobuf\Map<K, V>>
      */
-    public function map(iterable $values): Protobuf\Value;
+    public function map(Protobuf\Map $map): Protobuf\Value;
 }

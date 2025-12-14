@@ -179,13 +179,13 @@ final readonly class ToProtobufValueTypeVisitor implements Visitor
         /** @var Type<mixed, *, *, 'map-value'> $valueT */
         $valueT = $type->valueT->accept($this->typeVisitor);
 
-        $mapValue = static fn(array $value): array => $value;
+        $mapValue = static fn(array $value): Protobuf\Map => Protobuf\Map::fromArray($value);
 
         if ($type->valueT->accept(new IsObjectType())) {
             $mapper = $type->valueT->accept(new ToProtobufMessageTypeVisitor($this->reflector));
 
-            $mapValue = static function (array $value) use ($mapper): array {
-                $map = [];
+            $mapValue = static function (array $value) use ($mapper): Protobuf\Map {
+                $map = new Protobuf\Map();
 
                 foreach ($value as $key => $val) {
                     $map[$key] = $mapper($val);

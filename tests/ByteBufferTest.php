@@ -6,6 +6,7 @@ namespace Thesis\Protobuf;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Thesis\Protobuf\Exception\BufferUnderflow;
 use Thesis\Protobuf\Internal\Buffer\ByteBuffer;
 
 #[CoversClass(ByteBuffer::class)]

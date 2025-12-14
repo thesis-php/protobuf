@@ -6,6 +6,7 @@ namespace Thesis\Protobuf\Internal\Serde;
 
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
 use Thesis\Protobuf\Internal\Schema\Type;
+use Thesis\Protobuf\Map;
 use Thesis\Protobuf\Value;
 use function Thesis\Protobuf\fieldOf;
 use function Thesis\Protobuf\message;
@@ -14,7 +15,7 @@ use function Thesis\Protobuf\message;
  * @internal
  * @template K
  * @template V
- * @template-implements SerializeValue<iterable<K, V>>
+ * @template-implements SerializeValue<Map<K, V>>
  */
 final readonly class SerializeMap implements SerializeValue
 {
