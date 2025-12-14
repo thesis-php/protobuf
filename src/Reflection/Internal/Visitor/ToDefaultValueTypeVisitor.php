@@ -12,11 +12,9 @@ use Thesis\Protobuf\Reflection\Fixed32T;
 use Thesis\Protobuf\Reflection\FloatT;
 use Thesis\Protobuf\Reflection\ListT;
 use Thesis\Protobuf\Reflection\MapT;
-use Thesis\Protobuf\Reflection\ObjectT;
 use Thesis\Protobuf\Reflection\SFixed32T;
 use Thesis\Protobuf\Reflection\StringT;
 use Thesis\Protobuf\Reflection\Type;
-use function Thesis\Protobuf\Reflection\Internal\zeroNumber;
 
 /**
  * @internal
@@ -24,10 +22,6 @@ use function Thesis\Protobuf\Reflection\Internal\zeroNumber;
  */
 final class ToDefaultValueTypeVisitor extends DefaultTypeVisitor
 {
-    public function __construct(
-        private readonly \ReflectionType $propertyType,
-    ) {}
-
     #[\Override]
     public function bool(BoolT $type): mixed
     {
@@ -93,18 +87,12 @@ final class ToDefaultValueTypeVisitor extends DefaultTypeVisitor
             }
         }
 
-        throw new \LogicException("No default case found for enum '{$type->enum}'.");
+        return null;
     }
 
     #[\Override]
-    public function object(ObjectT $type): never
+    protected function default(Type $type): null
     {
-        throw new \LogicException("No default value found for object '{$type->class}'. Make it nullable.");
-    }
-
-    #[\Override]
-    protected function default(Type $type): mixed
-    {
-        return zeroNumber($this->propertyType);
+        return null;
     }
 }

@@ -23,7 +23,7 @@ final readonly class FileOptions
         public bool $javaMultipleFiles = false,
         #[Reflection\Field(27, Reflection\BoolT::T)]
         public bool $javaStringCheckUtf8 = false,
-        #[Reflection\Field(9, new Reflection\EnumT(FileOptions\OptimizeMode::class), FileOptions\OptimizeMode::SPEED)]
+        #[Reflection\Field(9, new Reflection\EnumT(FileOptions\OptimizeMode::class))]
         public FileOptions\OptimizeMode $optimizeFor = FileOptions\OptimizeMode::SPEED,
         #[Reflection\Field(11, Reflection\StringT::T)]
         public ?string $goPackage = null,

@@ -26,7 +26,7 @@ final readonly class ExtensionRangeOptions
         public array $declarations = [],
         #[Reflection\Field(50, new Reflection\ObjectT(FeatureSet::class))]
         public ?FeatureSet $features = null,
-        #[Reflection\Field(3, new Reflection\EnumT(ExtensionRangeOptions\VerificationState::class), ExtensionRangeOptions\VerificationState::UNVERIFIED)]
+        #[Reflection\Field(3, new Reflection\EnumT(ExtensionRangeOptions\VerificationState::class))]
         public ExtensionRangeOptions\VerificationState $verification = ExtensionRangeOptions\VerificationState::UNVERIFIED,
     ) {}
 }

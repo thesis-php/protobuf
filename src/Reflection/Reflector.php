@@ -9,9 +9,9 @@ use Thesis\Protobuf;
 use Thesis\Protobuf\Internal\Schema\Type;
 use Thesis\Protobuf\Message;
 use Thesis\Protobuf\Reflection\Internal\Api\ClassReflector;
+use Thesis\Protobuf\Reflection\Internal\Api\PropertyReflection;
 use Thesis\Protobuf\Reflection\Internal\Cache\Cache;
 use Thesis\Protobuf\Reflection\Internal\Cache\InMemoryPsr16Cache;
-use Thesis\Protobuf\Reflection\Internal\Visitor\IsValueEmpty;
 use Thesis\Protobuf\Reflection\Internal\Visitor\RecursionBreakTypeVisitor;
 use Thesis\Protobuf\Reflection\Internal\Visitor\ToDefaultValueTypeVisitor;
 use Thesis\Protobuf\Reflection\Internal\Visitor\ToProtobufTypeTypeVisitor;
@@ -27,6 +27,8 @@ final class Reflector
 
     /** @var ToProtobufValueTypeVisitor<*> */
     private readonly ToProtobufValueTypeVisitor $valueVisitor;
+
+    private readonly ToDefaultValueTypeVisitor $defaultValueTypeVisitor;
 
     private readonly ClassReflector $classReflector;
 
@@ -48,6 +50,7 @@ final class Reflector
     ) {
         $this->typeVisitor = new ToProtobufTypeTypeVisitor($this);
         $this->valueVisitor = new ToProtobufValueTypeVisitor($this);
+        $this->defaultValueTypeVisitor = new ToDefaultValueTypeVisitor();
         $this->classReflector = new ClassReflector();
     }
 
@@ -145,6 +148,7 @@ final class Reflector
      * @param class-string<T> $class
      * @return T
      * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function map(Message $message, string $class): object
     {
@@ -168,12 +172,7 @@ final class Reflector
                                 $this,
                                 $descriptor->value->value,
                             )),
-                        $field->default !== null => $field->default,
-                        $property->reflection->hasDefaultValue() => $property->reflection->getDefaultValue(),
-                        $propertyType->allowsNull() === true => null,
-                        default => $field
-                            ->type
-                            ->accept(new ToDefaultValueTypeVisitor($propertyType)),
+                        default => $this->defaultValuePropertyValue($property, $field),
                     },
                 );
             } elseif ($property->attributes->has(OneOf::class)) {
@@ -194,10 +193,36 @@ final class Reflector
                     }
                 }
 
-                $property->reflection->setValue($object, null);
+                $property->reflection->setValue(
+                    $object,
+                    $this->defaultValuePropertyValue($property),
+                );
             }
         }
 
         return $object;
+    }
+
+    /**
+     * @throws Exception\PropertyUninitialized
+     */
+    private function defaultValuePropertyValue(PropertyReflection $property, ?Field $field = null): mixed
+    {
+        if ($property->default !== null) {
+            return $property->default->value;
+        }
+
+        return $field?->type->accept($this->defaultValueTypeVisitor) ?? $this->throwPropertyUninitializedException($property);
+    }
+
+    /**
+     * @throws Exception\PropertyUninitialized
+     */
+    private function throwPropertyUninitializedException(PropertyReflection $property): never
+    {
+        throw new Exception\PropertyUninitialized(
+            $property->reflection->getDeclaringClass()->getName(),
+            $property->reflection->getName(),
+        );
     }
 }
