@@ -12,13 +12,16 @@ use Thesis\Protobuf\Reflection\DoubleT;
 use Thesis\Protobuf\Reflection\EnumT;
 use Thesis\Protobuf\Reflection\Fixed32T;
 use Thesis\Protobuf\Reflection\FloatT;
+use Thesis\Protobuf\Reflection\Int32T;
 use Thesis\Protobuf\Reflection\ListT;
 use Thesis\Protobuf\Reflection\MapT;
 use Thesis\Protobuf\Reflection\ObjectT;
 use Thesis\Protobuf\Reflection\Reflector;
 use Thesis\Protobuf\Reflection\SFixed32T;
+use Thesis\Protobuf\Reflection\SInt32T;
 use Thesis\Protobuf\Reflection\StringT;
 use Thesis\Protobuf\Reflection\Type;
+use Thesis\Protobuf\Reflection\Uint32T;
 
 /**
  * @internal
@@ -54,6 +57,31 @@ final class ToValueTypeVisitor extends DefaultTypeVisitor
 
         return $this->value;
     }
+
+    #[\Override]
+    public function int32(Int32T $type): mixed
+    {
+        \assert(\is_int($this->value));
+
+        return $this->value;
+    }
+
+    #[\Override]
+    public function uint32(Uint32T $type): mixed
+    {
+        \assert(\is_int($this->value));
+
+        return $this->value;
+    }
+
+    #[\Override]
+    public function sint32(SInt32T $type): mixed
+    {
+        \assert(\is_int($this->value));
+
+        return $this->value;
+    }
+
 
     #[\Override]
     public function fixed32(Fixed32T $type): mixed
