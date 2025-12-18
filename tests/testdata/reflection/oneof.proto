@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package test.v1;
+
+message Chat {
+  int32 id = 1;
+  string username = 2;
+}
+
+message Organization {
+  string name = 1;
+
+  enum Role {
+    ROLE_MEMBER = 0;
+    ROLE_MAINTAINER = 1;
+    ROLE_OWNER = 2;
+  };
+  Role role = 2;
+}
+
+message Developer {
+  string name = 1;
+  repeated Organization organizations = 2;
+  oneof contact {
+    string email = 3;
+    string phone = 4;
+    Chat telegram = 5;
+  };
+  string url = 6;
+}

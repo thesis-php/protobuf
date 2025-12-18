@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package test.v1;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/api.proto";
+
+message KnownMessage {
+  google.protobuf.Struct struct = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  google.protobuf.Duration duration = 3;
+  google.protobuf.Empty empty = 4;
+  google.protobuf.Api api = 5;
+}

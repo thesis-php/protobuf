@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package api.v1.plugin;
+
+option php_namespace = "Thesis\\Plugin";
+
+message Request {
+    enum RequestType {
+        REQUEST_TYPE_UNSPECIFIED = 0;
+        REQUEST_TYPE_POST = 1;
+        REQUEST_TYPE_GET = 2;
+    }
+    // comment some
+    string name = 1;
+    RequestType type = 2;
+    fixed32 id = 3;
+    map<RequestType, string> m = 4;
+}

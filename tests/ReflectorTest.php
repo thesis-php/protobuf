@@ -7,10 +7,10 @@ namespace Thesis\Protobuf;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Thesis\Protobuf\Internal\Schema\Type\MessageT;
+use Thesis\Protobuf\Reflection\Reflector;
 
-#[CoversClass(Serializer::class)]
-final class SerializerTest extends TestCase
+#[CoversClass(Reflector::class)]
+final class ReflectorTest extends TestCase
 {
     #[DataProvider('provideRoundTripCases')]
     public function testRoundTrip(MessageTestData $data): void
@@ -18,9 +18,15 @@ final class SerializerTest extends TestCase
         $bytes = hex2bin($data->hex);
         self::assertIsString($bytes);
 
+        $reflector = Reflector::build();
         $serializer = new Serializer();
 
-        $message = $serializer->deserialize($data->type, $bytes);
+        $object = $reflector->map(
+            $serializer->deserialize($reflector->type($data->class), $bytes),
+            $data->class,
+        );
+
+        $message = $reflector->message($object);
 
         $hex = bin2hex($serializer->serialize($message));
 
@@ -32,6 +38,9 @@ final class SerializerTest extends TestCase
      */
     public static function provideRoundTripCases(): iterable
     {
+        /** @var array<non-empty-string, class-string> $requires */
+        static $requires = [];
+
         $f = fopen(__DIR__ . '/testdata/message_testcases.csv', 'r');
         if (!\is_resource($f)) {
             throw new \RuntimeException('Could not open file with testcases.');
@@ -48,12 +57,16 @@ final class SerializerTest extends TestCase
 
             [$hex, $path] = $row;
 
-            /** @var MessageT $messageT */
-            $messageT = require_once $path;
+            if (!isset($requires[$path])) {
+                /** @var class-string $class */
+                $class = require_once $path;
+
+                $requires[$path] = $class;
+            }
 
             yield [
                 new MessageTestData(
-                    $messageT,
+                    $requires[$path],
                     $hex,
                 ),
             ];
@@ -69,10 +82,11 @@ final class SerializerTest extends TestCase
 final readonly class MessageTestData
 {
     /**
+     * @param class-string $class
      * @param non-empty-string $hex
      */
     public function __construct(
-        public MessageT $type,
+        public string $class,
         public string $hex,
     ) {}
 }

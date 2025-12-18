@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package test.v1;
+
+message LinkedList {
+  Element root = 1;
+}
+
+message Element {
+  string value = 1;
+  Element next = 2;
+}
