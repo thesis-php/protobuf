@@ -33,7 +33,7 @@ final readonly class MessageType
         #[Reflection\Field(5, new Reflection\ObjectT(SourceContext::class))]
         public ?SourceContext $context = null,
         #[Reflection\Field(6, new Reflection\EnumT(Syntax::class))]
-        public Syntax $syntax = Syntax::PROTO3,
+        public ?Syntax $syntax = null,
         #[Reflection\Field(7, Reflection\StringT::T)]
         public ?string $edition = null,
     ) {}

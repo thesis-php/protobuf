@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Known;
 
+use Thesis\Protobuf\Map;
 use Thesis\Protobuf\Reflection\OneOf;
 
 /**
@@ -63,7 +64,7 @@ final readonly class Value
                 $elements[$key] = self::fromMixed($val);
             }
 
-            return new self(new StructValueKind(new Struct($elements)));
+            return new self(new StructValueKind(new Struct(Map::fromArray($elements))));
         }
 
         throw new \UnexpectedValueException(\sprintf('The struct value of type "%s" cannot be handle.', get_debug_type($value)));

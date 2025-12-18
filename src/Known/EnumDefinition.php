@@ -27,9 +27,9 @@ final readonly class EnumDefinition
         ))]
         public array $options,
         #[Reflection\Field(4, new Reflection\ObjectT(SourceContext::class))]
-        public SourceContext $context,
+        public ?SourceContext $context = null,
         #[Reflection\Field(5, new Reflection\EnumT(Syntax::class))]
-        public Syntax $syntax,
+        public ?Syntax $syntax = null,
         #[Reflection\Field(6, Reflection\StringT::T)]
         public ?string $edition = null,
     ) {}

@@ -12,11 +12,8 @@ use Thesis\Protobuf\Reflection;
  */
 final readonly class Int64Wrapper
 {
-    /**
-     * @param Number|int|numeric-string $value
-     */
     public function __construct(
         #[Reflection\Field(1, Reflection\Int64T::T)]
-        public Number|int|string $value,
+        public Number $value,
     ) {}
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Known;
 
+use BcMath\Number;
 use Thesis\Protobuf\Reflection;
 use Thesis\Time\TimeSpan;
 
@@ -15,7 +16,7 @@ final readonly class Duration
 {
     public function __construct(
         #[Reflection\Field(1, Reflection\Int64T::T)]
-        public int $seconds = 0,
+        public Number $seconds = new Number(0),
         #[Reflection\Field(2, Reflection\Int32T::T)]
         public int $nanoseconds = 0,
     ) {}
@@ -27,13 +28,13 @@ final readonly class Duration
         $nanoseconds -= $seconds * 1e9;
 
         return new self(
-            seconds: (int) $seconds,
+            seconds: new Number((int) $seconds),
             nanoseconds: (int) $nanoseconds,
         );
     }
 
     public function timespan(): TimeSpan
     {
-        return TimeSpan::fromNanoseconds($this->nanoseconds)->add(TimeSpan::fromSeconds($this->seconds));
+        return TimeSpan::fromNanoseconds($this->nanoseconds)->add(TimeSpan::fromSeconds((int) $this->seconds->value));
     }
 }

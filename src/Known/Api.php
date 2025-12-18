@@ -37,7 +37,7 @@ final readonly class Api
         ))]
         public array $mixins = [],
         #[Reflection\Field(7, new Reflection\EnumT(Syntax::class))]
-        public Syntax $syntax = Syntax::PROTO3,
+        public ?Syntax $syntax = null,
         #[Reflection\Field(8, Reflection\StringT::T)]
         public ?string $edition = null,
     ) {}
