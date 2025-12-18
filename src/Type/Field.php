@@ -7,7 +7,6 @@ namespace Thesis\Protobuf\Type;
 use Thesis\Protobuf\Type;
 
 /**
- * @internal
  * @template T
  */
 final readonly class Field

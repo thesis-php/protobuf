@@ -7,7 +7,6 @@ namespace Thesis\Protobuf\Type;
 use Thesis\Protobuf;
 
 /**
- * @internal
  * @template K
  * @template V
  */

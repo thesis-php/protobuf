@@ -7,7 +7,6 @@ namespace Thesis\Protobuf\Type;
 use Thesis\Protobuf\Type;
 
 /**
- * @internal
  * @template-implements Type<bool>
  * @template-implements Listable<bool>
  */

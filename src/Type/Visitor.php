@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Thesis\Protobuf\Type;
 
 /**
- * @internal
  * @template-covariant TResult
  */
 interface Visitor

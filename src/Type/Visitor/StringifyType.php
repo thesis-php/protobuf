@@ -26,7 +26,6 @@ use Thesis\Protobuf\Type\Uint64T;
 use Thesis\Protobuf\Type\Visitor;
 
 /**
- * @internal
  * @template-implements Visitor<non-empty-string>
  */
 final readonly class StringifyType implements Visitor

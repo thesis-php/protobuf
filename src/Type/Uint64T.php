@@ -8,7 +8,6 @@ use BcMath\Number;
 use Thesis\Protobuf\Type;
 
 /**
- * @internal
  * @template-implements Type<Number>
  * @template-implements Listable<Number>
  */

@@ -7,7 +7,6 @@ namespace Thesis\Protobuf\Type;
 use Thesis\Protobuf\Type;
 
 /**
- * @internal
  * @template-implements Type<double, 'repeatable', 'not-indexed'>
  * @template-implements Listable<double>
  */

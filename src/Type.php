@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Thesis\Protobuf;
 
 /**
- * @internal
  * @template-covariant T
  * @template Repeatable of 'repeatable' | 'not-repeatable' = 'repeatable'
  * @template Indexed of 'indexed' | 'not-indexed' = 'indexed'

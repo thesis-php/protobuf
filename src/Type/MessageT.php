@@ -8,7 +8,6 @@ use Thesis\Protobuf\Message;
 use Thesis\Protobuf\Type;
 
 /**
- * @internal
  * @template-implements Type<Message, 'repeatable', 'not-indexed'>
  * @template-implements Listable<Message>
  */

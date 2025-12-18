@@ -8,7 +8,6 @@ use Thesis\Protobuf;
 use Thesis\Protobuf\Type;
 
 /**
- * @internal
  * @template K
  * @template V
  * @template-implements Type<Protobuf\Map<K, V>, 'not-repeatable', 'not-indexed', 'not-map-value'>

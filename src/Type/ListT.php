@@ -7,7 +7,6 @@ namespace Thesis\Protobuf\Type;
 use Thesis\Protobuf\Type;
 
 /**
- * @internal
  * @template T
  * @template-implements Type<list<T>, 'not-repeatable', 'not-indexed', 'not-map-value'>
  */

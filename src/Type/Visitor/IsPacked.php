@@ -9,7 +9,6 @@ use Thesis\Protobuf\Type\MessageT;
 use Thesis\Protobuf\Type\StringT;
 
 /**
- * @internal
  * @template-extends DefaultTypeVisitor<bool>
  */
 final class IsPacked extends DefaultTypeVisitor

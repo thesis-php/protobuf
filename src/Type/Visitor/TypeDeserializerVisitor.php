@@ -47,7 +47,6 @@ use function Thesis\Protobuf\fieldT;
 use function Thesis\Protobuf\messageT;
 
 /**
- * @internal
  * @template-implements Visitor<DeserializeValue<*>>
  */
 final readonly class TypeDeserializerVisitor implements Visitor

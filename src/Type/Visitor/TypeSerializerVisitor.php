@@ -50,7 +50,6 @@ use function Thesis\Protobuf\fieldT;
 use function Thesis\Protobuf\messageT;
 
 /**
- * @internal
  * @template T
  * @phpstan-import-type Uint32 from Endian\Order
  * @phpstan-import-type Int32 from Endian\Order
