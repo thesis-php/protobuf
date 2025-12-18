@@ -161,6 +161,6 @@ final readonly class ToProtobufTypeTypeVisitor implements Visitor
     #[\Override]
     public function object(ObjectT $type): Type
     {
-        return $this->reflector->reflect($type->class);
+        return $this->reflector->type($type->class);
     }
 }

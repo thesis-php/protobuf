@@ -12,6 +12,7 @@ use Thesis\Protobuf\Reflection\Internal\Api\ClassReflector;
 use Thesis\Protobuf\Reflection\Internal\Api\PropertyReflection;
 use Thesis\Protobuf\Reflection\Internal\Cache\Cache;
 use Thesis\Protobuf\Reflection\Internal\Cache\InMemoryPsr16Cache;
+use Thesis\Protobuf\Reflection\Internal\Visitor\IsValueEmpty;
 use Thesis\Protobuf\Reflection\Internal\Visitor\RecursionBreakTypeVisitor;
 use Thesis\Protobuf\Reflection\Internal\Visitor\ToDefaultValueTypeVisitor;
 use Thesis\Protobuf\Reflection\Internal\Visitor\ToProtobufTypeTypeVisitor;
@@ -54,52 +55,15 @@ final class Reflector
         $this->classReflector = new ClassReflector();
     }
 
-    public function value(object $message): Message
+    public function message(object $message): Message
     {
-        $classReflection = $this->classReflector->reflect($message::class);
-
-        $descriptors = [];
-
-        foreach ($classReflection->properties as $property) {
-            $value = $property->reflection->getValue($message);
-
-            if ($value === null) {
-                continue;
-            }
-
-            if ($property->attributes->has(Field::class)) {
-                $field = $property->attributes->get(Field::class);
-
-                // TODO: how to serialize maps keeping empty values?
-                // if (!$field->type->accept(new IsValueEmpty($value))) {
-                $descriptors[] = Protobuf\fieldOf(
-                    $field->num,
-                    $field->type->accept($this->valueVisitor)($value),
-                );
-                // }
-            } elseif ($property->attributes->has(OneOf::class)) {
-                $oneof = $property->attributes->get(OneOf::class);
-
-                foreach ($oneof->variants as $it) {
-                    if ($value instanceof $it) {
-                        $descriptors = [
-                            ...$descriptors,
-                            ...$this->value($value)->fields,
-                        ];
-
-                        break;
-                    }
-                }
-            }
-        }
-
-        return Protobuf\message(...$descriptors);
+        return $this->doGetMessage($message);
     }
 
     /**
      * @param class-string $class
      */
-    public function reflect(string $class): Type\MessageT
+    public function type(string $class): Type\MessageT
     {
         if (($messageT = $this->cache->get($class)) !== null) {
             return $messageT;
@@ -129,7 +93,7 @@ final class Reflector
                 foreach ($oneof->variants as $it) {
                     $fields = [
                         ...$fields,
-                        ...$this->reflect($it)->fields,
+                        ...$this->type($it)->fields,
                     ];
                 }
             }
@@ -179,7 +143,7 @@ final class Reflector
                 $oneof = $property->attributes->get(OneOf::class);
 
                 foreach ($oneof->variants as $it) {
-                    $variantType = $this->reflect($it);
+                    $variantType = $this->type($it);
 
                     foreach ($variantType->fields as $num => $_) {
                         if (isset($message->fields[$num])) {
@@ -204,6 +168,52 @@ final class Reflector
     }
 
     /**
+     * @param ?\Closure(Field, mixed): bool $presence
+     */
+    private function doGetMessage(object $message, ?\Closure $presence = null): Message
+    {
+        $presence ??= static fn(Field $field, mixed $value): bool => !$field->type->accept(new IsValueEmpty($value));
+
+        $classReflection = $this->classReflector->reflect($message::class);
+
+        $descriptors = [];
+
+        foreach ($classReflection->properties as $property) {
+            $value = $property->reflection->getValue($message);
+
+            if ($value === null) {
+                continue;
+            }
+
+            if ($property->attributes->has(Field::class)) {
+                $field = $property->attributes->get(Field::class);
+
+                if ($presence($field, $value)) {
+                    $descriptors[] = Protobuf\fieldOf(
+                        $field->num,
+                        $field->type->accept($this->valueVisitor)($value),
+                    );
+                }
+            } elseif ($property->attributes->has(OneOf::class)) {
+                $oneof = $property->attributes->get(OneOf::class);
+
+                foreach ($oneof->variants as $it) {
+                    if ($value instanceof $it) {
+                        $descriptors = [
+                            ...$descriptors,
+                            ...$this->doGetMessage($value, static fn() => true)->fields,
+                        ];
+
+                        break;
+                    }
+                }
+            }
+        }
+
+        return Protobuf\message(...$descriptors);
+    }
+
+    /**
      * @throws Exception\PropertyUninitialized
      */
     private function defaultValuePropertyValue(PropertyReflection $property, ?Field $field = null): mixed
@@ -212,15 +222,7 @@ final class Reflector
             return $property->default->value;
         }
 
-        return $field?->type->accept($this->defaultValueTypeVisitor) ?? $this->throwPropertyUninitializedException($property);
-    }
-
-    /**
-     * @throws Exception\PropertyUninitialized
-     */
-    private function throwPropertyUninitializedException(PropertyReflection $property): never
-    {
-        throw new Exception\PropertyUninitialized(
+        return $field?->type->accept($this->defaultValueTypeVisitor) ?? throw new Exception\PropertyUninitialized(
             $property->reflection->getDeclaringClass()->getName(),
             $property->reflection->getName(),
         );

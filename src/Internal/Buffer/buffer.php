@@ -15,8 +15,8 @@ use Thesis\Protobuf\Internal\Wire;
 function copy(ReadBuffer $src, WriteBuffer $dst): void
 {
     $written = $src->flush();
+    SerdeVarint::T->serialize($dst, new Number(\strlen($written)));
     if ($written !== '') {
-        SerdeVarint::T->serialize($dst, new Number(\strlen($written)));
         $dst->write($written);
     }
 }

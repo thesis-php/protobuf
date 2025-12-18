@@ -215,7 +215,7 @@ final readonly class ToProtobufValueTypeVisitor implements Visitor
         return fn(object $message) => Protobuf\messageOf(
             ...$this
             ->reflector
-            ->value($message)
+            ->message($message)
             ->fields,
         );
     }

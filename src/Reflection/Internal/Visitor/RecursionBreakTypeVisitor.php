@@ -52,7 +52,7 @@ final class RecursionBreakTypeVisitor extends DefaultTypeVisitor
     {
         /** @phpstan-ignore return.type */
         return isset($this->visited[$type->class])
-            ? Protobuf\recursionT(fn() => $this->reflector->reflect($type->class))
+            ? Protobuf\recursionT(fn() => $this->reflector->type($type->class))
             : $this->default($type);
     }
 

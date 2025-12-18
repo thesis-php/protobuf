@@ -27,7 +27,7 @@ final class ToProtobufMessageTypeVisitor extends DefaultTypeVisitor
         return fn(object $message) => Protobuf\message(
             ...$this
             ->reflector
-            ->value($message)
+            ->message($message)
             ->fields,
         );
     }
