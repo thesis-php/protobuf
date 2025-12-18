@@ -31,7 +31,7 @@ final readonly class SerializeList implements SerializeValue
     public function serialize(WriteBuffer $buffer, mixed $value): void
     {
         if ($this->isPacked) {
-            $tag = new Tag($this->tag->num, WireType::bytes);
+            $tag = new Tag($this->tag->num, WireType::BYTES);
             $tmp = new ByteBuffer();
 
             foreach ($value as $it) {

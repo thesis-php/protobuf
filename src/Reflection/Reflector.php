@@ -6,7 +6,6 @@ namespace Thesis\Protobuf\Reflection;
 
 use Psr\SimpleCache\CacheInterface;
 use Thesis\Protobuf;
-use Thesis\Protobuf\Internal\Schema\Type;
 use Thesis\Protobuf\Message;
 use Thesis\Protobuf\Reflection\Internal\Api\ClassReflector;
 use Thesis\Protobuf\Reflection\Internal\Api\PropertyReflection;
@@ -18,6 +17,7 @@ use Thesis\Protobuf\Reflection\Internal\Visitor\ToDefaultValueTypeVisitor;
 use Thesis\Protobuf\Reflection\Internal\Visitor\ToProtobufTypeTypeVisitor;
 use Thesis\Protobuf\Reflection\Internal\Visitor\ToProtobufValueTypeVisitor;
 use Thesis\Protobuf\Reflection\Internal\Visitor\ToValueTypeVisitor;
+use Thesis\Protobuf\Type;
 
 /**
  * @api

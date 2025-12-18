@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Thesis\Protobuf\Internal\Serde;
 
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
-use Thesis\Protobuf\Internal\Schema\Type;
 use Thesis\Protobuf\Map;
+use Thesis\Protobuf\Type;
 use Thesis\Protobuf\Value;
 use function Thesis\Protobuf\fieldOf;
 use function Thesis\Protobuf\message;

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Thesis\Protobuf;
 
 use BcMath\Number;
-use Thesis\Protobuf\Internal\Schema\Type;
 
 /**
  * @api

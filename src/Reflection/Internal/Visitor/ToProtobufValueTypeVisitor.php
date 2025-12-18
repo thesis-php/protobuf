@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Thesis\Protobuf\Reflection\Internal\Visitor;
 
 use Thesis\Protobuf;
-use Thesis\Protobuf\Internal\Schema\Type;
 use Thesis\Protobuf\Reflection\BoolT;
 use Thesis\Protobuf\Reflection\BytesT;
 use Thesis\Protobuf\Reflection\DoubleT;
@@ -27,6 +26,7 @@ use Thesis\Protobuf\Reflection\StringT;
 use Thesis\Protobuf\Reflection\Uint32T;
 use Thesis\Protobuf\Reflection\Uint64T;
 use Thesis\Protobuf\Reflection\Visitor;
+use Thesis\Protobuf\Type;
 
 /**
  * @internal

@@ -22,16 +22,16 @@ use Thesis\Varint;
 function discardUnknown(ReadBuffer $buffer, Tag $tag): void
 {
     switch ($tag->type) {
-        case WireType::fixed32:
+        case WireType::FIXED32:
             $buffer->read(4);
             break;
-        case WireType::fixed64:
+        case WireType::FIXED64:
             $buffer->read(8);
             break;
-        case WireType::varint:
+        case WireType::VARINT:
             readVarint($buffer);
             break;
-        case WireType::bytes:
+        case WireType::BYTES:
             $length = (int) readVarint($buffer)->value;
             if ($length > 0) {
                 $buffer->read($length);

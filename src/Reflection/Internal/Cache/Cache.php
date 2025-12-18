@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Thesis\Protobuf\Reflection\Internal\Cache;
 
 use Psr\SimpleCache\CacheInterface;
-use Thesis\Protobuf\Internal\Schema\Type\MessageT;
+use Thesis\Protobuf\Type\MessageT;
 
 /**
  * @internal

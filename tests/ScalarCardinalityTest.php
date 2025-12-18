@@ -9,9 +9,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Thesis\Protobuf\Internal\Buffer\ByteBuffer;
-use Thesis\Protobuf\Internal\Schema\Type\Visitor\DetermineWireType;
-use Thesis\Protobuf\Internal\Schema\Type\Visitor\TypeDeserializerVisitor;
-use Thesis\Protobuf\Internal\Schema\Type\Visitor\TypeSerializerVisitor;
 use Thesis\Protobuf\Internal\Serde\SerdeBool;
 use Thesis\Protobuf\Internal\Serde\SerdeDouble;
 use Thesis\Protobuf\Internal\Serde\SerdeFixed32;
@@ -28,6 +25,9 @@ use Thesis\Protobuf\Internal\Serde\SerdeUint32;
 use Thesis\Protobuf\Internal\Serde\SerdeUint64;
 use Thesis\Protobuf\Internal\Serde\SerializeTag;
 use Thesis\Protobuf\Internal\Wire\Tag;
+use Thesis\Protobuf\Type\Visitor\DetermineWireType;
+use Thesis\Protobuf\Type\Visitor\TypeDeserializerVisitor;
+use Thesis\Protobuf\Type\Visitor\TypeSerializerVisitor;
 
 #[CoversClass(SerdeBool::class)]
 #[CoversClass(SerdeInt32::class)]

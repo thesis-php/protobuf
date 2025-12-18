@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Thesis\Protobuf\Reflection\Internal\Visitor;
 
 use Thesis\Protobuf;
-use Thesis\Protobuf\Internal\Schema;
 use Thesis\Protobuf\Reflection\ListT;
 use Thesis\Protobuf\Reflection\MapT;
 use Thesis\Protobuf\Reflection\ObjectT;
@@ -15,12 +14,12 @@ use Thesis\Protobuf\Reflection\Visitor;
 
 /**
  * @internal
- * @template-extends DefaultTypeVisitor<Schema\Type<mixed, *, *, *>>
+ * @template-extends DefaultTypeVisitor<Protobuf\Type<mixed, *, *, *>>
  */
 final class RecursionBreakTypeVisitor extends DefaultTypeVisitor
 {
     /**
-     * @param Visitor<Schema\Type<mixed, *, *, *>> $fallback
+     * @param Visitor<\Thesis\Protobuf\Type<mixed, *, *, *>> $fallback
      * @param array<class-string, true> $visited
      */
     public function __construct(

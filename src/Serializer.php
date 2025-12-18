@@ -6,12 +6,12 @@ namespace Thesis\Protobuf;
 
 use Thesis\Protobuf\Exception\BufferUnderflow;
 use Thesis\Protobuf\Internal\Buffer\ByteBuffer;
-use Thesis\Protobuf\Internal\Schema\Type\MessageT;
-use Thesis\Protobuf\Internal\Schema\Type\Visitor\DetermineWireType;
-use Thesis\Protobuf\Internal\Schema\Type\Visitor\TypeDeserializerVisitor;
-use Thesis\Protobuf\Internal\Schema\Type\Visitor\TypeSerializerVisitor;
 use Thesis\Protobuf\Internal\Wire;
 use Thesis\Protobuf\Internal\Wire\Tag;
+use Thesis\Protobuf\Type\MessageT;
+use Thesis\Protobuf\Type\Visitor\DetermineWireType;
+use Thesis\Protobuf\Type\Visitor\TypeDeserializerVisitor;
+use Thesis\Protobuf\Type\Visitor\TypeSerializerVisitor;
 
 /**
  * @api

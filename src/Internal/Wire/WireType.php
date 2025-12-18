@@ -9,8 +9,8 @@ namespace Thesis\Protobuf\Internal\Wire;
  */
 enum WireType: int
 {
-    case varint = 0;
-    case fixed64 = 1;
-    case bytes = 2;
-    case fixed32 = 5;
+    case VARINT = 0;
+    case FIXED64 = 1;
+    case BYTES = 2;
+    case FIXED32 = 5;
 }

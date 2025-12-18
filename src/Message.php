@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf;
 
-use Thesis\Protobuf\Internal\Schema\Type\Field;
-use Thesis\Protobuf\Internal\Schema\Type\MessageT;
-
 /**
  * @api
  * @template-implements \IteratorAggregate<array-key, FieldDescriptor<*>>
@@ -34,10 +31,10 @@ final readonly class Message implements
         $this->fields = $map;
     }
 
-    public function type(): MessageT
+    public function type(): Type\MessageT
     {
         return messageT(...array_map(
-            static fn(FieldDescriptor $ds) => new Field(
+            static fn(FieldDescriptor $ds) => new Type\Field(
                 $ds->num,
                 $ds->value->type,
             ),

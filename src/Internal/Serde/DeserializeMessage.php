@@ -7,10 +7,10 @@ namespace Thesis\Protobuf\Internal\Serde;
 use Thesis\Protobuf\FieldDescriptor;
 use Thesis\Protobuf\Internal\Buffer;
 use Thesis\Protobuf\Internal\Buffer\ReadBuffer;
-use Thesis\Protobuf\Internal\Schema\Type\MessageT;
-use Thesis\Protobuf\Internal\Schema\Type\Visitor\TypeDeserializerVisitor;
 use Thesis\Protobuf\Internal\Wire;
 use Thesis\Protobuf\Message;
+use Thesis\Protobuf\Type\MessageT;
+use Thesis\Protobuf\Type\Visitor\TypeDeserializerVisitor;
 use Thesis\Protobuf\Value;
 
 /**
