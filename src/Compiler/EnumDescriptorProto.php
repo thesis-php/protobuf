@@ -18,7 +18,7 @@ final readonly class EnumDescriptorProto
      */
     public function __construct(
         #[Reflection\Field(1, Reflection\StringT::T)]
-        public ?string $name = null,
+        public string $name,
         #[Reflection\Field(2, new Reflection\ListT(
             new Reflection\ObjectT(EnumValueDescriptorProto::class),
         ))]

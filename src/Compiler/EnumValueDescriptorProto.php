@@ -13,9 +13,9 @@ final readonly class EnumValueDescriptorProto
 {
     public function __construct(
         #[Reflection\Field(1, Reflection\StringT::T)]
-        public ?string $name = null,
+        public string $name,
         #[Reflection\Field(2, Reflection\Int32T::T)]
-        public ?int $number = null,
+        public int $number,
         #[Reflection\Field(3, new Reflection\ObjectT(EnumValueOptions::class))]
         public ?EnumValueOptions $options = null,
     ) {}
