@@ -12,6 +12,7 @@ use Thesis\Protobuf\Reflection;
 final readonly class EnumDescriptorProto
 {
     /**
+     * @param non-empty-string $name
      * @param list<EnumValueDescriptorProto> $values
      * @param list<EnumDescriptorProto\EnumReservedRange> $reservedRanges
      * @param list<string> $reservedNames
