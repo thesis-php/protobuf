@@ -18,13 +18,13 @@ final readonly class Location
      */
     public function __construct(
         #[Reflection\Field(1, new Reflection\ListT(Reflection\Int32T::T))]
-        public array $path,
+        public array $path = [],
         #[Reflection\Field(2, new Reflection\ListT(Reflection\Int32T::T))]
-        public array $span,
+        public array $span = [],
         #[Reflection\Field(3, Reflection\StringT::T)]
-        public ?string $leadingComments = null,
+        public string $leadingComments = '',
         #[Reflection\Field(4, Reflection\StringT::T)]
-        public ?string $trailingComments = null,
+        public string $trailingComments = '',
         #[Reflection\Field(6, new Reflection\ListT(Reflection\StringT::T))]
         public array $leadingDetachedComments = [],
     ) {}
