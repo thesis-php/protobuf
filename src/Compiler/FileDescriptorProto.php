@@ -26,7 +26,7 @@ final readonly class FileDescriptorProto
         #[Reflection\Field(1, Reflection\StringT::T)]
         public string $name,
         #[Reflection\Field(2, Reflection\StringT::T)]
-        public string $package,
+        public ?string $package = null,
         #[Reflection\Field(3, new Reflection\ListT(Reflection\StringT::T))]
         public array $dependencies = [],
         #[Reflection\Field(10, new Reflection\ListT(Reflection\Int32T::T))]
