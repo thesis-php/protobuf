@@ -13,17 +13,17 @@ final readonly class FieldDescriptorProto
 {
     public function __construct(
         #[Reflection\Field(1, Reflection\StringT::T)]
-        public ?string $name = null,
+        public string $name,
         #[Reflection\Field(3, Reflection\Int32T::T)]
-        public ?int $number = null,
+        public int $number,
         #[Reflection\Field(4, new Reflection\EnumT(FieldDescriptorProto\Label::class))]
-        public ?FieldDescriptorProto\Label $label = null,
+        public FieldDescriptorProto\Label $label,
         #[Reflection\Field(5, new Reflection\EnumT(FieldDescriptorProto\Type::class))]
-        public ?FieldDescriptorProto\Type $type = null,
+        public FieldDescriptorProto\Type $type,
         #[Reflection\Field(6, Reflection\StringT::T)]
         public ?string $typeName = null,
         #[Reflection\Field(2, Reflection\StringT::T)]
-        public ?string $extendee  = null,
+        public ?string $extendee = null,
         #[Reflection\Field(7, Reflection\StringT::T)]
         public ?string $defaultValue = null,
         #[Reflection\Field(9, Reflection\Int32T::T)]

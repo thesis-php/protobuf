@@ -23,7 +23,7 @@ final readonly class DescriptorProto
      */
     public function __construct(
         #[Reflection\Field(1, Reflection\StringT::T)]
-        public ?string $name = null,
+        public string $name,
         #[Reflection\Field(2, new Reflection\ListT(
             new Reflection\ObjectT(FieldDescriptorProto::class),
         ))]

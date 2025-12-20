@@ -11,9 +11,6 @@ use Thesis\Protobuf\Reflection;
  */
 final readonly class EnumValueDescriptorProto
 {
-    /**
-     * @param non-empty-string $name
-     */
     public function __construct(
         #[Reflection\Field(1, Reflection\StringT::T)]
         public string $name,

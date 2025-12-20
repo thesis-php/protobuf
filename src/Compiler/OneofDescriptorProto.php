@@ -13,7 +13,7 @@ final readonly class OneofDescriptorProto
 {
     public function __construct(
         #[Reflection\Field(1, Reflection\StringT::T)]
-        public ?string $name = null,
+        public string $name,
         #[Reflection\Field(2, new Reflection\ObjectT(OneofOptions::class))]
         public ?OneofOptions $options = null,
     ) {}
