@@ -9,7 +9,7 @@ use Thesis\Protobuf\Reflection;
 /**
  * @api
  */
-final readonly class Version
+final readonly class Version implements \Stringable
 {
     public function __construct(
         #[Reflection\Field(1, Reflection\Int32T::T)]
@@ -21,4 +21,27 @@ final readonly class Version
         #[Reflection\Field(4, Reflection\StringT::T)]
         public ?string $suffix = null,
     ) {}
+
+    #[\Override]
+    public function __toString(): string
+    {
+        $version = implode('.', array_filter(
+            [
+                $this->major,
+                $this->minor,
+                $this->patch,
+            ],
+            static fn(?int $version) => $version !== null,
+        ));
+
+        if ($this->suffix !== null) {
+            $version .= '-' . $this->suffix;
+        }
+
+        if ($version === '') {
+            $version = 'unknown';
+        }
+
+        return $version;
+    }
 }
