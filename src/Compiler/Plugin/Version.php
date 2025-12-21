@@ -34,7 +34,7 @@ final readonly class Version implements \Stringable
             static fn(?int $version) => $version !== null,
         ));
 
-        if ($this->suffix !== null) {
+        if ($this->suffix !== null && $this->suffix !== '') {
             $version .= '-' . $this->suffix;
         }
 

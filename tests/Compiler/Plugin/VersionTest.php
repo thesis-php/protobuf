@@ -23,6 +23,10 @@ final class VersionTest extends TestCase
         new Version(4, 32, suffix: 'rc1'),
         '4.32-rc1',
     ])]
+    #[TestWith([
+        new Version(4, 32, suffix: ''),
+        '4.32',
+    ])]
     public function testVersion(Version $version, string $stringable): void
     {
         self::assertSame($stringable, (string) $version);
