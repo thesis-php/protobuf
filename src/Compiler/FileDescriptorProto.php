@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Compiler;
 
-use BcMath\Number;
 use Thesis\Protobuf\Reflection;
 
 /**
@@ -14,8 +13,8 @@ final readonly class FileDescriptorProto
 {
     /**
      * @param list<string> $dependencies
-     * @param list<Number> $publicDependencies
-     * @param list<Number> $weakDependencies
+     * @param list<int> $publicDependencies
+     * @param list<int> $weakDependencies
      * @param list<string> $optionDependencies
      * @param list<DescriptorProto> $messages
      * @param list<EnumDescriptorProto> $enums
@@ -24,7 +23,7 @@ final readonly class FileDescriptorProto
      */
     public function __construct(
         #[Reflection\Field(1, Reflection\StringT::T)]
-        public string $name,
+        public ?string $name = null,
         #[Reflection\Field(2, Reflection\StringT::T)]
         public ?string $package = null,
         #[Reflection\Field(3, new Reflection\ListT(Reflection\StringT::T))]

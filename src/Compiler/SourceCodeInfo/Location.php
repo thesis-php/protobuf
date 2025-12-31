@@ -22,9 +22,9 @@ final readonly class Location
         #[Reflection\Field(2, new Reflection\ListT(Reflection\Int32T::T))]
         public array $span = [],
         #[Reflection\Field(3, Reflection\StringT::T)]
-        public string $leadingComments = '',
+        public ?string $leadingComments = null,
         #[Reflection\Field(4, Reflection\StringT::T)]
-        public string $trailingComments = '',
+        public ?string $trailingComments = null,
         #[Reflection\Field(6, new Reflection\ListT(Reflection\StringT::T))]
         public array $leadingDetachedComments = [],
     ) {}

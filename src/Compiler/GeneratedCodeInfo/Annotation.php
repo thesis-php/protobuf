@@ -18,7 +18,7 @@ final readonly class Annotation
         #[Reflection\Field(1, new Reflection\ListT(Reflection\Int32T::T))]
         public array $path,
         #[Reflection\Field(2, Reflection\StringT::T)]
-        public string $sourceFile,
+        public ?string $sourceFile = null,
         #[Reflection\Field(3, Reflection\Int32T::T)]
         public ?int $begin = null,
         #[Reflection\Field(4, Reflection\Int32T::T)]

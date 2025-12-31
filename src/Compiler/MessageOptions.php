@@ -24,7 +24,7 @@ final readonly class MessageOptions
         #[Reflection\Field(7, Reflection\BoolT::T)]
         public ?bool $mapEntry = null,
         #[Reflection\Field(11, Reflection\BoolT::T)]
-        public ?bool $deprecatedLegacyJsonFieldConflicts = null,
+        public bool $deprecatedLegacyJsonFieldConflicts = true,
         #[Reflection\Field(12, new Reflection\ObjectT(FeatureSet::class))]
         public ?FeatureSet $features = null,
         #[Reflection\Field(999, new Reflection\ListT(

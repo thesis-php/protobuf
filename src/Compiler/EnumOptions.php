@@ -20,7 +20,7 @@ final readonly class EnumOptions
         #[Reflection\Field(3, Reflection\BoolT::T)]
         public bool $deprecated = false,
         #[Reflection\Field(6, Reflection\BoolT::T)]
-        public ?bool $deprecatedLegacyJsonFieldConflicts = null,
+        public bool $deprecatedLegacyJsonFieldConflicts = true,
         #[Reflection\Field(7, new Reflection\ObjectT(FeatureSet::class))]
         public ?FeatureSet $features = null,
         #[Reflection\Field(999, new Reflection\ListT(
