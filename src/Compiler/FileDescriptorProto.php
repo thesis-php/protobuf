@@ -28,9 +28,9 @@ final readonly class FileDescriptorProto
         public ?string $package = null,
         #[Reflection\Field(3, new Reflection\ListT(Reflection\StringT::T))]
         public array $dependencies = [],
-        #[Reflection\Field(10, new Reflection\ListT(Reflection\Int32T::T))]
+        #[Reflection\Field(10, new Reflection\ListT(Reflection\Int32T::T, false))]
         public array $publicDependencies = [],
-        #[Reflection\Field(11, new Reflection\ListT(Reflection\Int32T::T))]
+        #[Reflection\Field(11, new Reflection\ListT(Reflection\Int32T::T, false))]
         public array $weakDependencies = [],
         #[Reflection\Field(15, new Reflection\ListT(Reflection\StringT::T))]
         public array $optionDependencies = [],

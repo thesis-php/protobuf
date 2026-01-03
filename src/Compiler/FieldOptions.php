@@ -32,9 +32,7 @@ final readonly class FieldOptions
         public bool $debugRedact = false,
         #[Reflection\Field(17, new Reflection\EnumT(FieldOptions\OptionRetention::class))]
         public ?FieldOptions\OptionRetention $retention = null,
-        #[Reflection\Field(19, new Reflection\ListT(
-            new Reflection\ObjectT(FieldOptions\OptionTargetType::class),
-        ))]
+        #[Reflection\Field(19, new Reflection\ListT(new Reflection\EnumT(FieldOptions\OptionTargetType::class), false))]
         public array $targets = [],
         #[Reflection\Field(20, new Reflection\ListT(
             new Reflection\ObjectT(FieldOptions\EditionDefault::class),

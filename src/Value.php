@@ -155,10 +155,11 @@ final readonly class Value
     public static function listOf(
         Type $type,
         array $values,
+        ?bool $packed = null,
     ): self {
         return new self(
             $values,
-            listT($type),
+            listT($type, $packed),
         );
     }
 

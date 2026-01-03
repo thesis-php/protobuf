@@ -146,7 +146,7 @@ final readonly class TypeDeserializerVisitor implements Visitor
             /** @phpstan-ignore argument.type */
             $type->element->accept($this),
             $this->tag,
-            $type->element->accept(new IsPacked()),
+            $type->packed ?? $type->element->accept(new IsPacked()),
         );
     }
 

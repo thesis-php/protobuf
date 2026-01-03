@@ -32,7 +32,7 @@ final class RecursionBreakTypeVisitor extends DefaultTypeVisitor
     public function list(ListT $type): mixed
     {
         /** @phpstan-ignore argument.type */
-        return Protobuf\listT($type->element->accept($this));
+        return Protobuf\listT($type->element->accept($this), $type->packed);
     }
 
     #[\Override]

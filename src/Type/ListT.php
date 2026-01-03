@@ -17,6 +17,7 @@ final readonly class ListT implements Type
      */
     public function __construct(
         public Type $element,
+        public ?bool $packed = null,
     ) {}
 
     #[\Override]

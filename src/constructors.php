@@ -247,8 +247,9 @@ function recursionT(\Closure $continuation): Type\RecursionT
 function listOf(
     Type $type,
     array $values,
+    ?bool $packed = null,
 ): Value {
-    return Value::listOf($type, $values);
+    return Value::listOf($type, $values, $packed);
 }
 
 /**
@@ -257,9 +258,9 @@ function listOf(
  * @param Type<T, 'repeatable', *, *> $element
  * @return Type\ListT<T>
  */
-function listT(Type $element): Type\ListT
+function listT(Type $element, ?bool $packed = null): Type\ListT
 {
-    return new Type\ListT($element);
+    return new Type\ListT($element, $packed);
 }
 
 /**

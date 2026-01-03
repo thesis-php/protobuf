@@ -134,7 +134,7 @@ final readonly class ToProtobufTypeTypeVisitor implements Visitor
         /** @var Type<mixed, 'repeatable'> $element */
         $element = $type->element->accept($this);
 
-        return Protobuf\listT($element);
+        return Protobuf\listT($element, $type->packed);
     }
 
     #[\Override]
