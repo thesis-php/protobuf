@@ -115,6 +115,7 @@ final class ScalarCardinalityTest extends TestCase
                         'uint32' => Value::uint32(filter_var($value, FILTER_VALIDATE_INT)),
                         /** @phpstan-ignore argument.type */
                         'int64' => Value::int64(new Number($value)),
+                        /** @phpstan-ignore argument.type */
                         'uint64' => Value::uint64(new Number($value)),
                         /** @phpstan-ignore argument.type */
                         'sint64' => Value::sint64(new Number($value)),
