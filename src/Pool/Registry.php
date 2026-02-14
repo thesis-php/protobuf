@@ -91,10 +91,13 @@ final class Registry
         return $this->descriptors[$descriptorIdx] ?? throw new \RuntimeException("No descriptor for service type '{$serviceType}'");
     }
 
-    public function register(Registrar $registry): self
+    public function register(Registrar ...$registries): self
     {
         $pool = self::get();
-        $registry->register($pool);
+
+        foreach ($registries as $registry) {
+            $registry->register($pool);
+        }
 
         return $pool;
     }
@@ -111,29 +114,56 @@ final class Registry
 
         foreach ($types as $type => $md) {
             if ($md instanceof MessageMetadata) {
-                if (isset($this->messageTypes[$type])) {
-                    throw new \RuntimeException("Message type '{$type}' is already registered");
-                }
-
-                $pool->messageTypeToDescriptorIndex[$type] = $idx;
-                $pool->messageTypes[$type] = $md;
+                $pool->doAddMessageType($type, $md, $idx);
             } elseif ($md instanceof EnumMetadata) {
-                if (isset($this->enumTypes[$type])) {
-                    throw new \RuntimeException("Enum type '{$type}' is already registered");
-                }
-
-                $pool->enumTypeToDescriptorIndex[$type] = $idx;
-                $pool->enumTypes[$type] = $md;
+                $pool->doAddEnumType($type, $md, $idx);
             } elseif ($md instanceof ServiceMetadata) { // @phpstan-ignore instanceof.alwaysTrue
-                if (isset($this->serviceTypes[$type])) {
-                    throw new \RuntimeException("Service type '{$type}' is already registered");
-                }
-
-                $pool->serviceTypeToDescriptorIndex[$type] = $idx;
-                $pool->serviceTypes[$type] = $md;
+                $pool->doAddServiceType($type, $md, $idx);
             }
         }
 
         return $pool;
+    }
+
+    /**
+     * @param non-empty-string $type
+     * @param non-negative-int $descriptorIdx
+     */
+    private function doAddMessageType(string $type, MessageMetadata $md, int $descriptorIdx): void
+    {
+        if (isset($this->messageTypes[$type])) {
+            throw new \RuntimeException("Message type '{$type}' is already registered");
+        }
+
+        $this->messageTypeToDescriptorIndex[$type] = $descriptorIdx;
+        $this->messageTypes[$type] = $md;
+    }
+
+    /**
+     * @param non-empty-string $type
+     * @param non-negative-int $descriptorIdx
+     */
+    private function doAddEnumType(string $type, EnumMetadata $md, int $descriptorIdx): void
+    {
+        if (isset($this->enumTypes[$type])) {
+            throw new \RuntimeException("Enum type '{$type}' is already registered");
+        }
+
+        $this->enumTypeToDescriptorIndex[$type] = $descriptorIdx;
+        $this->enumTypes[$type] = $md;
+    }
+
+    /**
+     * @param non-empty-string $type
+     * @param non-negative-int $descriptorIdx
+     */
+    private function doAddServiceType(string $type, ServiceMetadata $md, int $descriptorIdx): void
+    {
+        if (isset($this->serviceTypes[$type])) {
+            throw new \RuntimeException("Service type '{$type}' is already registered");
+        }
+
+        $this->serviceTypeToDescriptorIndex[$type] = $descriptorIdx;
+        $this->serviceTypes[$type] = $md;
     }
 }
