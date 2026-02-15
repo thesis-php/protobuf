@@ -17,9 +17,7 @@ use Thesis\Varint;
 final class Tag
 {
     /** @phpstan-ignore property.uninitialized */
-    public private(set) Number $number {
-        get => $this->number ??= new Number($this->num << 3 | $this->type->value);
-    }
+    public private(set) Number $number { get => $this->number ??= new Number($this->num << 3 | $this->type->value); }
 
     public static function from(Number $number): self
     {
