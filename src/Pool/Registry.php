@@ -22,11 +22,17 @@ final class Registry
     /** @var array<non-empty-string, MessageMetadata> */
     public private(set) array $messageTypes = [];
 
+    /** @var array<non-empty-string, non-empty-string> */
+    private array $classToTypeIndex = [];
+
     /** @var array<non-empty-string, non-negative-int> */
     private array $messageTypeToDescriptorIndex = [];
 
     /** @var array<non-empty-string, EnumMetadata> */
     public private(set) array $enumTypes = [];
+
+    /** @var array<non-empty-string, non-empty-string> */
+    private array $enumToTypeIndex = [];
 
     /** @var array<non-empty-string, non-negative-int> */
     private array $enumTypeToDescriptorIndex = [];
@@ -42,7 +48,16 @@ final class Registry
      */
     public function messageByType(string $type): MessageMetadata
     {
-        return $this->messageTypes[$type] ?? throw new \RuntimeException("No message metadata for type '{$type}'");
+        return $this->messageTypes[$type] ?? self::throwTypeNotFound($type);
+    }
+
+    /**
+     * @param class-string $fqcn
+     * @return non-empty-string
+     */
+    public function classType(string $fqcn): string
+    {
+        return $this->classToTypeIndex[$fqcn] ?? self::throwClassTypeNotFound($fqcn);
     }
 
     /**
@@ -50,9 +65,8 @@ final class Registry
      */
     public function descriptorByMessage(string $messageType): Descriptor
     {
-        $descriptorIdx = $this->messageTypeToDescriptorIndex[$messageType] ?? throw new \RuntimeException("Message type '{$messageType}' was not registered");
-
-        return $this->descriptors[$descriptorIdx] ?? throw new \RuntimeException("No descriptor for message type '{$messageType}'");
+        return $this->descriptors[$this->messageTypeToDescriptorIndex[$messageType] ?? self::throwTypeNotFound($messageType)]
+            ?? self::throwDescriptorNotFound($messageType);
     }
 
     /**
@@ -60,7 +74,16 @@ final class Registry
      */
     public function enumByType(string $type): EnumMetadata
     {
-        return $this->enumTypes[$type] ?? throw new \RuntimeException("No enum metadata for type '{$type}'");
+        return $this->enumTypes[$type] ?? self::throwTypeNotFound($type);
+    }
+
+    /**
+     * @param class-string $fqcn
+     * @return non-empty-string
+     */
+    public function enumType(string $fqcn): string
+    {
+        return $this->enumToTypeIndex[$fqcn] ?? self::throwEnumTypeNotFound($fqcn);
     }
 
     /**
@@ -68,9 +91,8 @@ final class Registry
      */
     public function descriptorByEnum(string $enumType): Descriptor
     {
-        $descriptorIdx = $this->enumTypeToDescriptorIndex[$enumType] ?? throw new \RuntimeException("Enum type '{$enumType}' was not registered");
-
-        return $this->descriptors[$descriptorIdx] ?? throw new \RuntimeException("No descriptor for enum type '{$enumType}'");
+        return $this->descriptors[$this->enumTypeToDescriptorIndex[$enumType] ?? self::throwTypeNotFound($enumType)]
+            ?? self::throwDescriptorNotFound($enumType);
     }
 
     /**
@@ -78,7 +100,7 @@ final class Registry
      */
     public function serviceByType(string $type): ServiceMetadata
     {
-        return $this->serviceTypes[$type] ?? throw new \RuntimeException("No service metadata for type '{$type}'");
+        return $this->serviceTypes[$type] ?? self::throwTypeNotFound($type);
     }
 
     /**
@@ -86,9 +108,8 @@ final class Registry
      */
     public function descriptorByService(string $serviceType): Descriptor
     {
-        $descriptorIdx = $this->serviceTypeToDescriptorIndex[$serviceType] ?? throw new \RuntimeException("Service type '{$serviceType}' was not registered");
-
-        return $this->descriptors[$descriptorIdx] ?? throw new \RuntimeException("No descriptor for service type '{$serviceType}'");
+        return $this->descriptors[$this->serviceTypeToDescriptorIndex[$serviceType] ?? self::throwTypeNotFound($serviceType)]
+            ?? self::throwDescriptorNotFound($serviceType);
     }
 
     public function register(Registrar ...$registries): self
@@ -132,11 +153,12 @@ final class Registry
     private function doAddMessageType(string $type, MessageMetadata $md, int $descriptorIdx): void
     {
         if (isset($this->messageTypes[$type])) {
-            throw new \RuntimeException("Message type '{$type}' is already registered");
+            self::throwTypeAlreadyRegistered($type);
         }
 
         $this->messageTypeToDescriptorIndex[$type] = $descriptorIdx;
         $this->messageTypes[$type] = $md;
+        $this->classToTypeIndex[$md->fqcn] = $type;
     }
 
     /**
@@ -146,11 +168,12 @@ final class Registry
     private function doAddEnumType(string $type, EnumMetadata $md, int $descriptorIdx): void
     {
         if (isset($this->enumTypes[$type])) {
-            throw new \RuntimeException("Enum type '{$type}' is already registered");
+            self::throwTypeAlreadyRegistered($type);
         }
 
         $this->enumTypeToDescriptorIndex[$type] = $descriptorIdx;
         $this->enumTypes[$type] = $md;
+        $this->enumToTypeIndex[$md->fqcn] = $type;
     }
 
     /**
@@ -160,10 +183,50 @@ final class Registry
     private function doAddServiceType(string $type, ServiceMetadata $md, int $descriptorIdx): void
     {
         if (isset($this->serviceTypes[$type])) {
-            throw new \RuntimeException("Service type '{$type}' is already registered");
+            self::throwTypeAlreadyRegistered($type);
         }
 
         $this->serviceTypeToDescriptorIndex[$type] = $descriptorIdx;
         $this->serviceTypes[$type] = $md;
+    }
+
+    /**
+     * @param non-empty-string $type
+     */
+    private static function throwTypeAlreadyRegistered(string $type): never
+    {
+        throw new \RuntimeException(\sprintf('Type "%s" is already registered in the \Thesis\Protobuf\Pool\Registry. Ensure that you are using protobuf compiler correctly, or use \Thesis\Protobuf\Pool\OnceRegistrar to prevent duplicate registration of types in the pool', $type));
+    }
+
+    /**
+     * @param class-string $fqcn
+     */
+    private static function throwClassTypeNotFound(string $fqcn): never
+    {
+        throw new \RuntimeException(\sprintf('Associated with class "%s" metadata not found in the \Thesis\Protobuf\Pool\Registry. Perhaps you forgot to include autoload.metadata.php in composer.json or did not call the appropriate descriptor registrar to register types in the pool?', $fqcn));
+    }
+
+    /**
+     * @param class-string $fqcn
+     */
+    private static function throwEnumTypeNotFound(string $fqcn): never
+    {
+        throw new \RuntimeException(\sprintf('Associated with enum "%s" metadata not found in the \Thesis\Protobuf\Pool\Registry. Perhaps you forgot to include autoload.metadata.php in composer.json or did not call the appropriate descriptor registrar to register types in the pool?', $fqcn));
+    }
+
+    /**
+     * @param non-empty-string $type
+     */
+    private static function throwDescriptorNotFound(string $type): never
+    {
+        throw new \RuntimeException(\sprintf('Descriptor for type "%s" not found in the \Thesis\Protobuf\Pool\Registry. Perhaps you forgot to include autoload.metadata.php in composer.json or did not call the appropriate descriptor registrar to register types in the pool?', $type));
+    }
+
+    /**
+     * @param non-empty-string $type
+     */
+    private static function throwTypeNotFound(string $type): never
+    {
+        throw new \RuntimeException(\sprintf('Type metadata "%s" not found in the \Thesis\Protobuf\Pool\Registry. Perhaps you forgot to include autoload.metadata.php in composer.json or did not call the appropriate descriptor registrar to register types in the pool?', $type));
     }
 }
