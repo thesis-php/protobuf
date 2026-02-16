@@ -229,4 +229,6 @@ final class Registry
     {
         throw new \RuntimeException(\sprintf('Type metadata "%s" not found in the \Thesis\Protobuf\Pool\Registry. Perhaps you forgot to include autoload.metadata.php in composer.json or did not call the appropriate descriptor registrar to register types in the pool?', $type));
     }
+
+    private function __construct() {}
 }
