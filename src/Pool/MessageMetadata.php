@@ -6,11 +6,12 @@ namespace Thesis\Protobuf\Pool;
 
 /**
  * @api
+ * @template T of object
  */
 final readonly class MessageMetadata
 {
     /**
-     * @param non-empty-string $fqcn
+     * @param class-string<T> $fqcn
      */
     public function __construct(
         public string $fqcn,

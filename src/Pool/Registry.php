@@ -19,7 +19,7 @@ final class Registry
     /** @var list<Descriptor> */
     public private(set) array $descriptors = [];
 
-    /** @var array<non-empty-string, MessageMetadata> */
+    /** @var array<non-empty-string, MessageMetadata<object>> */
     public private(set) array $messageTypes = [];
 
     /** @var array<non-empty-string, non-empty-string> */
@@ -45,6 +45,7 @@ final class Registry
 
     /**
      * @param non-empty-string $type
+     * @return MessageMetadata<object>
      */
     public function messageByType(string $type): MessageMetadata
     {
@@ -124,7 +125,8 @@ final class Registry
     }
 
     /**
-     * @param array<non-empty-string, MessageMetadata|EnumMetadata|ServiceMetadata> $types
+     * @template T of object
+     * @param array<non-empty-string, MessageMetadata<T>|EnumMetadata|ServiceMetadata> $types
      */
     public function add(Descriptor $descriptor, array $types): self
     {
@@ -148,6 +150,7 @@ final class Registry
 
     /**
      * @param non-empty-string $type
+     * @param MessageMetadata<object> $md
      * @param non-negative-int $descriptorIdx
      */
     private function doAddMessageType(string $type, MessageMetadata $md, int $descriptorIdx): void
