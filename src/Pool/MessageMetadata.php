@@ -6,7 +6,7 @@ namespace Thesis\Protobuf\Pool;
 
 /**
  * @api
- * @template T of object
+ * @template-covariant T of object
  */
 final readonly class MessageMetadata
 {
