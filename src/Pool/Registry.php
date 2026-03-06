@@ -127,8 +127,8 @@ final class Registry
             }
 
             $pool->messages[$message->name] = $message;
-            $pool->types[$message->fqcn] = $message->name;
             $pool->symbols[$message->name] = $file->name;
+            $pool->types[$message->fqcn] = $message->name;
         }
 
         foreach ($file->enums as $enum) {
@@ -137,8 +137,8 @@ final class Registry
             }
 
             $pool->enums[$enum->name] = $enum;
-            $pool->types[$enum->fqcn] = $enum->name;
             $pool->symbols[$enum->name] = $file->name;
+            $pool->types[$enum->fqcn] = $enum->name;
         }
 
         foreach ($file->services as $service) {
