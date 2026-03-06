@@ -113,15 +113,15 @@ final class ScalarCardinalityTest extends TestCase
                         'sint32' => Value::sint32(filter_var($value, FILTER_VALIDATE_INT)),
                         /** @phpstan-ignore argument.type */
                         'uint32' => Value::uint32(filter_var($value, FILTER_VALIDATE_INT)),
-                        'int64' => Value::int64(new Number($value)),
-                        'uint64' => Value::uint64(new Number($value)),
-                        'sint64' => Value::sint64(new Number($value)),
+                        'int64' => Value::int64(self::toNumber($value)),
+                        'uint64' => Value::uint64(self::toNumber($value)),
+                        'sint64' => Value::sint64(self::toNumber($value)),
                         /** @phpstan-ignore argument.type */
                         'fixed32' => Value::fixed32(filter_var($value, FILTER_VALIDATE_INT)),
                         /** @phpstan-ignore argument.type */
                         'sfixed32' => Value::sfixed32(filter_var($value, FILTER_VALIDATE_INT)),
-                        'fixed64' => Value::fixed64(new Number($value)),
-                        'sfixed64' => Value::sfixed64(new Number($value)),
+                        'fixed64' => Value::fixed64(self::toNumber($value)),
+                        'sfixed64' => Value::sfixed64(self::toNumber($value)),
                         default => throw new \UnexpectedValueException("Cannot handle type '{$type}'."),
                     },
                     $hex,
@@ -130,6 +130,16 @@ final class ScalarCardinalityTest extends TestCase
         }
 
         fclose($f);
+    }
+
+    /**
+     * @param non-empty-string $value
+     */
+    private static function toNumber(string $value): Number
+    {
+        \assert(is_numeric($value), "'{$value}' is not a numeric value");
+
+        return new Number($value);
     }
 }
 
