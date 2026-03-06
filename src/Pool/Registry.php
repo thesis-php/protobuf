@@ -16,40 +16,33 @@ final class Registry
         return self::$instance ??= new self();
     }
 
-    /** @var list<Descriptor> */
-    public private(set) array $descriptors = [];
+    /** @var array<non-empty-string, Descriptor> */
+    private array $descriptors = [];
 
-    /** @var array<non-empty-string, MessageMetadata<object>> */
-    public private(set) array $messageTypes = [];
+    /** @var array<non-empty-string, File> */
+    private array $files = [];
 
-    /** @var array<non-empty-string, non-empty-string> */
-    private array $classToTypeIndex = [];
+    /** @var array<non-empty-string, File\MessageDescriptor> map File\MessageDescriptor by typename, used by google.protobuf.Any */
+    private array $messages = [];
 
-    /** @var array<non-empty-string, non-negative-int> */
-    private array $messageTypeToDescriptorIndex = [];
+    /** @var array<non-empty-string, File\EnumDescriptor> map File\EnumDescriptor by typename */
+    private array $enums = [];
 
-    /** @var array<non-empty-string, EnumMetadata> */
-    public private(set) array $enumTypes = [];
+    /** @var array<non-empty-string, File\ServiceDescriptor> map File\ServiceDescriptor by typename, used by server reflection */
+    private array $services = [];
 
-    /** @var array<non-empty-string, non-empty-string> */
-    private array $enumToTypeIndex = [];
+    /** @var array<class-string, non-empty-string> map typename by fqcn, used by google.protobuf.Any */
+    private array $types = [];
 
-    /** @var array<non-empty-string, non-negative-int> */
-    private array $enumTypeToDescriptorIndex = [];
-
-    /** @var array<non-empty-string, ServiceMetadata> */
-    public private(set) array $serviceTypes = [];
-
-    /** @var array<non-empty-string, non-negative-int> */
-    private array $serviceTypeToDescriptorIndex = [];
+    /** @var array<non-empty-string, non-empty-string> map filename by typename, used by server reflection */
+    private array $symbols = [];
 
     /**
      * @param non-empty-string $type
-     * @return MessageMetadata<object>
      */
-    public function messageByType(string $type): MessageMetadata
+    public function messageDescriptorByType(string $type): File\MessageDescriptor
     {
-        return $this->messageTypes[$type] ?? self::throwTypeNotFound($type);
+        return $this->messages[$type] ?? self::throwTypeNotFound($type);
     }
 
     /**
@@ -58,24 +51,15 @@ final class Registry
      */
     public function classType(string $fqcn): string
     {
-        return $this->classToTypeIndex[$fqcn] ?? self::throwClassTypeNotFound($fqcn);
-    }
-
-    /**
-     * @param non-empty-string $messageType
-     */
-    public function descriptorByMessage(string $messageType): Descriptor
-    {
-        return $this->descriptors[$this->messageTypeToDescriptorIndex[$messageType] ?? self::throwTypeNotFound($messageType)]
-            ?? self::throwDescriptorNotFound($messageType);
+        return $this->types[$fqcn] ?? self::throwClassTypeNotFound($fqcn);
     }
 
     /**
      * @param non-empty-string $type
      */
-    public function enumByType(string $type): EnumMetadata
+    public function enumDescriptorByType(string $type): File\EnumDescriptor
     {
-        return $this->enumTypes[$type] ?? self::throwTypeNotFound($type);
+        return $this->enums[$type] ?? self::throwTypeNotFound($type);
     }
 
     /**
@@ -84,33 +68,39 @@ final class Registry
      */
     public function enumType(string $fqcn): string
     {
-        return $this->enumToTypeIndex[$fqcn] ?? self::throwEnumTypeNotFound($fqcn);
-    }
-
-    /**
-     * @param non-empty-string $enumType
-     */
-    public function descriptorByEnum(string $enumType): Descriptor
-    {
-        return $this->descriptors[$this->enumTypeToDescriptorIndex[$enumType] ?? self::throwTypeNotFound($enumType)]
-            ?? self::throwDescriptorNotFound($enumType);
+        return $this->types[$fqcn] ?? self::throwEnumTypeNotFound($fqcn);
     }
 
     /**
      * @param non-empty-string $type
      */
-    public function serviceByType(string $type): ServiceMetadata
+    public function serviceDescriptorByType(string $type): File\ServiceDescriptor
     {
-        return $this->serviceTypes[$type] ?? self::throwTypeNotFound($type);
+        return $this->services[$type] ?? self::throwTypeNotFound($type);
     }
 
     /**
-     * @param non-empty-string $serviceType
+     * @param non-empty-string $filename
      */
-    public function descriptorByService(string $serviceType): Descriptor
+    public function fileByName(string $filename): File
     {
-        return $this->descriptors[$this->serviceTypeToDescriptorIndex[$serviceType] ?? self::throwTypeNotFound($serviceType)]
-            ?? self::throwDescriptorNotFound($serviceType);
+        return $this->files[$filename] ?? self::throwTypeNotFound($filename);
+    }
+
+    /**
+     * @param non-empty-string $symbol
+     */
+    public function fileBySymbol(string $symbol): File
+    {
+        return $this->files[$this->symbols[$symbol] ?? self::throwTypeNotFound($symbol)] ?? self::throwTypeNotFound($symbol);
+    }
+
+    /**
+     * @param non-empty-string $filename
+     */
+    public function descriptorByFilename(string $filename): Descriptor
+    {
+        return $this->descriptors[$filename] ?? self::throwTypeNotFound($filename);
     }
 
     public function register(Registrar ...$registries): self
@@ -124,73 +114,43 @@ final class Registry
         return $pool;
     }
 
-    /**
-     * @template T of object
-     * @param array<non-empty-string, MessageMetadata<T>|EnumMetadata|ServiceMetadata> $types
-     */
-    public function add(Descriptor $descriptor, array $types): self
+    public function add(Descriptor $descriptor, File $file): self
     {
         $pool = self::get();
 
-        $idx = \count($pool->descriptors);
-        $pool->descriptors[] = $descriptor;
+        $pool->descriptors[$file->name] = $descriptor;
+        $pool->files[$file->name] = $file;
 
-        foreach ($types as $type => $md) {
-            if ($md instanceof MessageMetadata) {
-                $pool->doAddMessageType($type, $md, $idx);
-            } elseif ($md instanceof EnumMetadata) {
-                $pool->doAddEnumType($type, $md, $idx);
-            } elseif ($md instanceof ServiceMetadata) { // @phpstan-ignore instanceof.alwaysTrue
-                $pool->doAddServiceType($type, $md, $idx);
+        foreach ($file->messages as $message) {
+            if (isset($pool->messages[$message->name])) {
+                self::throwTypeAlreadyRegistered($message->name);
             }
+
+            $pool->messages[$message->name] = $message;
+            $pool->types[$message->fqcn] = $message->name;
+            $pool->symbols[$message->name] = $file->name;
+        }
+
+        foreach ($file->enums as $enum) {
+            if (isset($pool->enums[$enum->name])) {
+                self::throwTypeAlreadyRegistered($enum->name);
+            }
+
+            $pool->enums[$enum->name] = $enum;
+            $pool->types[$enum->fqcn] = $enum->name;
+            $pool->symbols[$enum->name] = $file->name;
+        }
+
+        foreach ($file->services as $service) {
+            if (isset($pool->services[$service->name])) {
+                self::throwTypeAlreadyRegistered($service->name);
+            }
+
+            $pool->services[$service->name] = $service;
+            $pool->symbols[$service->name] = $file->name;
         }
 
         return $pool;
-    }
-
-    /**
-     * @param non-empty-string $type
-     * @param MessageMetadata<object> $md
-     * @param non-negative-int $descriptorIdx
-     */
-    private function doAddMessageType(string $type, MessageMetadata $md, int $descriptorIdx): void
-    {
-        if (isset($this->messageTypes[$type])) {
-            self::throwTypeAlreadyRegistered($type);
-        }
-
-        $this->messageTypeToDescriptorIndex[$type] = $descriptorIdx;
-        $this->messageTypes[$type] = $md;
-        $this->classToTypeIndex[$md->fqcn] = $type;
-    }
-
-    /**
-     * @param non-empty-string $type
-     * @param non-negative-int $descriptorIdx
-     */
-    private function doAddEnumType(string $type, EnumMetadata $md, int $descriptorIdx): void
-    {
-        if (isset($this->enumTypes[$type])) {
-            self::throwTypeAlreadyRegistered($type);
-        }
-
-        $this->enumTypeToDescriptorIndex[$type] = $descriptorIdx;
-        $this->enumTypes[$type] = $md;
-        $this->enumToTypeIndex[$md->fqcn] = $type;
-    }
-
-    /**
-     * @param non-empty-string $type
-     * @param non-negative-int $descriptorIdx
-     */
-    private function doAddServiceType(string $type, ServiceMetadata $md, int $descriptorIdx): void
-    {
-        if (isset($this->serviceTypes[$type])) {
-            self::throwTypeAlreadyRegistered($type);
-        }
-
-        $this->serviceTypeToDescriptorIndex[$type] = $descriptorIdx;
-        $this->serviceTypes[$type] = $md;
     }
 
     /**
@@ -215,14 +175,6 @@ final class Registry
     private static function throwEnumTypeNotFound(string $fqcn): never
     {
         throw new \RuntimeException(\sprintf('Associated with enum "%s" metadata not found in the \Thesis\Protobuf\Pool\Registry. Perhaps you forgot to include autoload.metadata.php in composer.json or did not call the appropriate descriptor registrar to register types in the pool?', $fqcn));
-    }
-
-    /**
-     * @param non-empty-string $type
-     */
-    private static function throwDescriptorNotFound(string $type): never
-    {
-        throw new \RuntimeException(\sprintf('Descriptor for type "%s" not found in the \Thesis\Protobuf\Pool\Registry. Perhaps you forgot to include autoload.metadata.php in composer.json or did not call the appropriate descriptor registrar to register types in the pool?', $type));
     }
 
     /**
