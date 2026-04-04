@@ -30,6 +30,10 @@ final class ReflectionEncoderTest extends TestCase
             '080012001800',
             bin2hex($encoder->encode(new OptionalScalarRequest(0, '', false))),
         );
+
+        self::assertEmpty(
+            $encoder->encode(new OptionalScalarRequest()),
+        );
     }
 }
 
