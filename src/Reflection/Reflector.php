@@ -188,7 +188,7 @@ final class Reflector
             if ($property->attributes->has(Field::class)) {
                 $field = $property->attributes->get(Field::class);
 
-                if ($presence($field, $value)) {
+                if (($property->default !== null && $property->default->value === null) || $presence($field, $value)) {
                     $descriptors[] = Protobuf\fieldOf(
                         $field->num,
                         $field->type->accept($this->valueVisitor)($value),
