@@ -8,8 +8,8 @@ use Thesis\Protobuf\FieldDescriptor;
 use Thesis\Protobuf\Internal\Buffer;
 use Thesis\Protobuf\Internal\Buffer\ByteBuffer;
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
-use Thesis\Protobuf\Internal\Wire\Tag;
 use Thesis\Protobuf\Message;
+use Thesis\Protobuf\Tag;
 use Thesis\Protobuf\Type\Visitor\DetermineWireType;
 use Thesis\Protobuf\Type\Visitor\TypeSerializerVisitor;
 

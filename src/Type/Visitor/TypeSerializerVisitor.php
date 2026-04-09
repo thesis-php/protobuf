@@ -26,7 +26,7 @@ use Thesis\Protobuf\Internal\Serde\SerializeMap;
 use Thesis\Protobuf\Internal\Serde\SerializeMessage;
 use Thesis\Protobuf\Internal\Serde\SerializeTag;
 use Thesis\Protobuf\Internal\Serde\SerializeValue;
-use Thesis\Protobuf\Internal\Wire\Tag;
+use Thesis\Protobuf\Tag;
 use Thesis\Protobuf\Type\BoolT;
 use Thesis\Protobuf\Type\DoubleT;
 use Thesis\Protobuf\Type\EnumT;

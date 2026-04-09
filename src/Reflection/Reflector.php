@@ -38,16 +38,19 @@ final class Reflector
 
     public static function build(
         ?CacheInterface $cache = null,
+        ?Protobuf\UnknownFieldHandler $unknowns = null,
     ): self {
         return new self(
             cache: new Cache(
                 $cache ?? new InMemoryPsr16Cache(),
             ),
+            unknowns: $unknowns,
         );
     }
 
     private function __construct(
         private readonly Cache $cache,
+        private readonly ?Protobuf\UnknownFieldHandler $unknowns = null,
     ) {
         $this->typeVisitor = new ToProtobufTypeTypeVisitor($this);
         $this->valueVisitor = new ToProtobufValueTypeVisitor($this);
@@ -162,6 +165,10 @@ final class Reflector
                     $this->defaultValuePropertyValue($property),
                 );
             }
+        }
+
+        if ($message->unknowns !== []) {
+            $this->unknowns?->handle($object, $message->unknowns);
         }
 
         return $object;

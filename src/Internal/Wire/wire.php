@@ -7,10 +7,15 @@ namespace Thesis\Protobuf\Internal\Wire;
 use BcMath\Number;
 use Thesis\Protobuf\Exception\BufferUnderflow;
 use Thesis\Protobuf\Internal\Buffer\ReadBuffer;
+use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
+use Thesis\Protobuf\Internal\Serde\SerdeVarint;
+use Thesis\Protobuf\Tag;
+use Thesis\Protobuf\UnknownField;
+use Thesis\Protobuf\WireType;
 use Thesis\Varint;
 
 /**
- * Removes bytes from the buffer corresponding to the size of each type:
+ * Return bytes from the buffer corresponding to the size of each type:
  *   fixed32 - 4,
  *   fixed64 - 8,
  *   varint  - 1 ≤ size ≤ 10,
@@ -19,25 +24,21 @@ use Thesis\Varint;
  * @internal
  * @throws BufferUnderflow
  */
-function discardUnknown(ReadBuffer $buffer, Tag $tag): void
+function discardUnknown(ReadBuffer $buffer, Tag $tag): UnknownField
 {
-    switch ($tag->type) {
-        case WireType::FIXED32:
-            $buffer->read(4);
-            break;
-        case WireType::FIXED64:
-            $buffer->read(8);
-            break;
-        case WireType::VARINT:
-            readVarint($buffer);
-            break;
-        case WireType::BYTES:
+    return new UnknownField($tag, match ($tag->type) {
+        WireType::FIXED32 => $buffer->read(4),
+        WireType::FIXED64 => $buffer->read(8),
+        WireType::VARINT => readVarint($buffer),
+        WireType::BYTES => (static function () use ($buffer): string {
             $length = (int) readVarint($buffer)->value;
             if ($length > 0) {
-                $buffer->read($length);
+                return $buffer->read($length);
             }
-            break;
-    }
+
+            return '';
+        })(),
+    });
 }
 
 /**
@@ -50,4 +51,32 @@ function readVarint(ReadBuffer $buffer): Number
     $buffer->read($number->size);
 
     return $number->value;
+}
+
+/**
+ * @internal
+ */
+function writeTag(WriteBuffer $buffer, Tag $tag): void
+{
+    SerdeVarint::T->serialize($buffer, $tag->number);
+}
+
+/**
+ * @internal
+ * @throws BufferUnderflow
+ */
+function peekTag(ReadBuffer $buffer): Tag
+{
+    $number = Varint\BcMath::Codec->decodeVarintSized($buffer->peek(10));
+
+    return Tag::from($number->value);
+}
+
+/**
+ * @internal
+ * @throws BufferUnderflow
+ */
+function readTag(ReadBuffer $buffer): Tag
+{
+    return Tag::from(readVarint($buffer));
 }

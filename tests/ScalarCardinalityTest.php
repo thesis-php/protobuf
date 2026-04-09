@@ -24,7 +24,6 @@ use Thesis\Protobuf\Internal\Serde\SerdeString;
 use Thesis\Protobuf\Internal\Serde\SerdeUint32;
 use Thesis\Protobuf\Internal\Serde\SerdeUint64;
 use Thesis\Protobuf\Internal\Serde\SerializeTag;
-use Thesis\Protobuf\Internal\Wire\Tag;
 use Thesis\Protobuf\Type\Visitor\DetermineWireType;
 use Thesis\Protobuf\Type\Visitor\TypeDeserializerVisitor;
 use Thesis\Protobuf\Type\Visitor\TypeSerializerVisitor;

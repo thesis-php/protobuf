@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Type\Visitor;
 
-use Thesis\Protobuf\Internal\Wire\WireType;
 use Thesis\Protobuf\Type\BoolT;
 use Thesis\Protobuf\Type\DoubleT;
 use Thesis\Protobuf\Type\EnumT;
@@ -24,6 +23,7 @@ use Thesis\Protobuf\Type\StringT;
 use Thesis\Protobuf\Type\Uint32T;
 use Thesis\Protobuf\Type\Uint64T;
 use Thesis\Protobuf\Type\Visitor;
+use Thesis\Protobuf\WireType;
 
 /**
  * @internal
