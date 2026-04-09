@@ -21,7 +21,7 @@
         "php": "^8.4",
         "ext-bcmath": "*",
         "psr/simple-cache": "^3.0",
-        "thesis/endian": "^0.3.0",
+        "thesis/endian": "^0.3.3",
         "thesis/varint": "^0.2.0"
     },
     "require-dev": {

@@ -22,13 +22,12 @@ enum SerdeSFixed32 implements
     #[\Override]
     public function serialize(WriteBuffer $buffer, mixed $value): void
     {
-        /** @phpstan-ignore argument.type */
-        $buffer->write(Endian\Order::little->packInt32($value));
+        $buffer->write(Endian\Order::Little->packInt32($value));
     }
 
     #[\Override]
     public function deserialize(ReadBuffer $buffer): int
     {
-        return Endian\Order::little->unpackInt32($buffer->read(4));
+        return Endian\Order::Little->unpackInt32($buffer->read(4));
     }
 }

@@ -23,12 +23,12 @@ enum SerdeFixed64 implements
     #[\Override]
     public function serialize(WriteBuffer $buffer, mixed $value): void
     {
-        $buffer->write(Endian\Order::little->packUint64($value));
+        $buffer->write(Endian\Order::Little->packUint64($value));
     }
 
     #[\Override]
     public function deserialize(ReadBuffer $buffer): Number
     {
-        return Endian\Order::little->unpackUint64($buffer->read(8));
+        return Endian\Order::Little->unpackUint64($buffer->read(8));
     }
 }

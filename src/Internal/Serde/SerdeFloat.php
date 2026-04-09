@@ -22,12 +22,12 @@ enum SerdeFloat implements
     #[\Override]
     public function serialize(WriteBuffer $buffer, mixed $value): void
     {
-        $buffer->write(Endian\Order::little->packFloat($value));
+        $buffer->write(Endian\Order::Little->packFloat($value));
     }
 
     #[\Override]
     public function deserialize(ReadBuffer $buffer): float
     {
-        return Endian\Order::little->unpackFloat($buffer->read(4));
+        return Endian\Order::Little->unpackFloat($buffer->read(4));
     }
 }
