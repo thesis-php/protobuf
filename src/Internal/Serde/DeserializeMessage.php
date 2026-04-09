@@ -31,12 +31,14 @@ final readonly class DeserializeMessage implements DeserializeValue
         /** @var list<FieldDescriptor<*>> $descriptors */
         $descriptors = [];
 
+        $unknowns = [];
+
         while (\count($buffer) > 0) {
             $tag = Wire\readTag($buffer);
 
             $field = $this->messageT->fields[$tag->num] ?? null;
             if ($field === null) {
-                Wire\discardUnknown($buffer, $tag);
+                $unknowns[] = Wire\discardUnknown($buffer, $tag);
 
                 continue;
             }
@@ -54,6 +56,6 @@ final readonly class DeserializeMessage implements DeserializeValue
             );
         }
 
-        return new Message(...$descriptors);
+        return new Message($descriptors, $unknowns);
     }
 }

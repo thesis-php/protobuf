@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Thesis\Protobuf\Internal\Wire;
+namespace Thesis\Protobuf;
 
 /**
- * @internal
+ * @api
  */
 enum WireType: int
 {

@@ -202,7 +202,7 @@ function fieldT(int $num, Type $type): Type\Field
  */
 function message(FieldDescriptor ...$fields): Message
 {
-    return new Message(...$fields);
+    return new Message($fields);
 }
 
 /**
@@ -214,7 +214,7 @@ function message(FieldDescriptor ...$fields): Message
 function messageOf(FieldDescriptor ...$fields): Value
 {
     return Value::message(
-        new Message(...$fields),
+        new Message($fields),
     );
 }
 

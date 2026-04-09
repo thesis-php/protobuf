@@ -17,10 +17,12 @@ final readonly class Message implements
 
     /**
      * @no-named-arguments
-     * @param FieldDescriptor<*> ...$fields
+     * @param list<FieldDescriptor<*>> $fields
+     * @param list<UnknownFields\UnknownField> $unknowns
      */
     public function __construct(
-        FieldDescriptor ...$fields,
+        array $fields = [],
+        public array $unknowns = [],
     ) {
         $map = [];
 

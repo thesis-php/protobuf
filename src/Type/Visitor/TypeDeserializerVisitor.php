@@ -23,7 +23,7 @@ use Thesis\Protobuf\Internal\Serde\SerdeSInt64;
 use Thesis\Protobuf\Internal\Serde\SerdeString;
 use Thesis\Protobuf\Internal\Serde\SerdeUint32;
 use Thesis\Protobuf\Internal\Serde\SerdeUint64;
-use Thesis\Protobuf\Internal\Wire\Tag;
+use Thesis\Protobuf\Tag;
 use Thesis\Protobuf\Type\BoolT;
 use Thesis\Protobuf\Type\DoubleT;
 use Thesis\Protobuf\Type\EnumT;

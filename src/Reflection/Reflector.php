@@ -18,6 +18,7 @@ use Thesis\Protobuf\Reflection\Internal\Visitor\ToProtobufTypeTypeVisitor;
 use Thesis\Protobuf\Reflection\Internal\Visitor\ToProtobufValueTypeVisitor;
 use Thesis\Protobuf\Reflection\Internal\Visitor\ToValueTypeVisitor;
 use Thesis\Protobuf\Type;
+use Thesis\Protobuf\UnknownFields;
 
 /**
  * @api
@@ -38,16 +39,19 @@ final class Reflector
 
     public static function build(
         ?CacheInterface $cache = null,
+        ?UnknownFields\Handler $unknowns = null,
     ): self {
         return new self(
             cache: new Cache(
                 $cache ?? new InMemoryPsr16Cache(),
             ),
+            unknowns: $unknowns,
         );
     }
 
     private function __construct(
         private readonly Cache $cache,
+        private readonly ?UnknownFields\Handler $unknowns = null,
     ) {
         $this->typeVisitor = new ToProtobufTypeTypeVisitor($this);
         $this->valueVisitor = new ToProtobufValueTypeVisitor($this);
@@ -162,6 +166,10 @@ final class Reflector
                     $this->defaultValuePropertyValue($property),
                 );
             }
+        }
+
+        if ($message->unknowns !== []) {
+            $this->unknowns?->handle($object, $message->unknowns);
         }
 
         return $object;

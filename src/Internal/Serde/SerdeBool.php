@@ -30,6 +30,6 @@ enum SerdeBool implements
     {
         $num = SerdeVarint::T->deserialize($buffer);
 
-        return (int) $num->value === 1;
+        return (int) $num->value !== 0;
     }
 }

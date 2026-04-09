@@ -7,7 +7,6 @@ namespace Thesis\Protobuf;
 use Thesis\Protobuf\Exception\BufferUnderflow;
 use Thesis\Protobuf\Internal\Buffer\ByteBuffer;
 use Thesis\Protobuf\Internal\Wire;
-use Thesis\Protobuf\Internal\Wire\Tag;
 use Thesis\Protobuf\Type\MessageT;
 use Thesis\Protobuf\Type\Visitor\DetermineWireType;
 use Thesis\Protobuf\Type\Visitor\TypeDeserializerVisitor;
@@ -47,12 +46,14 @@ final readonly class Serializer
         /** @var list<FieldDescriptor<*>> $descriptors */
         $descriptors = [];
 
+        $unknowns = [];
+
         while (\count($buffer) > 0) {
             $tag = Wire\readTag($buffer);
 
             $field = $type->fields[$tag->num] ?? null;
             if ($field === null) {
-                Wire\discardUnknown($buffer, $tag);
+                $unknowns[] = Wire\discardUnknown($buffer, $tag);
 
                 continue;
             }
@@ -70,6 +71,6 @@ final readonly class Serializer
             );
         }
 
-        return new Message(...$descriptors);
+        return new Message($descriptors, $unknowns);
     }
 }

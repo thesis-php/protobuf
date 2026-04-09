@@ -9,6 +9,7 @@ use Thesis\Protobuf\Decoder;
 use Thesis\Protobuf\Decoder\Internal\ReflectionDecoder;
 use Thesis\Protobuf\Reflection\Reflector;
 use Thesis\Protobuf\Serializer;
+use Thesis\Protobuf\UnknownFields;
 
 /**
  * @api
@@ -17,10 +18,20 @@ final class Builder
 {
     private ?CacheInterface $cache = null;
 
+    private ?UnknownFields\Handler $unknowns = null;
+
     public function withCache(CacheInterface $cache): self
     {
         $builder = clone $this;
         $builder->cache = $cache;
+
+        return $builder;
+    }
+
+    public function withUnknownHandler(UnknownFields\Handler $handler): self
+    {
+        $builder = clone $this;
+        $builder->unknowns = $handler;
 
         return $builder;
     }
@@ -34,7 +45,7 @@ final class Builder
     {
         return new ReflectionDecoder(
             new Serializer(),
-            Reflector::build($this->cache),
+            Reflector::build($this->cache, $this->unknowns),
         );
     }
 }

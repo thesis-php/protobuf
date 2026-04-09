@@ -8,8 +8,8 @@ use Thesis\Protobuf\Internal\Buffer;
 use Thesis\Protobuf\Internal\Buffer\ByteBuffer;
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
 use Thesis\Protobuf\Internal\Wire;
-use Thesis\Protobuf\Internal\Wire\Tag;
-use Thesis\Protobuf\Internal\Wire\WireType;
+use Thesis\Protobuf\Tag;
+use Thesis\Protobuf\WireType;
 
 /**
  * @internal

@@ -6,7 +6,7 @@ namespace Thesis\Protobuf\Internal\Serde;
 
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
 use Thesis\Protobuf\Internal\Wire;
-use Thesis\Protobuf\Internal\Wire\Tag;
+use Thesis\Protobuf\Tag;
 
 /**
  * @internal
