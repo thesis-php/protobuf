@@ -135,6 +135,7 @@ This is convenient for logging without keeping the data in memory:
 
 ```php
 use Thesis\Protobuf\Decoder;
+use Thesis\Protobuf\UnknownField;
 use Thesis\Protobuf\UnknownFieldHandler\OnUnknownFields;
 
 $decoder = new Decoder\Builder()
@@ -143,7 +144,7 @@ $decoder = new Decoder\Builder()
             $logger->warning('Unknown fields detected', [
                 'class' => $message::class,
                 'fields' => array_map(
-                    static fn($f) => $f->tag->num,
+                    static fn(UnknownField $f) => $f->tag->num,
                     $unknowns,
                 ),
             ]);
