@@ -6,7 +6,6 @@ namespace Thesis\Protobuf;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Thesis\Protobuf\Decoder\Builder;
 use Thesis\Protobuf\UnknownFieldHandler\OnUnknownFields;
 use Thesis\Protobuf\UnknownFieldHandler\UnknownFields;
 
@@ -17,7 +16,7 @@ final class UnknownHandlerTest extends TestCase
     public function testUnknownFieldsHandler(): void
     {
         $encoder = Encoder\Builder::buildDefault();
-        $decoder = new Builder()
+        $decoder = new Decoder\Builder()
             ->withUnknownHandler(UnknownFields::get())
             ->build();
 
@@ -38,7 +37,7 @@ final class UnknownHandlerTest extends TestCase
         $captured = [];
 
         $encoder = Encoder\Builder::buildDefault();
-        $decoder = new Builder()
+        $decoder = new Decoder\Builder()
             ->withUnknownHandler(new OnUnknownFields(
                 static function (object $message, array $unknowns) use (&$captured): void {
                     $captured[] = [$message, $unknowns];
@@ -58,7 +57,7 @@ final class UnknownHandlerTest extends TestCase
     public function testNoUnknownFieldsProducesEmptyResult(): void
     {
         $encoder = Encoder\Builder::buildDefault();
-        $decoder = new Builder()
+        $decoder = new Decoder\Builder()
             ->withUnknownHandler(UnknownFields::get())
             ->build();
 
