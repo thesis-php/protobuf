@@ -18,6 +18,7 @@ use Thesis\Protobuf\Reflection\Internal\Visitor\ToProtobufTypeTypeVisitor;
 use Thesis\Protobuf\Reflection\Internal\Visitor\ToProtobufValueTypeVisitor;
 use Thesis\Protobuf\Reflection\Internal\Visitor\ToValueTypeVisitor;
 use Thesis\Protobuf\Type;
+use Thesis\Protobuf\UnknownFields;
 
 /**
  * @api
@@ -38,7 +39,7 @@ final class Reflector
 
     public static function build(
         ?CacheInterface $cache = null,
-        ?Protobuf\UnknownFieldHandler $unknowns = null,
+        ?UnknownFields\Handler $unknowns = null,
     ): self {
         return new self(
             cache: new Cache(
@@ -50,7 +51,7 @@ final class Reflector
 
     private function __construct(
         private readonly Cache $cache,
-        private readonly ?Protobuf\UnknownFieldHandler $unknowns = null,
+        private readonly ?UnknownFields\Handler $unknowns = null,
     ) {
         $this->typeVisitor = new ToProtobufTypeTypeVisitor($this);
         $this->valueVisitor = new ToProtobufValueTypeVisitor($this);

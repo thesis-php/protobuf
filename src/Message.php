@@ -18,7 +18,7 @@ final readonly class Message implements
     /**
      * @no-named-arguments
      * @param list<FieldDescriptor<*>> $fields
-     * @param list<UnknownField> $unknowns
+     * @param list<UnknownFields\UnknownField> $unknowns
      */
     public function __construct(
         array $fields = [],

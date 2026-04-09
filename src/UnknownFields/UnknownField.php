@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Thesis\Protobuf;
+namespace Thesis\Protobuf\UnknownFields;
 
 use BcMath\Number;
+use Thesis\Protobuf\Tag;
 
 /**
  * @api

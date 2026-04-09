@@ -2,15 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Thesis\Protobuf\UnknownFieldHandler;
-
-use Thesis\Protobuf\UnknownField;
-use Thesis\Protobuf\UnknownFieldHandler;
+namespace Thesis\Protobuf\UnknownFields;
 
 /**
  * @api
  */
-final readonly class OnUnknownFields implements UnknownFieldHandler
+final readonly class UnknownFieldsCallback implements Handler
 {
     /** @var \Closure(object, non-empty-list<UnknownField>): void */
     private \Closure $function;

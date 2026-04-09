@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Thesis\Protobuf;
+namespace Thesis\Protobuf\UnknownFields;
 
 /**
  * @api
  */
-interface UnknownFieldHandler
+interface Handler
 {
     /**
      * @param non-empty-list<UnknownField> $unknowns

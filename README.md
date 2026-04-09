@@ -105,10 +105,10 @@ Once the object is garbage collected, the unknown fields are automatically clean
 
 ```php
 use Thesis\Protobuf\Decoder;
-use Thesis\Protobuf\UnknownFieldHandler\UnknownFields;
+use Thesis\Protobuf\UnknownFields;
 
 $decoder = new Decoder\Builder()
-    ->withUnknownHandler(UnknownFields::get())
+    ->withUnknownHandler(UnknownFields::handler())
     ->build();
 
 $request = $decoder->decode($buffer, CreateUserRequest::class);
@@ -130,21 +130,20 @@ $unknowns = UnknownFields::of($request->nested);
 
 #### Using a callback
 
-The `OnUnknownFields` handler calls a user-defined function each time unknown fields are detected.
+The `UnknownFieldsCallback` handler calls a user-defined function each time unknown fields are detected.
 This is convenient for logging without keeping the data in memory:
 
 ```php
 use Thesis\Protobuf\Decoder;
-use Thesis\Protobuf\UnknownField;
-use Thesis\Protobuf\UnknownFieldHandler\OnUnknownFields;
+use Thesis\Protobuf\UnknownFields;
 
 $decoder = new Decoder\Builder()
-    ->withUnknownHandler(new OnUnknownFields(
+    ->withUnknownHandler(new UnknownFields\UnknownFieldsCallback(
         static function (object $message, array $unknowns): void {
             $logger->warning('Unknown fields detected', [
                 'class' => $message::class,
                 'fields' => array_map(
-                    static fn(UnknownField $f) => $f->tag->num,
+                    static fn(UnknownFields\UnknownField $f) => $f->tag->num,
                     $unknowns,
                 ),
             ]);
@@ -155,12 +154,12 @@ $decoder = new Decoder\Builder()
 
 #### Custom handler
 
-You can implement the `UnknownFieldHandler` interface to define your own strategy:
+You can implement the `UnknownFields\Handler` interface to define your own strategy:
 
 ```php
-use Thesis\Protobuf\UnknownFieldHandler;
+use Thesis\Protobuf\UnknownFields;
 
-final readonly class MyHandler implements UnknownFieldHandler
+final readonly class MyHandler implements UnknownFields\Handler
 {
     #[\Override]
     public function handle(object $message, array $unknowns): void

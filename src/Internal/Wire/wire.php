@@ -10,7 +10,7 @@ use Thesis\Protobuf\Internal\Buffer\ReadBuffer;
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
 use Thesis\Protobuf\Internal\Serde\SerdeVarint;
 use Thesis\Protobuf\Tag;
-use Thesis\Protobuf\UnknownField;
+use Thesis\Protobuf\UnknownFields\UnknownField;
 use Thesis\Protobuf\WireType;
 use Thesis\Varint;
 
