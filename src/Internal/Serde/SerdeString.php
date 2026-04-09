@@ -33,7 +33,11 @@ enum SerdeString implements
     public function deserialize(ReadBuffer $buffer): string
     {
         $length = (int) SerdeVarint::T->deserialize($buffer)->value;
-        if ($length <= 0) {
+        if ($length < 0) {
+            throw new \UnexpectedValueException("String length must be positive or equal to 0, '{$length}' given.");
+        }
+
+        if ($length === 0) {
             return '';
         }
 
