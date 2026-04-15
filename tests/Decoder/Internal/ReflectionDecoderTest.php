@@ -20,6 +20,18 @@ final class ReflectionDecoderTest extends TestCase
         self::assertIsString($buffer);
         self::assertEquals(new Request('John Doe', 50), $decoder->decode($buffer, Request::class));
     }
+
+    public function testRequiredPropertiesCannotBeInitializedImplicitly(): void
+    {
+        $decoder = Builder::buildDefault();
+
+        $this->expectExceptionObject(new Reflection\Exception\MappingError([
+            new Reflection\Exception\PropertyRequired(Request::class, 'name'),
+            new Reflection\Exception\PropertyRequired(Request::class, 'id'),
+        ]));
+
+        $decoder->decode('', Request::class);
+    }
 }
 
 final readonly class Request

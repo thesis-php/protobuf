@@ -8,12 +8,10 @@ use Psr\SimpleCache\CacheInterface;
 use Thesis\Protobuf;
 use Thesis\Protobuf\Message;
 use Thesis\Protobuf\Reflection\Internal\Api\ClassReflector;
-use Thesis\Protobuf\Reflection\Internal\Api\PropertyReflection;
 use Thesis\Protobuf\Reflection\Internal\Cache\Cache;
 use Thesis\Protobuf\Reflection\Internal\Cache\InMemoryPsr16Cache;
 use Thesis\Protobuf\Reflection\Internal\Visitor\IsValueEmpty;
 use Thesis\Protobuf\Reflection\Internal\Visitor\RecursionBreakTypeVisitor;
-use Thesis\Protobuf\Reflection\Internal\Visitor\ToDefaultValueTypeVisitor;
 use Thesis\Protobuf\Reflection\Internal\Visitor\ToProtobufTypeTypeVisitor;
 use Thesis\Protobuf\Reflection\Internal\Visitor\ToProtobufValueTypeVisitor;
 use Thesis\Protobuf\Reflection\Internal\Visitor\ToValueTypeVisitor;
@@ -29,8 +27,6 @@ final class Reflector
 
     /** @var ToProtobufValueTypeVisitor<*> */
     private readonly ToProtobufValueTypeVisitor $valueVisitor;
-
-    private readonly ToDefaultValueTypeVisitor $defaultValueTypeVisitor;
 
     private readonly ClassReflector $classReflector;
 
@@ -55,7 +51,6 @@ final class Reflector
     ) {
         $this->typeVisitor = new ToProtobufTypeTypeVisitor($this);
         $this->valueVisitor = new ToProtobufValueTypeVisitor($this);
-        $this->defaultValueTypeVisitor = new ToDefaultValueTypeVisitor();
         $this->classReflector = new ClassReflector();
     }
 
@@ -123,6 +118,8 @@ final class Reflector
         $classReflection = $this->classReflector->reflect($class);
         $object = $classReflection->class->newInstanceWithoutConstructor();
 
+        $exceptions = [];
+
         foreach ($classReflection->properties as $property) {
             $propertyType = $property->reflection->getType();
             \assert($propertyType !== null);
@@ -130,18 +127,27 @@ final class Reflector
             if ($property->attributes->has(Field::class)) {
                 $field = $property->attributes->get(Field::class);
 
-                $descriptor = $message->fields[$field->num] ?? null;
+                if (isset($message->fields[$field->num])) {
+                    $value = $field
+                        ->type
+                        ->accept(new ToValueTypeVisitor(
+                            $this,
+                            $message->fields[$field->num]->value->value,
+                        ));
+                } elseif ($property->default !== null) {
+                    $value = $property->default->value;
+                } else {
+                    $exceptions[] = new Exception\PropertyRequired(
+                        $property->reflection->getDeclaringClass()->getName(),
+                        $property->reflection->getName(),
+                    );
+
+                    continue;
+                }
+
                 $property->reflection->setValue(
                     $object,
-                    match (true) {
-                        $descriptor !== null => $field
-                            ->type
-                            ->accept(new ToValueTypeVisitor(
-                                $this,
-                                $descriptor->value->value,
-                            )),
-                        default => $this->defaultValuePropertyValue($property, $field),
-                    },
+                    $value,
                 );
             } elseif ($property->attributes->has(OneOf::class)) {
                 $oneof = $property->attributes->get(OneOf::class);
@@ -163,9 +169,13 @@ final class Reflector
 
                 $property->reflection->setValue(
                     $object,
-                    $this->defaultValuePropertyValue($property),
+                    null,
                 );
             }
+        }
+
+        if ($exceptions !== []) {
+            throw new Exception\MappingError($exceptions);
         }
 
         if ($message->unknowns !== []) {
@@ -219,20 +229,5 @@ final class Reflector
         }
 
         return Protobuf\message(...$descriptors);
-    }
-
-    /**
-     * @throws Exception\PropertyUninitialized
-     */
-    private function defaultValuePropertyValue(PropertyReflection $property, ?Field $field = null): mixed
-    {
-        if ($property->default !== null) {
-            return $property->default->value;
-        }
-
-        return $field?->type->accept($this->defaultValueTypeVisitor) ?? throw new Exception\PropertyUninitialized(
-            $property->reflection->getDeclaringClass()->getName(),
-            $property->reflection->getName(),
-        );
     }
 }
