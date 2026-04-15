@@ -90,6 +90,40 @@ $request = $decoder->decode(/** protobuf buffer here */, CreateUserRequest::clas
 echo $request->name;
 ```
 
+### Required fields
+
+`Reflector::map()` maps missing fields using property defaults when they exist.
+If a property is non-nullable and has no default value, it is treated as required.
+
+When one or more required properties are missing, decoding fails with `Thesis\Protobuf\Reflection\Exception\MappingError`.
+The exception contains all reasons in `->reasons` (each reason is typically `PropertyRequired`).
+
+This behavior is aligned with other protobuf implementations/plugins: messages missing required fields are treated as invalid during decode.
+
+A field is considered required when either:
+- it is defined as `required` in `proto2`;
+- it is defined in editions with `features.field_presence = LEGACY_REQUIRED`.
+
+```php
+use Thesis\Protobuf\Decoder;
+use Thesis\Protobuf\Reflection;
+
+$decoder = Decoder\Builder::buildDefault();
+
+try {
+    $message = $decoder->decode($buffer, CreateUserRequest::class);
+} catch (Reflection\Exception\MappingError $e) {
+    foreach ($e->reasons as $reason) {
+        if ($reason instanceof Reflection\Exception\PropertyRequired) {
+            echo $reason->class . "::$" . $reason->property . PHP_EOL;
+        }
+    }
+}
+```
+
+Both `Encoder::encode()` and `Decoder::decode()` throw `Thesis\Protobuf\ProtobufException`.
+Domain protobuf exceptions are preserved and are not wrapped into generic runtime errors.
+
 ### Unknown fields
 
 When a protobuf message is decoded, it may contain fields that are not defined in the target class.

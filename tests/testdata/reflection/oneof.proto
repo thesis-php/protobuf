@@ -11,9 +11,10 @@ message Organization {
   string name = 1;
 
   enum Role {
-    ROLE_MEMBER = 0;
-    ROLE_MAINTAINER = 1;
-    ROLE_OWNER = 2;
+    ROLE_UNSPECIFIED = 0;
+    ROLE_MEMBER = 1;
+    ROLE_MAINTAINER = 2;
+    ROLE_OWNER = 3;
   };
   Role role = 2;
 }

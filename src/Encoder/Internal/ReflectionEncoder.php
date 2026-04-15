@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Thesis\Protobuf\Encoder\Internal;
 
 use Thesis\Protobuf\Encoder;
+use Thesis\Protobuf\ProtobufException;
 use Thesis\Protobuf\Reflection\Reflector;
 use Thesis\Protobuf\Serializer;
 
@@ -25,6 +26,8 @@ final readonly class ReflectionEncoder implements Encoder
             return $this->serializer->serialize(
                 $this->reflector->message($message),
             );
+        } catch (ProtobufException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             throw new Encoder\EncodingError($e->getMessage(), (int) $e->getCode(), $e);
         }
