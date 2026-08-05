@@ -11,8 +11,8 @@ use Thesis\Varint;
 
 /**
  * @internal
- * @template-implements SerializeValue<Number>
- * @template-implements DeserializeValue<Number>
+ * @template-implements SerializeValue<int>
+ * @template-implements DeserializeValue<int>
  */
 enum SerdeSInt64 implements
     SerializeValue,
@@ -23,12 +23,12 @@ enum SerdeSInt64 implements
     #[\Override]
     public function serialize(WriteBuffer $buffer, mixed $value): void
     {
-        SerdeVarint::T->serialize($buffer, Varint\BcMath::Codec->encodeZigZag($value));
+        SerdeVarint::T->serialize($buffer, Varint\BcMath::Codec->encodeZigZag(new Number($value)));
     }
 
     #[\Override]
-    public function deserialize(ReadBuffer $buffer): Number
+    public function deserialize(ReadBuffer $buffer): int
     {
-        return Varint\BcMath::Codec->decodeZigZag(SerdeVarint::T->deserialize($buffer));
+        return (int) Varint\BcMath::Codec->decodeZigZag(SerdeVarint::T->deserialize($buffer))->value;
     }
 }

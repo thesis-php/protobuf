@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Reflection;
 
-use BcMath\Number;
-
 /**
  * @api
- * @template-implements Type<Number>
+ * @template-implements Type<int>
  */
 enum SFixed64T implements Type
 {

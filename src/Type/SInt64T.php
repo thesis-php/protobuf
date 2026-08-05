@@ -4,18 +4,17 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Type;
 
-use BcMath\Number;
 use Thesis\Protobuf\Type;
 
 /**
- * @template-implements Type<Number>
- * @template-implements Listable<Number>
+ * @template-implements Type<int>
+ * @template-implements Listable<int>
  */
 enum SInt64T implements
     Type,
     Listable
 {
-    /** @use Listed<Number> */
+    /** @use Listed<int> */
     use Listed;
 
     case T;

@@ -112,15 +112,15 @@ final class ScalarCardinalityTest extends TestCase
                         'sint32' => Value::sint32(filter_var($value, FILTER_VALIDATE_INT)),
                         /** @phpstan-ignore argument.type */
                         'uint32' => Value::uint32(filter_var($value, FILTER_VALIDATE_INT)),
-                        'int64' => Value::int64(self::toNumber($value)),
+                        'int64' => Value::int64((int) $value),
                         'uint64' => Value::uint64(self::toNumber($value)),
-                        'sint64' => Value::sint64(self::toNumber($value)),
+                        'sint64' => Value::sint64((int) $value),
                         /** @phpstan-ignore argument.type */
                         'fixed32' => Value::fixed32(filter_var($value, FILTER_VALIDATE_INT)),
                         /** @phpstan-ignore argument.type */
                         'sfixed32' => Value::sfixed32(filter_var($value, FILTER_VALIDATE_INT)),
                         'fixed64' => Value::fixed64(self::toNumber($value)),
-                        'sfixed64' => Value::sfixed64(self::toNumber($value)),
+                        'sfixed64' => Value::sfixed64((int) $value),
                         default => throw new \UnexpectedValueException("Cannot handle type '{$type}'."),
                     },
                     $hex,
