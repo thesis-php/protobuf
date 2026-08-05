@@ -14,12 +14,15 @@ use Thesis\Protobuf\Reflection\EnumT;
 use Thesis\Protobuf\Reflection\Fixed32T;
 use Thesis\Protobuf\Reflection\FloatT;
 use Thesis\Protobuf\Reflection\Int32T;
+use Thesis\Protobuf\Reflection\Int64T;
 use Thesis\Protobuf\Reflection\ListT;
 use Thesis\Protobuf\Reflection\MapT;
 use Thesis\Protobuf\Reflection\ObjectT;
 use Thesis\Protobuf\Reflection\Reflector;
 use Thesis\Protobuf\Reflection\SFixed32T;
+use Thesis\Protobuf\Reflection\SFixed64T;
 use Thesis\Protobuf\Reflection\SInt32T;
+use Thesis\Protobuf\Reflection\SInt64T;
 use Thesis\Protobuf\Reflection\StringT;
 use Thesis\Protobuf\Reflection\Type;
 use Thesis\Protobuf\Reflection\Uint32T;
@@ -94,6 +97,30 @@ final class ToValueTypeVisitor extends DefaultTypeVisitor
 
     #[\Override]
     public function sfixed32(SFixed32T $type): mixed
+    {
+        \assert(\is_int($this->value));
+
+        return $this->value;
+    }
+
+    #[\Override]
+    public function int64(Int64T $type): mixed
+    {
+        \assert(\is_int($this->value));
+
+        return $this->value;
+    }
+
+    #[\Override]
+    public function sint64(SInt64T $type): mixed
+    {
+        \assert(\is_int($this->value));
+
+        return $this->value;
+    }
+
+    #[\Override]
+    public function sfixed64(SFixed64T $type): mixed
     {
         \assert(\is_int($this->value));
 

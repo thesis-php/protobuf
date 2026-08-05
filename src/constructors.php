@@ -52,9 +52,9 @@ const sint32T = Type\SInt32T::T;
 
 /**
  * @api
- * @return Value<Number>
+ * @return Value<int>
  */
-function int64Of(Number $num): Value
+function int64Of(int $num): Value
 {
     return Value::int64($num);
 }
@@ -74,9 +74,9 @@ const uint64T = Type\Uint64T::T;
 
 /**
  * @api
- * @return Value<Number>
+ * @return Value<int>
  */
-function sint64Of(Number $num): Value
+function sint64Of(int $num): Value
 {
     return Value::sint64($num);
 }
@@ -118,9 +118,9 @@ const fixed64T = Type\Fixed64T::T;
 
 /**
  * @api
- * @return Value<Number>
+ * @return Value<int>
  */
-function sfixed64Of(Number $num): Value
+function sfixed64Of(int $num): Value
 {
     return Value::sfixed64($num);
 }

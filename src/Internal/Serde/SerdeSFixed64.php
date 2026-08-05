@@ -11,8 +11,8 @@ use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
 
 /**
  * @internal
- * @template-implements SerializeValue<Number>
- * @template-implements DeserializeValue<Number>
+ * @template-implements SerializeValue<int>
+ * @template-implements DeserializeValue<int>
  */
 enum SerdeSFixed64 implements
     SerializeValue,
@@ -23,12 +23,12 @@ enum SerdeSFixed64 implements
     #[\Override]
     public function serialize(WriteBuffer $buffer, mixed $value): void
     {
-        $buffer->write(Endian\Order::Little->packInt64($value));
+        $buffer->write(Endian\Order::Little->packInt64(new Number($value)));
     }
 
     #[\Override]
-    public function deserialize(ReadBuffer $buffer): Number
+    public function deserialize(ReadBuffer $buffer): int
     {
-        return Endian\Order::Little->unpackInt64($buffer->read(8));
+        return (int) Endian\Order::Little->unpackInt64($buffer->read(8))->value;
     }
 }

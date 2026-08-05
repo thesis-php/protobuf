@@ -29,9 +29,9 @@ final readonly class Value
     }
 
     /**
-     * @return self<Number>
+     * @return self<int>
      */
-    public static function int64(Number $num): self
+    public static function int64(int $num): self
     {
         return new self($num, int64T);
     }
@@ -61,9 +61,9 @@ final readonly class Value
     }
 
     /**
-     * @return self<Number>
+     * @return self<int>
      */
-    public static function sint64(Number $num): self
+    public static function sint64(int $num): self
     {
         return new self($num, sint64T);
     }
@@ -93,9 +93,9 @@ final readonly class Value
     }
 
     /**
-     * @return self<Number>
+     * @return self<int>
      */
-    public static function sfixed64(Number $num): self
+    public static function sfixed64(int $num): self
     {
         return new self($num, sfixed64T);
     }

@@ -10,8 +10,8 @@ use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
 
 /**
  * @internal
- * @template-implements SerializeValue<Number>
- * @template-implements DeserializeValue<Number>
+ * @template-implements SerializeValue<int>
+ * @template-implements DeserializeValue<int>
  */
 enum SerdeInt64 implements
     SerializeValue,
@@ -30,7 +30,7 @@ enum SerdeInt64 implements
         static $p63;
         $p63 ??= new Number(2)->pow(63);
 
-        $num = $value->mod($p64);
+        $num = new Number($value)->mod($p64);
 
         if ($num->compare($p63) >= 0) {
             $num -= $p64;
@@ -44,7 +44,7 @@ enum SerdeInt64 implements
     }
 
     #[\Override]
-    public function deserialize(ReadBuffer $buffer): Number
+    public function deserialize(ReadBuffer $buffer): int
     {
         /** @var ?Number $p63 */
         static $p63;
@@ -61,6 +61,6 @@ enum SerdeInt64 implements
             $num -= $p64;
         }
 
-        return $num;
+        return (int) $num->value;
     }
 }

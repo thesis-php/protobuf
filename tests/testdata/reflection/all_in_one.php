@@ -9,7 +9,7 @@ use Thesis\Protobuf\Reflection;
 final readonly class Nested
 {
     /**
-     * @param ?list<Number> $values
+     * @param ?list<int> $values
      */
     public function __construct(
         #[Reflection\Field(1, Reflection\Uint32T::T)]
@@ -76,7 +76,7 @@ final readonly class MegaTest
         #[Reflection\Field(1, Reflection\Int32T::T)]
         public ?int $aInt32 = null,
         #[Reflection\Field(2, Reflection\Int64T::T)]
-        public ?Number $aInt64 = null,
+        public ?int $aInt64 = null,
         #[Reflection\Field(3, Reflection\Uint32T::T)]
         public ?int $aUint32 = null,
         #[Reflection\Field(4, Reflection\Uint64T::T)]
@@ -84,7 +84,7 @@ final readonly class MegaTest
         #[Reflection\Field(5, Reflection\SInt32T::T)]
         public ?int $aSint32 = null,
         #[Reflection\Field(6, Reflection\SInt64T::T)]
-        public ?Number $aSint64 = null,
+        public ?int $aSint64 = null,
         #[Reflection\Field(7, Reflection\Fixed32T::T)]
         public ?int $aFixed32 = null,
         #[Reflection\Field(8, Reflection\Fixed64T::T)]
@@ -92,7 +92,7 @@ final readonly class MegaTest
         #[Reflection\Field(9, Reflection\SFixed32T::T)]
         public ?int $aSfixed32 = null,
         #[Reflection\Field(10, Reflection\SFixed64T::T)]
-        public ?Number $aSfixed64 = null,
+        public ?int $aSfixed64 = null,
         #[Reflection\Field(11, Reflection\FloatT::T)]
         public ?float $aFloat = null,
         #[Reflection\Field(12, Reflection\DoubleT::T)]

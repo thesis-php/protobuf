@@ -37,7 +37,7 @@ enum SerdeSInt32 implements
             $num -= $p32;
         }
 
-        SerdeSInt64::T->serialize($buffer, $num);
+        SerdeSInt64::T->serialize($buffer, (int) $num->value);
     }
 
     #[\Override]
@@ -51,8 +51,7 @@ enum SerdeSInt32 implements
         static $p32;
         $p32 ??= new Number(2)->pow(32);
 
-        $num = SerdeSInt64::T->deserialize($buffer);
-        $num = $num->mod($p32);
+        $num = new Number(SerdeSInt64::T->deserialize($buffer))->mod($p32);
 
         if ($num->compare($p31) >= 0) {
             $num -= $p32;
