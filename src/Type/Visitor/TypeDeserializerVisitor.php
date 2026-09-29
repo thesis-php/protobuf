@@ -43,6 +43,7 @@ use Thesis\Protobuf\Type\StringT;
 use Thesis\Protobuf\Type\Uint32T;
 use Thesis\Protobuf\Type\Uint64T;
 use Thesis\Protobuf\Type\Visitor;
+use Thesis\Protobuf\WireType;
 use function Thesis\Protobuf\fieldT;
 use function Thesis\Protobuf\messageT;
 
@@ -142,11 +143,13 @@ final readonly class TypeDeserializerVisitor implements Visitor
     #[\Override]
     public function list(ListT $type): DeserializeValue
     {
+        // Parsers must accept both encodings of a packable repeated field whatever it is declared
+        // as: a length-delimited record of a packable element type is always the packed form.
         return new DeserializeList(
             /** @phpstan-ignore argument.type */
             $type->element->accept($this),
             $this->tag,
-            $type->packed ?? $type->element->accept(new IsPacked()),
+            $this->tag->type === WireType::BYTES && $type->element->accept(new IsPacked()),
         );
     }
 

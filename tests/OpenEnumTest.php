@@ -51,9 +51,7 @@ final class OpenEnumTest extends TestCase
 
     public function testUnpackedRepeatedKeepsKnownValuesInOrder(): void
     {
-        // Field 4 as separate varints (tag 0x20): 1, 68, 2, 69. Written by hand, since the
-        // encoder currently packs repeated int32 even when declared `packed: false`.
-        $decoded = self::decodeBytes("\x20\x01\x20\x44\x20\x02\x20\x45", OpenEnumTestMessage::class);
+        $decoded = self::decode(new OpenEnumTestWire(unpacked: [1, 68, 2, 69]), OpenEnumTestMessage::class);
 
         self::assertSame([OpenEnumTestColor::RED, OpenEnumTestColor::BLUE], $decoded->unpacked);
         self::assertSame([[4, WireType::VARINT, '68'], [4, WireType::VARINT, '69']], self::unknowns($decoded));
@@ -98,16 +96,8 @@ final class OpenEnumTest extends TestCase
      */
     private static function decode(object $wire, string $class): object
     {
-        return self::decodeBytes(Encoder\Builder::buildDefault()->encode($wire), $class);
-    }
+        $bytes = Encoder\Builder::buildDefault()->encode($wire);
 
-    /**
-     * @template T of object
-     * @param class-string<T> $class
-     * @return T
-     */
-    private static function decodeBytes(string $bytes, string $class): object
-    {
         return new Decoder\Builder()->withUnknownHandler(UnknownFields::handler())->build()->decode($bytes, $class);
     }
 
