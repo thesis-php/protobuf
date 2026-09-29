@@ -167,6 +167,7 @@ final readonly class ToProtobufValueTypeVisitor implements Visitor
             $element,
             /** @phpstan-ignore argument.type */
             $mapValue($value),
+            $type->packed,
         );
     }
 
