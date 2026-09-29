@@ -47,6 +47,15 @@ final readonly class DeserializeMessage implements DeserializeValue
                 ->accept(new TypeDeserializerVisitor($tag))
                 ->deserialize($buffer);
 
+            [$value, $unknownEnums] = UnknownEnumValue::extract($value, $field->num);
+            if ($unknownEnums !== []) {
+                $unknowns = [...$unknowns, ...$unknownEnums];
+
+                if ($value === null) {
+                    continue;
+                }
+            }
+
             $descriptors[] = new FieldDescriptor(
                 $field->num,
                 new Value(

@@ -6,6 +6,7 @@ namespace Thesis\Protobuf;
 
 use Thesis\Protobuf\Exception\BufferUnderflow;
 use Thesis\Protobuf\Internal\Buffer\ByteBuffer;
+use Thesis\Protobuf\Internal\Serde\UnknownEnumValue;
 use Thesis\Protobuf\Internal\Wire;
 use Thesis\Protobuf\Type\MessageT;
 use Thesis\Protobuf\Type\Visitor\DetermineWireType;
@@ -61,6 +62,15 @@ final readonly class Serializer
             $value = $field->type
                 ->accept(new TypeDeserializerVisitor($tag))
                 ->deserialize($buffer);
+
+            [$value, $unknownEnums] = UnknownEnumValue::extract($value, $field->num);
+            if ($unknownEnums !== []) {
+                $unknowns = [...$unknowns, ...$unknownEnums];
+
+                if ($value === null) {
+                    continue;
+                }
+            }
 
             $descriptors[] = new FieldDescriptor(
                 $field->num,
