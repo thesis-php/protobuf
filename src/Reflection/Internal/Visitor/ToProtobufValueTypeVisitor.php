@@ -162,14 +162,12 @@ final readonly class ToProtobufValueTypeVisitor implements Visitor
             $mapValue = static fn(array $value): array => array_map($mapper, $value);
         }
 
-        $packed = $type->packed;
-
         /** @phpstan-ignore return.type */
         return static fn(array $value) => Protobuf\listOf(
             $element,
             /** @phpstan-ignore argument.type */
             $mapValue($value),
-            $packed,
+            $type->packed,
         );
     }
 
