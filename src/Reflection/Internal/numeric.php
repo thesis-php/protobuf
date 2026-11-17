@@ -11,12 +11,12 @@ use BcMath\Number;
  */
 function zeroed(mixed $value): bool
 {
-    if (is_numeric($value)) {
-        return (int) $value === 0;
+    if (\is_int($value)) {
+        return $value === 0;
     }
 
     if ($value instanceof Number) {
-        return $value->value === '0';
+        return $value->compare(0) === 0;
     }
 
     return false;
