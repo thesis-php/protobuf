@@ -26,7 +26,7 @@ final readonly class DeserializeMessage implements DeserializeValue
     #[\Override]
     public function deserialize(ReadBuffer $buffer): Message
     {
-        $buffer = Buffer\slice($buffer);
+        $limit = Buffer\enterRecord($buffer);
 
         /** @var list<FieldDescriptor<*>> $descriptors */
         $descriptors = [];
@@ -64,6 +64,8 @@ final readonly class DeserializeMessage implements DeserializeValue
                 ),
             );
         }
+
+        $buffer->popLimit($limit);
 
         return new Message($descriptors, $unknowns);
     }

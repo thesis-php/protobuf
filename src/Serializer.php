@@ -6,6 +6,7 @@ namespace Thesis\Protobuf;
 
 use Thesis\Protobuf\Exception\MalformedMessage;
 use Thesis\Protobuf\Internal\Buffer\ByteBuffer;
+use Thesis\Protobuf\Internal\Buffer\Reader;
 use Thesis\Protobuf\Internal\Serde\UnknownEnumValue;
 use Thesis\Protobuf\Internal\Wire;
 use Thesis\Protobuf\Type\MessageT;
@@ -49,7 +50,7 @@ final readonly class Serializer
      */
     public function deserialize(MessageT $type, string $bytes): Message
     {
-        $buffer = new ByteBuffer($bytes);
+        $buffer = new Reader($bytes);
 
         /** @var list<FieldDescriptor<*>> $descriptors */
         $descriptors = [];

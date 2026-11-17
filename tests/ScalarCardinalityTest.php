@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Thesis\Protobuf\Internal\Buffer\ByteBuffer;
+use Thesis\Protobuf\Internal\Buffer\Reader;
 use Thesis\Protobuf\Internal\Serde\SerdeBool;
 use Thesis\Protobuf\Internal\Serde\SerdeDouble;
 use Thesis\Protobuf\Internal\Serde\SerdeFixed32;
@@ -47,7 +48,7 @@ final class ScalarCardinalityTest extends TestCase
     #[DataProvider('provideRoundTripCases')]
     public function testRoundTrip(ScalarTestData $data): void
     {
-        $buffer = new ByteBuffer((string) hex2bin($data->hex));
+        $buffer = new Reader((string) hex2bin($data->hex));
 
         $type = $data->value->type;
         $expected = $data->value->value;
@@ -69,11 +70,12 @@ final class ScalarCardinalityTest extends TestCase
 
         self::assertCount(0, $buffer);
 
+        $output = new ByteBuffer();
         $type
             ->accept(new TypeSerializerVisitor($tag))
             ->without(SerializeTag::class)
-            ->serialize($buffer, $expected);
-        self::assertSame($data->hex, bin2hex((string) $buffer));
+            ->serialize($output, $expected);
+        self::assertSame($data->hex, bin2hex((string) $output));
     }
 
     /**
