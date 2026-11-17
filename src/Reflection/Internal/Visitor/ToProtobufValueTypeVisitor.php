@@ -185,12 +185,15 @@ final readonly class ToProtobufValueTypeVisitor implements Visitor
         if ($type->valueT->accept(new IsObjectType())) {
             $mapper = $type->valueT->accept(new ToProtobufMessageTypeVisitor($this->reflector));
 
+            // The user's map must stay untouched: build a new one with the mapped values.
             $mapValue = static function (Protobuf\Map $map) use ($mapper): Protobuf\Map {
+                $mapped = new Protobuf\Map();
+
                 foreach ($map as $key => $val) {
-                    $map[$key] = $mapper($val);
+                    $mapped[$key] = $mapper($val);
                 }
 
-                return $map;
+                return $mapped;
             };
         }
 
