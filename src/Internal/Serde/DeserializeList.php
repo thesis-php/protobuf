@@ -31,11 +31,13 @@ final readonly class DeserializeList implements DeserializeValue
         $values = [];
 
         if ($this->isPacked) {
-            $buffer = Buffer\slice($buffer);
+            $limit = Buffer\enterRecord($buffer);
 
             while (\count($buffer) > 0) {
                 $values[] = $this->deserializer->deserialize($buffer);
             }
+
+            $buffer->popLimit($limit);
         } else {
             $values[] = $this->deserializer->deserialize($buffer);
 

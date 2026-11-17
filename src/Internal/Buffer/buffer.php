@@ -10,9 +10,11 @@ use Thesis\Protobuf\Internal\Serde\SerdeVarint;
 use Thesis\Protobuf\Internal\Wire;
 
 /**
+ * Writes the contents of `src` to `dst` as a length-delimited record.
+ *
  * @internal
  */
-function copy(ReadBuffer $src, WriteBuffer $dst): void
+function copy(ByteBuffer $src, WriteBuffer $dst): void
 {
     $written = $src->flush();
     SerdeVarint::T->serialize($dst, new Number(\strlen($written)));
@@ -22,17 +24,13 @@ function copy(ReadBuffer $src, WriteBuffer $dst): void
 }
 
 /**
+ * Reads the length of a length-delimited record and limits the buffer to its body.
+ *
  * @internal
+ * @return int the previous limit, to restore with popLimit() once the body is read
  * @throws MalformedMessage
  */
-function slice(ReadBuffer $src): ReadBuffer
+function enterRecord(ReadBuffer $buffer): int
 {
-    $dst = new ByteBuffer();
-    $length = (int) Wire\readVarint($src)->value;
-
-    if ($length > 0) {
-        $dst->write($src->read($length));
-    }
-
-    return $dst;
+    return $buffer->pushLimit((int) Wire\readVarint($buffer)->value);
 }

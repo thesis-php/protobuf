@@ -31,5 +31,13 @@ interface ReadBuffer extends \Countable
      */
     public function read(int $n): string;
 
-    public function flush(): string;
+    /**
+     * Limits the buffer to the next `length` bytes, e.g. to the body of a nested message: count() and reads
+     * see only them. Returns the previous limit to restore with popLimit() once they are read.
+     *
+     * @throws BufferUnderflow if fewer than `length` bytes are left
+     */
+    public function pushLimit(int $length): int;
+
+    public function popLimit(int $limit): void;
 }
