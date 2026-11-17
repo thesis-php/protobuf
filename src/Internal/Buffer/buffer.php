@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Internal\Buffer;
 
-use BcMath\Number;
 use Thesis\Protobuf\Exception\MalformedMessage;
-use Thesis\Protobuf\Internal\Serde\SerdeVarint;
 use Thesis\Protobuf\Internal\Wire;
 
 /**
@@ -17,7 +15,7 @@ use Thesis\Protobuf\Internal\Wire;
 function copy(ByteBuffer $src, WriteBuffer $dst): void
 {
     $written = $src->flush();
-    SerdeVarint::T->serialize($dst, new Number(\strlen($written)));
+    Wire\writeVarint($dst, \strlen($written));
     if ($written !== '') {
         $dst->write($written);
     }
@@ -32,5 +30,8 @@ function copy(ByteBuffer $src, WriteBuffer $dst): void
  */
 function enterRecord(ReadBuffer $buffer): int
 {
-    return $buffer->pushLimit((int) Wire\readVarint($buffer)->value);
+    $length = $buffer->readVarint();
+
+    // A negative length is a varint of 2^63 or above: far more than any input holds.
+    return $buffer->pushLimit($length >= 0 ? $length : PHP_INT_MAX);
 }

@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Thesis\Protobuf\Internal\Serde;
 
 use BcMath\Number;
-use Thesis\Endian;
 use Thesis\Protobuf\Internal\Buffer\ReadBuffer;
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
+use Thesis\Protobuf\Internal\Wire;
 
 /**
  * @internal
@@ -23,12 +23,17 @@ enum SerdeFixed64 implements
     #[\Override]
     public function serialize(WriteBuffer $buffer, mixed $value): void
     {
-        $buffer->write(Endian\Order::Little->packUint64(Range::uint64($value, 'fixed64')));
+        /** @var non-empty-string $bytes */
+        $bytes = pack('P', Wire\fromUnsigned(Range::uint64($value, 'fixed64')));
+        $buffer->write($bytes);
     }
 
     #[\Override]
     public function deserialize(ReadBuffer $buffer): Number
     {
-        return Endian\Order::Little->unpackUint64($buffer->read(8));
+        /** @var array{1: int} $value */
+        $value = unpack('P', $buffer->read(8));
+
+        return Wire\toUnsigned($value[1]);
     }
 }

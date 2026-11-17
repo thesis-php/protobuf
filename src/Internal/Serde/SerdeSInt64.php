@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Internal\Serde;
 
-use BcMath\Number;
 use Thesis\Protobuf\Internal\Buffer\ReadBuffer;
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
-use Thesis\Varint;
+use Thesis\Protobuf\Internal\Wire;
 
 /**
  * @internal
@@ -23,12 +22,16 @@ enum SerdeSInt64 implements
     #[\Override]
     public function serialize(WriteBuffer $buffer, mixed $value): void
     {
-        SerdeVarint::T->serialize($buffer, Varint\BcMath::Codec->encodeZigZag(new Number($value)));
+        // ZigZag: 0, -1, 1, -2... become 0, 1, 2, 3...
+        Wire\writeVarint($buffer, ($value << 1) ^ ($value >> 63));
     }
 
     #[\Override]
     public function deserialize(ReadBuffer $buffer): int
     {
-        return (int) Varint\BcMath::Codec->decodeZigZag(SerdeVarint::T->deserialize($buffer))->value;
+        $value = $buffer->readVarint();
+
+        // A logical shift right, then the sign restored from the low bit.
+        return (($value >> 1) & PHP_INT_MAX) ^ -($value & 1);
     }
 }

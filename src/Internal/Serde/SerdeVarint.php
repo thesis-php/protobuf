@@ -8,7 +8,6 @@ use BcMath\Number;
 use Thesis\Protobuf\Internal\Buffer\ReadBuffer;
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
 use Thesis\Protobuf\Internal\Wire;
-use Thesis\Varint;
 
 /**
  * @internal
@@ -24,12 +23,12 @@ enum SerdeVarint implements
     #[\Override]
     public function serialize(WriteBuffer $buffer, mixed $value): void
     {
-        $buffer->write(Varint\BcMath::Codec->encodeVarint($value));
+        Wire\writeVarint($buffer, Wire\fromUnsigned($value));
     }
 
     #[\Override]
     public function deserialize(ReadBuffer $buffer): Number
     {
-        return Wire\readVarint($buffer);
+        return Wire\toUnsigned($buffer->readVarint());
     }
 }

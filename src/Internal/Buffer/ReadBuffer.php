@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Thesis\Protobuf\Internal\Buffer;
 
 use Thesis\Protobuf\Exception\BufferUnderflow;
+use Thesis\Protobuf\Exception\MalformedVarint;
 
 /**
  * @internal
@@ -12,14 +13,21 @@ use Thesis\Protobuf\Exception\BufferUnderflow;
 interface ReadBuffer extends \Countable
 {
     /**
-     * Peek should not move the cursor or remove data from the buffer.
-     * It should only return a `non-empty-string` of up to `n` bytes in size or throw an exception only if the buffer is empty.
+     * Reads a varint as the 64 bits it encodes: values of 2^63 and above come back as negative ints.
+     * Bits above the 64th, which only the 10th byte can carry, are dropped.
      *
-     * @param positive-int $n
-     * @return non-empty-string
-     * @throws BufferUnderflow
+     * @throws BufferUnderflow if the input or the current limit ends inside the varint
+     * @throws MalformedVarint if the varint does not end within 10 bytes
      */
-    public function peek(int $n): string;
+    public function readVarint(): int;
+
+    /**
+     * Like readVarint(), but leaves the cursor where it is.
+     *
+     * @throws BufferUnderflow
+     * @throws MalformedVarint
+     */
+    public function peekVarint(): int;
 
     /**
      * Read must remove `n` bytes of data from the buffer and return a `non-empty-string`, or throw an exception
