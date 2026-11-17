@@ -6,10 +6,13 @@ includes:
 parameters:
     level: max
     paths:
+        - benchmarks
         - examples
         - src
         - tests
     tmpDir: var/phpstan
+    additionalConstructors:
+        - Thesis\Protobuf\Benchmarks\CodecBench::setUp
     editorUrl: ''
     editorUrlTitle: '%%relFile%%:%%line%%'
 

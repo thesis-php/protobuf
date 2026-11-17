@@ -1,0 +1,18 @@
+{
+    "$schema": "./vendor/phpbench/phpbench/phpbench.schema.json",
+    "runner.bootstrap": "vendor/autoload.php",
+    "runner.path": "benchmarks",
+    "runner.file_pattern": "*Bench.php",
+    "runner.php_config": {
+        "xdebug.mode": "off",
+        "zend.assertions": -1
+    },
+    "storage.xml_storage_path": "var/phpbench",
+    "report.generators": {
+        "protobuf": {
+            "generator": "expression",
+            "cols": ["benchmark", "subject", "set", "revs", "its", "mem_peak", "mode", "rstdev"],
+            "break": []
+        }
+    }
+}
