@@ -148,7 +148,9 @@ final readonly class TypeSerializerVisitor implements Visitor
     #[\Override]
     public function list(ListT $type): SerializeValue
     {
+        // The visitor erases element types: SerializeValue is invariant, so phpstan cannot relate them.
         return $this->aggregated(
+            /** @phpstan-ignore argument.type */
             new SerializeList(
                 $type
                     ->element
@@ -168,8 +170,11 @@ final readonly class TypeSerializerVisitor implements Visitor
             fieldT(2, $type->valueT),
         );
 
+        // The visitor erases element types: SerializeValue is invariant, so phpstan cannot relate them.
         return $this->aggregated(
+            /** @phpstan-ignore argument.type */
             new SerializeMap(
+                /** @phpstan-ignore argument.type */
                 new SerializeList(
                     $messageT
                         ->accept($this)
