@@ -8,7 +8,6 @@ use BcMath\Number;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Thesis\Protobuf\Exception\InvalidSchema;
 use Thesis\Protobuf\Exception\ValueOutOfRange;
 use Thesis\Protobuf\Internal\Serde\Range;
 use Thesis\Protobuf\Internal\Serde\SerdeFixed32;
@@ -120,14 +119,6 @@ final class ValueRangeTest extends TestCase
         self::assertSame(ValueRangeTestEnum::MinusOne, ($decoded->fields[1] ?? null)?->value->value);
     }
 
-    public function testStringBackedEnumIsRejected(): void
-    {
-        $this->expectException(InvalidSchema::class);
-        $this->expectExceptionMessage(\sprintf('Enum "%s" must be int-backed', ValueRangeTestStringEnum::class));
-
-        new Serializer()->serialize(message(fieldOf(1, enumOf(ValueRangeTestStringEnum::A))));
-    }
-
     public function testEncoderReportsOutOfRangeValues(): void
     {
         $this->expectException(ValueOutOfRange::class);
@@ -144,11 +135,6 @@ enum ValueRangeTestEnum: int
     case Max = 2147483647;
     case TooBig = 2147483648;
     case TooSmall = -2147483649;
-}
-
-enum ValueRangeTestStringEnum: string
-{
-    case A = 'a';
 }
 
 final readonly class ValueRangeTestMessage

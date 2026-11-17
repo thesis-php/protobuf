@@ -22,6 +22,14 @@ final class ReflectionEncoderTest extends TestCase
         self::assertSame('0a084a6f686e20446f651032', bin2hex($encoder->encode(new Request('John Doe', 50))));
     }
 
+    public function testConfigurationErrorsAreNotWrapped(): void
+    {
+        // The property type does not match the declared protobuf type: a bug in the schema, not an encoding error.
+        $this->expectException(\TypeError::class);
+
+        Builder::buildDefault()->encode(new MismatchedPropertyType('abc'));
+    }
+
     public function testEncodeOptionalScalarZeroValues(): void
     {
         $encoder = Builder::buildDefault();
@@ -56,5 +64,13 @@ final readonly class OptionalScalarRequest
         public ?string $label = null,
         #[Reflection\Field(3, Reflection\BoolT::T)]
         public ?bool $enabled = null,
+    ) {}
+}
+
+final readonly class MismatchedPropertyType
+{
+    public function __construct(
+        #[Reflection\Field(1, Reflection\Int32T::T)]
+        public string $value = '',
     ) {}
 }

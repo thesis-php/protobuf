@@ -6,6 +6,8 @@ namespace Thesis\Protobuf\Internal\Wire;
 
 use BcMath\Number;
 use Thesis\Protobuf\Exception\BufferUnderflow;
+use Thesis\Protobuf\Exception\MalformedMessage;
+use Thesis\Protobuf\Exception\MalformedVarint;
 use Thesis\Protobuf\Internal\Buffer\ReadBuffer;
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
 use Thesis\Protobuf\Internal\Serde\SerdeVarint;
@@ -22,7 +24,7 @@ use Thesis\Varint;
  *   bytes   - 1 ≤ size ≤ 10 + length.
  *
  * @internal
- * @throws BufferUnderflow
+ * @throws MalformedMessage
  */
 function discardUnknown(ReadBuffer $buffer, Tag $tag): UnknownField
 {
@@ -43,14 +45,31 @@ function discardUnknown(ReadBuffer $buffer, Tag $tag): UnknownField
 
 /**
  * @internal
- * @throws BufferUnderflow
+ * @throws MalformedMessage
  */
 function readVarint(ReadBuffer $buffer): Number
 {
-    $number = Varint\BcMath::Codec->decodeVarintSized($buffer->peek(10));
+    $number = decodeVarint($buffer->peek(10));
     $buffer->read($number->size);
 
     return $number->value;
+}
+
+/**
+ * @internal
+ * @param non-empty-string $bytes up to 10 bytes from the start of a varint
+ * @throws MalformedMessage
+ */
+function decodeVarint(string $bytes): Varint\Sized
+{
+    try {
+        return Varint\BcMath::Codec->decodeVarintSized($bytes);
+    } catch (Varint\MalformedVarintNumber) {
+        // No terminating byte among the bytes given: either the input ends or the varint is too long.
+        throw \strlen($bytes) < 10
+            ? new BufferUnderflow('Unexpected end of input: truncated varint.')
+            : new MalformedVarint('Malformed varint: longer than 10 bytes.');
+    }
 }
 
 /**
@@ -63,18 +82,16 @@ function writeTag(WriteBuffer $buffer, Tag $tag): void
 
 /**
  * @internal
- * @throws BufferUnderflow
+ * @throws MalformedMessage
  */
 function peekTag(ReadBuffer $buffer): Tag
 {
-    $number = Varint\BcMath::Codec->decodeVarintSized($buffer->peek(10));
-
-    return Tag::from($number->value);
+    return Tag::from(decodeVarint($buffer->peek(10))->value);
 }
 
 /**
  * @internal
- * @throws BufferUnderflow
+ * @throws MalformedMessage
  */
 function readTag(ReadBuffer $buffer): Tag
 {

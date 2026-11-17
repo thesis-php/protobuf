@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Type;
 
+use Thesis\Protobuf\Exception\InvalidSchema;
+use Thesis\Protobuf\Internal\IntBackedEnum;
 use Thesis\Protobuf\Type;
 
 /**
@@ -19,10 +21,13 @@ final readonly class EnumT implements
 
     /**
      * @param class-string<\BackedEnum> $enum
+     * @throws InvalidSchema if the class is not an int-backed enum
      */
     public function __construct(
         public string $enum,
-    ) {}
+    ) {
+        IntBackedEnum::check($enum);
+    }
 
     #[\Override]
     public function accept(Visitor $visitor): mixed

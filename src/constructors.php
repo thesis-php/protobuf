@@ -273,7 +273,6 @@ function listT(Type $element, ?bool $packed = null): Type\ListT
  * @param Type<V, *, *> $valueT
  * @param Map<K, V> $map
  * @return Value<Map<K, V>>
- * @throws \UnexpectedValueException
  */
 function mapOf(
     Type $keyT,
@@ -294,7 +293,6 @@ function mapOf(
  * @param Type<K, *, 'indexed'> $keyT
  * @param Type<V, *, *, 'map-value'> $valueT
  * @return Type\MapT<K, V>
- * @throws \UnexpectedValueException
  */
 function mapT(Type $keyT, Type $valueT): Type\MapT
 {

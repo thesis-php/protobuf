@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Exception;
 
-use Thesis\Protobuf\ProtobufException;
-
 /**
+ * The input ends before the value being read does.
+ *
  * @api
  */
-final class BufferUnderflow extends ProtobufException {}
+final class BufferUnderflow extends MalformedMessage {}
