@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Thesis\Protobuf\Internal\Buffer;
 
 use Thesis\Protobuf\Exception\BufferUnderflow;
+use Thesis\Protobuf\Exception\MalformedVarint;
 
 /**
  * Reads the input in place: a cursor moves over the original string and a nested record is read by narrowing
@@ -27,14 +28,21 @@ final class Reader implements ReadBuffer
     }
 
     #[\Override]
-    public function peek(int $n): string
+    public function readVarint(): int
     {
-        if ($this->offset >= $this->limit) {
-            throw new BufferUnderflow('Buffer is empty.');
-        }
+        $offset = $this->offset;
+        $value = $this->decodeVarint($offset);
+        $this->offset = $offset;
 
-        /** @var non-empty-string */
-        return substr($this->bytes, $this->offset, min($n, $this->limit - $this->offset));
+        return $value;
+    }
+
+    #[\Override]
+    public function peekVarint(): int
+    {
+        $offset = $this->offset;
+
+        return $this->decodeVarint($offset);
     }
 
     #[\Override]
@@ -73,6 +81,32 @@ final class Reader implements ReadBuffer
         \assert($limit >= $this->offset && $limit <= \strlen($this->bytes), 'Limits must be restored in reverse order.');
 
         $this->limit = $limit;
+    }
+
+    /**
+     * @param non-negative-int $offset where the varint starts; on return, where it ends
+     * @throws BufferUnderflow
+     * @throws MalformedVarint
+     */
+    private function decodeVarint(int &$offset): int
+    {
+        $value = 0;
+
+        // Shifting a PHP int left drops the bits above the 64th, so the 10th byte contributes only its low bit.
+        for ($shift = 0; $shift < 70; $shift += 7) {
+            if ($offset >= $this->limit) {
+                throw new BufferUnderflow('Unexpected end of input: truncated varint.');
+            }
+
+            $byte = \ord($this->bytes[$offset++]);
+            $value |= ($byte & 0x7F) << $shift;
+
+            if ($byte < 0x80) {
+                return $value;
+            }
+        }
+
+        throw new MalformedVarint('Malformed varint: longer than 10 bytes.');
     }
 
     #[\Override]

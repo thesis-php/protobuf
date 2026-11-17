@@ -19,13 +19,22 @@ final class Tag
      */
     public static function from(Number $number): self
     {
-        $tag = (int) $number->value;
+        return self::fromVarint((int) $number->value);
+    }
 
-        /** @var positive-int $num */
-        $num = $tag >> 3;
+    /**
+     * @internal
+     * @throws Exception\UnsupportedWireType
+     */
+    public static function fromVarint(int $tag): self
+    {
+        // A logical shift: a negative tag must not give a negative field number.
+        $num = ($tag >> 3) & 0x1FFF_FFFF_FFFF_FFFF;
         $type = $tag & 7;
 
         return new self(
+            // Field number 0 is invalid but still accepted here, as it always was.
+            /** @phpstan-ignore argument.type */
             $num,
             WireType::tryFrom($type) ?? throw new Exception\UnsupportedWireType($type, $num),
         );

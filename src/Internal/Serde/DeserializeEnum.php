@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Internal\Serde;
 
-use BcMath\Number;
 use Thesis\Protobuf\Internal\Buffer\ReadBuffer;
+use Thesis\Protobuf\Internal\Wire;
 
 /**
  * @internal
@@ -27,22 +27,14 @@ final readonly class DeserializeEnum implements DeserializeValue
     #[\Override]
     public function deserialize(ReadBuffer $buffer): \BackedEnum|UnknownEnumValue
     {
-        /** @var ?Number $p31 */
-        static $p31;
-        $p31 ??= new Number(2)->pow(31);
-
-        /** @var ?Number $p32 */
-        static $p32;
-        $p32 ??= new Number(2)->pow(32);
-
-        $raw = SerdeVarint::T->deserialize($buffer);
+        $raw = $buffer->readVarint();
 
         // Enum numbers are int32: negative ones arrive sign-extended to 64 bits.
-        $num = $raw->mod($p32);
-        if ($num->compare($p31) >= 0) {
-            $num -= $p32;
+        $num = $raw & 0xFFFF_FFFF;
+        if ($num > 0x7FFF_FFFF) {
+            $num -= 0x1_0000_0000;
         }
 
-        return $this->enum::tryFrom((int) $num->value) ?? new UnknownEnumValue($raw);
+        return $this->enum::tryFrom($num) ?? new UnknownEnumValue(Wire\toUnsigned($raw));
     }
 }

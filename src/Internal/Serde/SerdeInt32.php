@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Internal\Serde;
 
-use BcMath\Number;
 use Thesis\Protobuf\Internal\Buffer\ReadBuffer;
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
+use Thesis\Protobuf\Internal\Wire;
 
 /**
  * @internal
@@ -23,27 +23,15 @@ enum SerdeInt32 implements
     public function serialize(WriteBuffer $buffer, mixed $value): void
     {
         // A negative int32 is encoded as its 64-bit sign extension, exactly like an int64.
-        SerdeInt64::T->serialize($buffer, Range::int32($value, 'int32'));
+        Wire\writeVarint($buffer, Range::int32($value, 'int32'));
     }
 
     #[\Override]
     public function deserialize(ReadBuffer $buffer): int
     {
-        /** @var ?Number $p31 */
-        static $p31;
-        $p31 ??= new Number(2)->pow(31);
+        // An int32 is the low 32 bits of the varint, sign-extended.
+        $value = $buffer->readVarint() & 0xFFFF_FFFF;
 
-        /** @var ?Number $p32 */
-        static $p32;
-        $p32 ??= new Number(2)->pow(32);
-
-        $num = SerdeVarint::T->deserialize($buffer);
-        $num = $num->mod($p32);
-
-        if ($num->compare($p31) >= 0) {
-            $num -= $p32;
-        }
-
-        return (int) $num->value;
+        return $value > 0x7FFF_FFFF ? $value - 0x1_0000_0000 : $value;
     }
 }
