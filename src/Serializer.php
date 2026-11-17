@@ -28,13 +28,17 @@ final readonly class Serializer
         foreach ($message->fields as $field) {
             $type = $field->value->type;
 
-            $type
-                ->accept(
-                    new TypeSerializerVisitor(
-                        new Tag($field->num, $type->accept(DetermineWireType::Visitor)),
-                    ),
-                )
-                ->serialize($buffer, $field->value->value);
+            try {
+                $type
+                    ->accept(
+                        new TypeSerializerVisitor(
+                            new Tag($field->num, $type->accept(DetermineWireType::Visitor)),
+                        ),
+                    )
+                    ->serialize($buffer, $field->value->value);
+            } catch (Exception\ValueOutOfRange $e) {
+                throw $e->inField($field->num);
+            }
         }
 
         return $buffer->flush();
