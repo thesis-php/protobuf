@@ -26,6 +26,7 @@
     },
     "require-dev": {
         "ext-filter": "*",
+        "phpbench/phpbench": "^1.7",
         "phpunit/phpunit": "^12.4.4",
         "symfony/var-dumper": "^6.4.15 || ^7.3.5"
     },
@@ -43,7 +44,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Thesis\\Protobuf\\": "tests/"
+            "Thesis\\Protobuf\\": "tests/",
+            "Thesis\\Protobuf\\Benchmarks\\": "benchmarks/"
         }
     },
     "config": {

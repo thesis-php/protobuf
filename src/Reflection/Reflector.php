@@ -25,7 +25,7 @@ final class Reflector
 {
     private readonly ToProtobufTypeTypeVisitor $typeVisitor;
 
-    /** @var ToProtobufValueTypeVisitor<*> */
+    /** @var ToProtobufValueTypeVisitor<mixed> */
     private readonly ToProtobufValueTypeVisitor $valueVisitor;
 
     private readonly ClassReflector $classReflector;

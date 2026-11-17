@@ -99,6 +99,10 @@ test: var vendor ## Run tests using PHPUnit
 	$(RUN) vendor/bin/phpunit $(ARGS) --colors
 .PHONY: test
 
+bench: var vendor ## Run benchmarks: `make bench ARGS='--filter=Packed --tag=baseline'`, then compare with `ARGS='--ref=baseline'`
+	$(RUN) vendor/bin/phpbench run --report=protobuf $(ARGS)
+.PHONY: bench
+
 infect: var vendor up ## Run mutation tests using Infection
 	$(RUN) infection --show-mutations $(ARGS)
 .PHONY: infect

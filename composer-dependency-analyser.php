@@ -7,4 +7,5 @@ use ShipMonk\ComposerDependencyAnalyser\Config\Configuration;
 $config = new Configuration();
 
 return $config
+    ->addPathToExclude(__DIR__ . '/benchmarks')
     ->addPathToExclude(__DIR__ . '/tests');
