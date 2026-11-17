@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Internal\Serde;
 
-use BcMath\Number;
+use Thesis\Protobuf\Exception\InvalidSchema;
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
 
 /**
@@ -20,9 +20,10 @@ enum SerializeEnum implements SerializeValue
     {
         $case = $value->value;
         if (!\is_int($case)) {
-            throw new \InvalidArgumentException('BackedEnum should be integer.');
+            throw new InvalidSchema(\sprintf('Enum "%s" must be int-backed to be a protobuf enum.', $value::class));
         }
 
-        SerdeVarint::T->serialize($buffer, new Number($case));
+        // Enum numbers are int32: a negative one is sign-extended to 64 bits.
+        SerdeInt64::T->serialize($buffer, Range::int32($case, 'enum'));
     }
 }

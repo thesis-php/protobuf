@@ -22,22 +22,8 @@ enum SerdeSInt32 implements
     #[\Override]
     public function serialize(WriteBuffer $buffer, mixed $value): void
     {
-        /** @var ?Number $p31 */
-        static $p31;
-
-        /** @var ?Number $p32 */
-        static $p32;
-
-        $p31 ??= new Number(2)->pow(31);
-        $p32 ??= new Number(2)->pow(32);
-
-        $num = new Number($value)->mod($p32);
-
-        if ($num->compare($p31) >= 0) {
-            $num -= $p32;
-        }
-
-        SerdeSInt64::T->serialize($buffer, (int) $num->value);
+        // For values in the int32 range ZigZag-64 gives the same number as ZigZag-32.
+        SerdeSInt64::T->serialize($buffer, Range::int32($value, 'sint32'));
     }
 
     #[\Override]

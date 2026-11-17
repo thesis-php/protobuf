@@ -22,7 +22,7 @@ enum SerdeFixed32 implements
     #[\Override]
     public function serialize(WriteBuffer $buffer, mixed $value): void
     {
-        $buffer->write(Endian\Order::Little->packUint32($value));
+        $buffer->write(Endian\Order::Little->packUint32(Range::uint32($value, 'fixed32')));
     }
 
     #[\Override]
