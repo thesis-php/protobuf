@@ -14,7 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Serializing a value that its protobuf type cannot represent now throws `Exception\ValueOutOfRange` instead of
   wrapping it or writing a broken varint: `int32`/`sint32`/`sfixed32`/enum outside [-2^31, 2^31-1] (e.g.
   `int32Of(2 ** 31)` used to wrap to a negative number), `uint32`/`fixed32` outside [0, 2^32-1], and
-  `uint64`/`fixed64` that are negative, above 2^64-1 or fractional.
+  `uint64`/`fixed64` that are negative, above 2^64-1 or fractional. The exception names the field numbers that
+  lead to the value (`$fields`, e.g. `field 3.1`) and, when encoding an object, the class properties
+  (`$properties`, e.g. `Order::$items → Item::$quantity`).
 - `enumT()`, `enumOf()`, `Type\EnumT` and `Reflection\EnumT` accept only int-backed PHP enums and throw
   `Exception\InvalidSchema` for any other class when the type is declared. A string-backed enum used to fail
   with `\InvalidArgumentException` only when a value was serialized.

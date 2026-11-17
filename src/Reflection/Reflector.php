@@ -186,6 +186,82 @@ final class Reflector
     }
 
     /**
+     * Translates a path of field numbers (see Exception\ValueOutOfRange::$fields) into "Class::$property"
+     * names, starting from the class of the encoded object. Stops where the path leaves the known classes.
+     *
+     * @internal
+     * @param class-string $class
+     * @param list<positive-int> $fields
+     * @return list<non-empty-string>
+     */
+    public function propertyPath(string $class, array $fields): array
+    {
+        $path = [];
+        $i = 0;
+
+        while (($num = $fields[$i] ?? null) !== null) {
+            $field = null;
+
+            foreach ($this->classReflector->reflect($class)->properties as $property) {
+                $name = $property->reflection->getName();
+
+                if ($property->attributes->has(Field::class)) {
+                    if ($property->attributes->get(Field::class)->num === $num) {
+                        $field = $property->attributes->get(Field::class);
+
+                        break;
+                    }
+                } elseif ($property->attributes->has(OneOf::class)) {
+                    foreach ($property->attributes->get(OneOf::class)->variants as $variant) {
+                        if (isset($this->type($variant)->fields[$num])) {
+                            // The variant's own properties carry the field: look it up there.
+                            $path[] = "{$class}::\${$name}";
+                            $class = $variant;
+
+                            continue 3;
+                        }
+                    }
+                }
+            }
+
+            if ($field === null) {
+                break;
+            }
+
+            $segment = "{$class}::\${$name}";
+            ++$i;
+
+            $type = $field->type;
+
+            while ($type instanceof ListT) {
+                $type = $type->element;
+            }
+
+            if ($type instanceof MapT) {
+                $entry = $fields[$i++] ?? null;
+
+                if ($entry === 1) {
+                    $segment .= '[key]';
+                    $type = $type->keyT;
+                } elseif ($entry === 2) {
+                    $segment .= '[value]';
+                    $type = $type->valueT;
+                }
+            }
+
+            $path[] = $segment;
+
+            if (!$type instanceof ObjectT) {
+                break;
+            }
+
+            $class = $type->class;
+        }
+
+        return $path;
+    }
+
+    /**
      * @param ?\Closure(Field, mixed): bool $presence
      */
     private function doGetMessage(object $message, ?\Closure $presence = null): Message
