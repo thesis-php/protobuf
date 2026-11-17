@@ -22,7 +22,7 @@ enum SerdeUint64 implements
     #[\Override]
     public function serialize(WriteBuffer $buffer, mixed $value): void
     {
-        SerdeVarint::T->serialize($buffer, $value);
+        SerdeVarint::T->serialize($buffer, Range::uint64($value, 'uint64'));
     }
 
     #[\Override]

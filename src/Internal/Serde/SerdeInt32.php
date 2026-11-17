@@ -22,25 +22,8 @@ enum SerdeInt32 implements
     #[\Override]
     public function serialize(WriteBuffer $buffer, mixed $value): void
     {
-        /** @var ?Number $p32 */
-        static $p32;
-        $p32 ??= new Number(2)->pow(32);
-
-        /** @var ?Number $p64 */
-        static $p64;
-        $p64 ??= new Number(2)->pow(64);
-
-        $num = new Number($value)->mod($p32);
-
-        if ($num->compare($p32->div(2)) >= 0) {
-            $num -= $p32;
-        }
-
-        if ($num->compare(0) < 0) {
-            $num += $p64;
-        }
-
-        SerdeVarint::T->serialize($buffer, $num);
+        // A negative int32 is encoded as its 64-bit sign extension, exactly like an int64.
+        SerdeInt64::T->serialize($buffer, Range::int32($value, 'int32'));
     }
 
     #[\Override]

@@ -22,11 +22,7 @@ enum SerdeUint32 implements
     #[\Override]
     public function serialize(WriteBuffer $buffer, mixed $value): void
     {
-        /** @var ?Number $p32 */
-        static $p32;
-        $p32 ??= new Number(2)->pow(32);
-
-        SerdeVarint::T->serialize($buffer, new Number($value)->mod($p32));
+        SerdeVarint::T->serialize($buffer, new Number(Range::uint32($value, 'uint32')));
     }
 
     #[\Override]
