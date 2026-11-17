@@ -61,7 +61,7 @@ function writeVarint(WriteBuffer $buffer, int $value): void
         $value = ($value >> 7) & 0x01FF_FFFF_FFFF_FFFF;
     }
 
-    $buffer->write($bytes . \chr($value));
+    $buffer->write($bytes . \chr($value & 0x7F));
 }
 
 /**
