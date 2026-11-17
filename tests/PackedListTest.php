@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 
 #[CoversClass(Type\ListT::class)]
 #[CoversClass(Reflection\ListT::class)]
-#[CoversClass(Type\Visitor\IsPacked::class)]
+#[CoversClass(Type\Visitor\IsPackable::class)]
 #[CoversClass(Reflection\Internal\Visitor\IsPackable::class)]
 final class PackedListTest extends TestCase
 {

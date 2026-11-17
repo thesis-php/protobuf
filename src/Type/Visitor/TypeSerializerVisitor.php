@@ -157,7 +157,7 @@ final readonly class TypeSerializerVisitor implements Visitor
                     ->accept($this)
                     ->without(SerializeTag::class),
                 $this->tag,
-                $type->packed ?? $type->element->accept(new IsPacked()),
+                $type->packed ?? $type->element->accept(new IsPackable()),
             ),
         );
     }

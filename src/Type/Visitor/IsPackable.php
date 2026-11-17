@@ -26,7 +26,7 @@ use Thesis\Protobuf\Type\Uint64T;
  *
  * @template-extends DefaultTypeVisitor<bool>
  */
-final class IsPacked extends DefaultTypeVisitor
+final class IsPackable extends DefaultTypeVisitor
 {
     #[\Override]
     public function bool(BoolT $type): bool

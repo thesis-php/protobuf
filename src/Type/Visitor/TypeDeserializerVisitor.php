@@ -149,7 +149,7 @@ final readonly class TypeDeserializerVisitor implements Visitor
             /** @phpstan-ignore argument.type */
             $type->element->accept($this),
             $this->tag,
-            $this->tag->type === WireType::BYTES && $type->element->accept(new IsPacked()),
+            $this->tag->type === WireType::BYTES && $type->element->accept(new IsPackable()),
         );
     }
 

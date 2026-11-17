@@ -6,7 +6,7 @@ namespace Thesis\Protobuf\Type;
 
 use Thesis\Protobuf\Exception\InvalidSchema;
 use Thesis\Protobuf\Type;
-use Thesis\Protobuf\Type\Visitor\IsPacked;
+use Thesis\Protobuf\Type\Visitor\IsPackable;
 
 /**
  * @template T
@@ -23,7 +23,7 @@ final readonly class ListT implements Type
         public ?bool $packed = null,
     ) {
         // A recursive message is not resolved here: the type it refers to may still be under construction.
-        if ($packed === true && ($element instanceof RecursionT || !$element->accept(new IsPacked()))) {
+        if ($packed === true && ($element instanceof RecursionT || !$element->accept(new IsPackable()))) {
             throw new InvalidSchema(\sprintf(
                 'Repeated fields of type "%s" cannot be packed: only scalar numeric, bool and enum elements can.',
                 $element::class,
