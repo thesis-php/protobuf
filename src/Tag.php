@@ -14,6 +14,9 @@ final class Tag
     /** @phpstan-ignore property.uninitialized */
     public private(set) Number $number { get => $this->number ??= new Number($this->num << 3 | $this->type->value); }
 
+    /**
+     * @throws Exception\UnsupportedWireType
+     */
     public static function from(Number $number): self
     {
         $tag = (int) $number->value;
@@ -24,7 +27,7 @@ final class Tag
 
         return new self(
             $num,
-            WireType::from($type),
+            WireType::tryFrom($type) ?? throw new Exception\UnsupportedWireType($type, $num),
         );
     }
 

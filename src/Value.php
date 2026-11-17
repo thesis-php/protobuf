@@ -171,7 +171,6 @@ final readonly class Value
      * @param Type<V, *, *, 'map-value'> $valueT
      * @param Map<K, V> $map
      * @return self<Map<K, V>>
-     * @throws \UnexpectedValueException
      */
     public static function mapOf(
         Type $keyT,

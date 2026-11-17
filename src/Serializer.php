@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf;
 
-use Thesis\Protobuf\Exception\BufferUnderflow;
+use Thesis\Protobuf\Exception\MalformedMessage;
 use Thesis\Protobuf\Internal\Buffer\ByteBuffer;
 use Thesis\Protobuf\Internal\Serde\UnknownEnumValue;
 use Thesis\Protobuf\Internal\Wire;
@@ -18,6 +18,9 @@ use Thesis\Protobuf\Type\Visitor\TypeSerializerVisitor;
  */
 final readonly class Serializer
 {
+    /**
+     * @throws Exception\ValueOutOfRange if a value does not fit its protobuf type
+     */
     public function serialize(Message $message): string
     {
         $buffer = new ByteBuffer();
@@ -38,7 +41,7 @@ final readonly class Serializer
     }
 
     /**
-     * @throws BufferUnderflow
+     * @throws MalformedMessage if the bytes are not a valid protobuf encoding
      */
     public function deserialize(MessageT $type, string $bytes): Message
     {

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Thesis\Protobuf\Internal\Buffer;
 
 use BcMath\Number;
-use Thesis\Protobuf\Exception\BufferUnderflow;
+use Thesis\Protobuf\Exception\MalformedMessage;
 use Thesis\Protobuf\Internal\Serde\SerdeVarint;
 use Thesis\Protobuf\Internal\Wire;
 
@@ -23,7 +23,7 @@ function copy(ReadBuffer $src, WriteBuffer $dst): void
 
 /**
  * @internal
- * @throws BufferUnderflow
+ * @throws MalformedMessage
  */
 function slice(ReadBuffer $src): ReadBuffer
 {

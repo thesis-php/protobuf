@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Thesis\Protobuf\Decoder\Internal;
 
 use Thesis\Protobuf\Decoder;
-use Thesis\Protobuf\ProtobufException;
 use Thesis\Protobuf\Reflection\Reflector;
 use Thesis\Protobuf\Serializer;
 
@@ -30,10 +29,8 @@ final readonly class ReflectionDecoder implements Decoder
                 ),
                 $classType,
             );
-        } catch (ProtobufException $e) {
-            throw $e;
-        } catch (\Throwable $e) {
-            throw new Decoder\DecodingError($e->getMessage(), (int) $e->getCode(), $e);
+        } catch (\ReflectionException $e) {
+            throw new Decoder\DecodingError($e->getMessage(), $e->getCode(), $e);
         }
     }
 }

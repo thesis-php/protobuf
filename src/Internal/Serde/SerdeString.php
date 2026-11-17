@@ -32,10 +32,9 @@ enum SerdeString implements
     #[\Override]
     public function deserialize(ReadBuffer $buffer): string
     {
+        // A varint is never negative; one above PHP_INT_MAX saturates and fails the read below.
+        /** @var non-negative-int $length */
         $length = (int) SerdeVarint::T->deserialize($buffer)->value;
-        if ($length < 0) {
-            throw new \UnexpectedValueException("String length must be positive or equal to 0, '{$length}' given.");
-        }
 
         if ($length === 0) {
             return '';
