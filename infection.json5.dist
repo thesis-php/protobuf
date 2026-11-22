@@ -65,6 +65,25 @@
                 "public function list\\(array \\$values\\): Protobuf\\\\Value",
             ],
         },
+        "UnwrapArrayValues": {
+            "ignoreSourceCodeByRegex": [
+                // Map::fromArray(): array_map() with two arrays walks them by position and ignores their keys.
+                "array_values\\(\\$values\\),",
+            ],
+        },
+        "Concat": {
+            "ignoreSourceCodeByRegex": [
+                // Map::hash(): the hash of a string is as unique with the marker after it as before it, since no other
+                // hash has the marker and PHP turns neither into an int array key.
+                "return self::STRING \\. \\$value;",
+            ],
+        },
+        "MatchArmRemoval": {
+            "ignoreSourceCodeByRegex": [
+                // Map::stringify() is only called for a key that Map::hash() accepted, which throws for the others.
+                "default => throw new Exception\\\\IllegalProtobufKeyMap\\(\\$value\\),",
+            ],
+        },
         "Break_": {
             "ignore": [
                 // The only break in the method ends the search for the variant class of a oneof value: two variants
