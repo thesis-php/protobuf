@@ -19,6 +19,7 @@ final readonly class Message implements
      * @no-named-arguments
      * @param list<FieldDescriptor<*>> $fields
      * @param list<UnknownFields\UnknownField> $unknowns
+     * @throws Exception\InvalidSchema if two of the fields have the same number
      */
     public function __construct(
         array $fields = [],
@@ -28,6 +29,22 @@ final readonly class Message implements
 
         foreach ($fields as $field) {
             $map[$field->num] = $field;
+        }
+
+        // Comparing the counts costs nothing per field: a message is built for every one read and written.
+        if (\count($map) !== \count($fields)) {
+            $seen = [];
+
+            foreach ($fields as $field) {
+                if (isset($seen[$field->num])) {
+                    throw new Exception\InvalidSchema(\sprintf(
+                        'Field number %d is given more than once: the fields of a message must have distinct numbers.',
+                        $field->num,
+                    ));
+                }
+
+                $seen[$field->num] = true;
+            }
         }
 
         $this->fields = $map;

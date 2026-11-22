@@ -50,6 +50,17 @@ final class Reflector
     /** @var array<class-string, true> */
     private array $visited = [];
 
+    /** @var array<class-string, array<positive-int, non-empty-string>> */
+    private array $fieldPaths = [];
+
+    /**
+     * The oneofs whose variants fieldPaths() is collecting the fields of, outermost first: the class reflected, the
+     * path of the oneof property, and the class that declares it and its name.
+     *
+     * @var list<array{class-string, non-empty-string, class-string, non-empty-string}>
+     */
+    private array $expandedOneOfs = [];
+
     /**
      * @param ?CacheInterface $cache deprecated and not used: the reflection of the classes, the types and how to encode
      *        and decode them are kept in memory for as long as the reflector lives, and nothing is stored in the cache
@@ -72,8 +83,8 @@ final class Reflector
     }
 
     /**
-     * @throws ReflectionException if a property cannot be the protobuf field or oneof it is declared as, or a property
-     *         declared as one is not initialized
+     * @throws ReflectionException if a property cannot be the protobuf field or oneof it is declared as, two properties
+     *         declare the same field number, or a property declared as a field or oneof is not initialized
      */
     public function message(object $message): Message
     {
@@ -87,13 +98,16 @@ final class Reflector
      *
      * @param class-string $class
      * @throws \ReflectionException if the class does not exist
-     * @throws ReflectionException if a property cannot be the protobuf field or oneof it is declared as
+     * @throws ReflectionException if a property cannot be the protobuf field or oneof it is declared as, or two
+     *         properties declare the same field number
      */
     public function type(string $class): Type\MessageT
     {
         if (isset($this->types[$class])) {
             return $this->types[$class];
         }
+
+        $this->fieldPaths($class);
 
         $this->visited[$class] = true;
 
@@ -363,6 +377,10 @@ final class Reflector
             return $this->encoders[$class];
         }
 
+        // Checked here too, not only in type(): a number declared twice would otherwise fail only when both properties
+        // hold a value to write, and without naming them.
+        $this->fieldPaths($class);
+
         $encoders = [];
 
         foreach ($this->classReflector->reflect($class)->properties as $property) {
@@ -402,6 +420,8 @@ final class Reflector
             return $this->decoders[$class];
         }
 
+        $this->fieldPaths($class);
+
         $decoders = [];
 
         foreach ($this->classReflector->reflect($class)->properties as $property) {
@@ -421,7 +441,7 @@ final class Reflector
 
                 foreach ($property->attributes->get(OneOf::class)->variants as $it) {
                     foreach ($this->type($it)->fields as $num => $_) {
-                        $variants[$num] ??= $it;
+                        $variants[$num] = $it;
                     }
                 }
 
@@ -430,5 +450,89 @@ final class Reflector
         }
 
         return $this->decoders[$class] = $decoders;
+    }
+
+    /**
+     * The field numbers of the message of the class, each with the property that declares it: "Class::$property", or
+     * "Class::$oneof → Variant::$property" for a field of a oneof variant, since the fields of the variants are
+     * fields of the message of the class the oneof belongs to.
+     *
+     * @param class-string $class
+     * @return array<positive-int, non-empty-string>
+     * @throws \ReflectionException
+     * @throws ReflectionException if two properties declare the same field number, directly or through the variants
+     *         of their oneofs, or a oneof has a variant that holds the oneof again, which would give the message
+     *         endless fields
+     */
+    private function fieldPaths(string $class): array
+    {
+        if (isset($this->fieldPaths[$class])) {
+            return $this->fieldPaths[$class];
+        }
+
+        // The class is a variant of the last oneof expanded: if a oneof expanded from the class itself is on the way,
+        // the variant holds that oneof again.
+        $last = $this->expandedOneOfs[\count($this->expandedOneOfs) - 1] ?? null;
+
+        if ($last !== null) {
+            foreach ($this->expandedOneOfs as $i => [$expanded]) {
+                if ($expanded === $class) {
+                    throw new Exception\InvalidProperty($last[2], $last[3], \sprintf(
+                        'has a oneof variant that holds the oneof again, which would give the message endless fields: "%s → %s"',
+                        implode(' → ', array_column(\array_slice($this->expandedOneOfs, $i), 1)),
+                        $class,
+                    ));
+                }
+            }
+        }
+
+        $paths = [];
+
+        foreach ($this->classReflector->reflect($class)->properties as $property) {
+            $declaringClass = $property->reflection->getDeclaringClass()->getName();
+            /** @var non-empty-string $name */
+            $name = $property->reflection->getName();
+            $owner = "{$declaringClass}::\${$name}";
+
+            if ($property->attributes->has(Field::class)) {
+                self::declareFieldPath($paths, $property->attributes->get(Field::class)->num, $owner, $declaringClass, $name);
+            } elseif ($property->attributes->has(OneOf::class)) {
+                $this->expandedOneOfs[] = [$class, $owner, $declaringClass, $name];
+
+                try {
+                    foreach ($property->attributes->get(OneOf::class)->variants as $variant) {
+                        foreach ($this->fieldPaths($variant) as $num => $path) {
+                            self::declareFieldPath($paths, $num, "{$owner} → {$path}", $declaringClass, $name);
+                        }
+                    }
+                } finally {
+                    array_pop($this->expandedOneOfs);
+                }
+            }
+        }
+
+        return $this->fieldPaths[$class] = $paths;
+    }
+
+    /**
+     * @param array<positive-int, non-empty-string> $paths
+     * @param positive-int $num
+     * @param non-empty-string $path
+     * @param class-string $class
+     * @param non-empty-string $property
+     * @throws Exception\InvalidProperty if the number is already in the paths
+     */
+    private static function declareFieldPath(array &$paths, int $num, string $path, string $class, string $property): void
+    {
+        if (isset($paths[$num])) {
+            throw new Exception\InvalidProperty($class, $property, \sprintf(
+                'declares the field number %d%s, which "%s" declares too',
+                $num,
+                $path === "{$class}::\${$property}" ? '' : " through \"{$path}\"",
+                $paths[$num],
+            ));
+        }
+
+        $paths[$num] = $path;
     }
 }
