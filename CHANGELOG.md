@@ -19,6 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and 2 for its value) and, for an object, the class properties (`$properties`), as `Exception\ValueOutOfRange`
   does; neither includes the bytes. The check is turned off with `new Serializer(validateUtf8: false)`,
   `Encoder\Builder::withUtf8Validation(false)` and `Decoder\Builder::withUtf8Validation(false)`.
+- `Decoder\Builder::withMissingFieldsAsZeroValues(true)` and the new last parameter of `Reflection\Reflector::build()`,
+  `missingFieldsAsZeroValues`, make a missing field give a property that has no default and cannot be null the zero
+  value of its type, as proto3 reads a field without presence, instead of failing with
+  `Reflection\Exception\PropertyRequired`: a proto3 sender does not write zero values. It is 0 (`BcMath\Number(0)` for
+  uint64 and fixed64), 0.0, false, `''`, an empty list, an empty map, as a `Map` or an array, and the enum case for 0
+  or, failing that, the first case. Nested objects, list elements, map values and oneof variants are decoded the same
+  way. A message field and an enum without cases have no zero value and stay required. It is off by default.
 
 ### Changed
 

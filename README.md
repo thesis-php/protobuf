@@ -319,6 +319,46 @@ try {
 }
 ```
 
+> [!WARNING]
+> A proto3 sender does not write zero values: `x = 0`, `false`, `""`, an empty list or map is not in the message at
+> all. Decoded into a property that cannot be null and has no default, such a field is missing and decoding fails,
+> e.g. `public int $x;` fails whenever another service sends `x = 0`. For proto3 messages give the property a default
+> (`public int $x = 0`), make it nullable, or turn on missing fields as zero values.
+
+With `withMissingFieldsAsZeroValues(true)` the decoder reads a field as proto3 reads one without presence: a missing
+field gives a property without a default that cannot be null the zero value of its type instead of failing. It is 0
+for the integer types (`new BcMath\Number(0)` for `uint64` and `fixed64`), 0.0, `false`, `''` for a string and bytes,
+an empty list, an empty map (a `Map` or an array, as the property holds it), and the enum case for 0 or, if the enum
+has none, its first case. Nested objects, list elements, map values and oneof variants are decoded the same way.
+A default of the property still comes first, and a property that can be null still gets `null`.
+
+```php
+use Thesis\Protobuf\Decoder;
+use Thesis\Protobuf\Reflection;
+
+final readonly class Point
+{
+    public function __construct(
+        #[Reflection\Field(1, Reflection\Int32T::T)]
+        public int $x,
+        #[Reflection\Field(2, Reflection\Int32T::T)]
+        public int $y,
+    ) {}
+}
+
+$decoder = new Decoder\Builder()
+    ->withMissingFieldsAsZeroValues(true)
+    ->build();
+
+$point = $decoder->decode("\x10\x05", Point::class); // only y = 5 is written
+
+var_dump($point->x, $point->y); // int(0), int(5)
+```
+
+Some properties have no zero value and are still required with the option on: a message field (`ObjectT`), since
+proto3 tells an absent message from an empty one, and an enum without cases. A oneof with no variant in the input is
+`null`, as without the option, so its property must be nullable.
+
 Both `Encoder::encode()` and `Decoder::decode()` throw `Thesis\Protobuf\ProtobufException`.
 Domain protobuf exceptions are preserved and are not wrapped into generic runtime errors.
 
