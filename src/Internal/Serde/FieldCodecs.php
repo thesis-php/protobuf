@@ -161,6 +161,7 @@ final class FieldCodecs implements Visitor
             self::of($type->valueT),
             $type->keyT->accept($zero),
             $type->valueT->accept($zero),
+            $type->keyT instanceof StringT,
         );
     }
 
