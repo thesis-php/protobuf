@@ -10,6 +10,10 @@ parameters:
         - examples
         - src
         - tests
+    excludePaths:
+        # Uses google/protobuf and the classes generated for it, which are not installed with the project:
+        # see benchmarks/Comparison/README.md.
+        - benchmarks/Comparison
     tmpDir: var/phpstan
     additionalConstructors:
         - Thesis\Protobuf\Benchmarks\CodecBench::setUp

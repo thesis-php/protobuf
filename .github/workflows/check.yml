@@ -49,6 +49,15 @@ jobs:
       # for the protobuf release pinned in tests/tools/protobuf.sh. See tests/conformance/README.md.
       - run: PHP_IMAGE_VERSION=8.4 make install-highest conformance-runner-pull conformance
 
+  comparison:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      # The times of a shared runner are noisy: what the job checks is that the comparison with google/protobuf runs,
+      # and the table it leaves in the summary is to be read by how the libraries relate. See benchmarks/Comparison/README.md.
+      - run: PHP_IMAGE_VERSION=8.4 make install-highest bench-compare
+      - run: cat var/comparison/report.md >> "$GITHUB_STEP_SUMMARY"
+
   infection:
     runs-on: ubuntu-latest
     steps:

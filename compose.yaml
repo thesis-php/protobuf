@@ -11,3 +11,14 @@ services:
     volumes:
       - .:/workspace:cached
     working_dir: /workspace
+
+  # The php service without Xdebug and with the extension of google/protobuf: see benchmarks/Comparison/README.md.
+  comparison:
+    extends: php
+    image: thesis-protobuf-comparison:${PHP_IMAGE_VERSION}-${GOOGLE_PROTOBUF_VERSION:-none}
+    build:
+      context: benchmarks/Comparison
+      args:
+        PHP_IMAGE_VERSION: ${PHP_IMAGE_VERSION}
+        GOOGLE_PROTOBUF_VERSION: ${GOOGLE_PROTOBUF_VERSION:-}
+    profiles: [comparison]

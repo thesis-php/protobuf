@@ -514,3 +514,42 @@ $encoder = new Encoder\Builder()
 
 The low-level `Serializer::serialize()` writes `Message::$unknowns` the same way, after the known fields of each
 message.
+
+### Performance
+
+The library is written in PHP and needs no extension beyond `bcmath`. `make bench-compare` measures it against
+[google/protobuf](https://github.com/protocolbuffers/protobuf/tree/main/php), both its PHP runtime and its C extension,
+on the same messages and the same bytes. The times below are of PHP 8.4.27 with OPcache and without JIT and Xdebug,
+google/protobuf 5.36.2, on an Intel Core i7-12700; next to the time of google/protobuf is how it relates to the time of
+this library.
+
+| Message | Operation | thesis/protobuf | google/protobuf, PHP | google/protobuf, extension |
+|---|---|---|---|---|
+| A string, an int32 and a bool | encode | 2.06 μs | 4.48 μs (2.2× slower) | 0.11 μs (19.7× faster) |
+| A string, an int32 and a bool | decode | 2.7 μs | 3.03 μs (1.1× slower) | 0.3 μs (9.2× faster) |
+| A string, an int32 and a bool | decode and read | 2.89 μs | 3.11 μs (1.1× slower) | 0.54 μs (5.4× faster) |
+| 1000 nested messages | encode | 2.66 ms | 10.1 ms (3.8× slower) | 82.2 μs (32.4× faster) |
+| 1000 nested messages | decode | 3.93 ms | 6.33 ms (1.6× slower) | 102.3 μs (38.4× faster) |
+| 1000 nested messages | decode and read | 3.91 ms | 6.69 ms (1.7× slower) | 649.9 μs (6× faster) |
+| 100 000 packed int64 | encode | 15.6 ms | 70.9 ms (4.5× slower) | 1.03 ms (15.2× faster) |
+| 100 000 packed int64 | decode | 18.7 ms | 48.2 ms (2.6× slower) | 1.1 ms (17× faster) |
+| 100 000 packed int64 | decode and read | 19.3 ms | 56.7 ms (2.9× slower) | 5.31 ms (3.6× faster) |
+| A map<string, int32> of 10 000 entries | encode | 6.97 ms | 48.3 ms (6.9× slower) | 344.5 μs (20.2× faster) |
+| A map<string, int32> of 10 000 entries | decode | 14.7 ms | 33.2 ms (2.3× slower) | 1.47 ms (10× faster) |
+| A map<string, int32> of 10 000 entries | decode and read | 15.2 ms | 34.1 ms (2.2× slower) | 2.28 ms (6.7× faster) |
+| A string of 1 MB | encode | 46.2 μs | 17.6 ms (381.1× slower) | 243.5 μs (5.3× slower) |
+| A string of 1 MB | decode | 393.2 μs | 383.3 μs (the same) | 587.7 μs (1.5× slower) |
+| A string of 1 MB | decode and read | 373.6 μs | 380.3 μs (the same) | 654.5 μs (1.8× slower) |
+
+- Against the PHP runtime of google/protobuf the library is 1.1 to 7 times faster, except for a large string, which
+  takes both the same time to decode.
+- The C extension is 4 to 40 times faster than the library on everything but a large string. Decoding alone flatters
+  it: the extension keeps the decoded message in its own memory and makes a PHP value of a field only when it is read,
+  while the library makes them all at once. "Decode and read" also reads every value of the message, and is the fairer
+  number of the two.
+- Encoding the string of 1 MB flatters the library: PHP remembers that a string is valid UTF-8, so the same string is
+  checked once, and the time is that of a copy. A string seen for the first time costs about what decoding it does.
+- The times are of one machine: read them by how the libraries relate. The memory is not compared, as the extension
+  allocates outside of what PHP measures.
+
+How the comparison is made and how to run it is in [benchmarks/Comparison](benchmarks/Comparison/README.md).

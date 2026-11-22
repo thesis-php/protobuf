@@ -1,0 +1,35 @@
+// The messages of benchmarks/Fixture, for the classes google/protobuf is measured with: see README.md next to this file.
+syntax = "proto3";
+
+package thesis.protobuf.benchmarks;
+
+option php_namespace = "Thesis\\Protobuf\\Benchmarks\\Comparison\\Google";
+option php_metadata_namespace = "Thesis\\Protobuf\\Benchmarks\\Comparison\\Google\\Metadata";
+
+message Small {
+  string name = 1;
+  int32 id = 2;
+  bool active = 3;
+}
+
+message Item {
+  uint32 id = 1;
+  string name = 2;
+  repeated int64 values = 3;
+}
+
+message Items {
+  repeated Item items = 1;
+}
+
+message PackedInts {
+  repeated int64 values = 1;
+}
+
+message StringMap {
+  map<string, int32> values = 1;
+}
+
+message Text {
+  string text = 1;
+}
