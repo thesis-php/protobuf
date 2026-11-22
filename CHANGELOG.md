@@ -62,6 +62,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Errors in the declaration of a class, `Exception\InvalidSchema` of its field types included, are reported when the
   first object of the class is encoded, whatever the values of its properties. They used to be reported only when
   a property with the wrong field had a value.
+- Two fields with the same number are rejected. `message()`, `messageOf()` and `new Message()` throw
+  `Exception\InvalidSchema` for a message, and `messageT()` and `new Type\MessageT()` for a message type. A class
+  reflected by `Reflector`, `Encoder` or `Decoder` throws `Reflection\Exception\InvalidProperty` when it is reflected
+  for the first time, whatever the values of its properties, if two of its properties declare the same field number:
+  two fields, a field and a field of a oneof variant, two variants of one oneof, or variants of two oneofs (one
+  variant class in two oneofs of a class included). The message names both properties, the variant ones by their
+  path, e.g. `The property "Order::$payment" declares the field number 1 through "Order::$payment → Card::$number",
+  which "Order::$id" declares too.` The later field used to silently replace the earlier one: in a message it was
+  the only one written, in a message type the only one read, and a oneof variant lost the fields whose numbers an
+  earlier variant had.
 - An empty `Map` in a map property is not written by `Reflector::message()`, as an empty array is not: the message
   has no such field. The encoded bytes are the same.
 - `Reflector::message()` gives a nested message value the type of its class, the one `Reflector::type()` returns,
@@ -83,6 +93,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A oneof with a variant that holds the oneof again, directly (a class as a variant of its own oneof) or through the
+  oneofs of other variants (`A::$x` has the variant `B`, whose `B::$y` has the variant `A`), throws
+  `Reflection\Exception\InvalidProperty` when the class, or any class whose oneof leads into the cycle, is reflected
+  for the first time: the fields of the variants are fields of the message, so it would have endless fields. The
+  message names the cycle, e.g. `The property "B::$y" has a oneof variant that holds the oneof again, which would
+  give the message endless fields: "A::$x → B::$y → A".` Such a class used to make reflection recurse until PHP ran
+  out of memory. A message field of the class itself, in the class or in a variant, is not such a cycle and works as
+  before.
 - Negative enum numbers are encoded as 10-byte sign-extended varints, as protobuf requires. They used to be
   written as a truncated varint that no parser, including this one, could read.
 - Every occurrence of a repeated or map field is decoded, wherever it is in the input: interleaved with other

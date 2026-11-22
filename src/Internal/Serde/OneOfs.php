@@ -19,8 +19,8 @@ final readonly class OneOfs
     public array $variantOf;
 
     /**
-     * @param list<list<list<positive-int>>> $oneofs the field numbers of each variant of each oneof; a field number
-     *        that is in several variants belongs to the first of them
+     * @param list<list<list<positive-int>>> $oneofs the field numbers of each variant of each oneof; a field number is
+     *        in one variant at most, which Reflection\Reflector makes sure of for the classes it reflects
      */
     public function __construct(array $oneofs)
     {
@@ -28,14 +28,9 @@ final readonly class OneOfs
 
         foreach ($oneofs as $oneof => $variants) {
             foreach ($variants as $fields) {
-                $own = array_values(array_filter(
-                    $fields,
-                    static fn(int $num): bool => !isset($variantOf[$num]),
-                ));
+                $variant = new OneOfVariant($oneof, $fields);
 
-                $variant = new OneOfVariant($oneof, $own);
-
-                foreach ($own as $num) {
+                foreach ($fields as $num) {
                     $variantOf[$num] = $variant;
                 }
             }
