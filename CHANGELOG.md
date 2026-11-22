@@ -34,6 +34,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `Tag::from()` rejects these numbers the same way.
 - A repeated field whose elements are lists or maps (`listT(listT(...))`, `listT(mapT(...))`, and the same with
   `Reflection\ListT`) throws `Exception\InvalidSchema` when the type is created: protobuf has no such fields.
+- Decoding limits how deeply the input may nest messages and groups, unknown groups included, so that untrusted
+  input cannot exhaust the stack and the memory: an input nested deeper than 100 levels below the top-level
+  message, as in the protobuf implementations for C++ and Java, throws the new `Exception\RecursionLimitExceeded`.
+  Such input used to be decoded as deep as the PHP stack allowed. The limit is set with
+  `Decoder\Builder::withRecursionLimit()` or `new Serializer($recursionLimit)`; the default is
+  `Serializer::DEFAULT_RECURSION_LIMIT`. A map entry is not a level of its own, but a message value in it is.
 
 ### Deprecated
 

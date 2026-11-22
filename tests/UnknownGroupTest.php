@@ -105,11 +105,12 @@ final class UnknownGroupTest extends TestCase
         self::assertSame([], $message->unknowns);
     }
 
-    public function testDeeplyNestedGroupsAreSkipped(): void
+    public function testDeeplyNestedGroupsAreSkippedWithoutRecursion(): void
     {
+        // A group nested in a group does not take a PHP stack frame, so a limit this high is safe for groups.
         $depth = 100_000;
 
-        $message = new Serializer()->deserialize(
+        $message = new Serializer($depth)->deserialize(
             messageT(fieldT(2, int32T)),
             str_repeat("\x1b", $depth) . str_repeat("\x1c", $depth) . "\x10\x07",
         );

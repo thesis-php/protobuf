@@ -6,6 +6,8 @@ namespace Thesis\Protobuf\Internal\Buffer;
 
 use Thesis\Protobuf\Exception\BufferUnderflow;
 use Thesis\Protobuf\Exception\MalformedVarint;
+use Thesis\Protobuf\Exception\RecursionLimitExceeded;
+use Thesis\Protobuf\Serializer;
 
 /**
  * Reads the input in place: a cursor moves over the original string and a nested record is read by narrowing
@@ -21,10 +23,18 @@ final class Reader implements ReadBuffer
     /** @var non-negative-int */
     private int $limit;
 
+    /** The levels of nesting left to enter: below zero, the limit is exceeded. */
+    private int $depth;
+
+    /**
+     * @param non-negative-int $recursionLimit how many messages and groups may be nested in one another
+     */
     public function __construct(
         private readonly string $bytes,
+        private readonly int $recursionLimit = Serializer::DEFAULT_RECURSION_LIMIT,
     ) {
         $this->limit = \strlen($bytes);
+        $this->depth = $recursionLimit;
     }
 
     #[\Override]
@@ -73,6 +83,20 @@ final class Reader implements ReadBuffer
         \assert($limit >= $this->offset && $limit <= \strlen($this->bytes), 'Limits must be restored in reverse order.');
 
         $this->limit = $limit;
+    }
+
+    #[\Override]
+    public function enterNested(): void
+    {
+        if (--$this->depth < 0) {
+            throw new RecursionLimitExceeded($this->recursionLimit);
+        }
+    }
+
+    #[\Override]
+    public function leaveNested(): void
+    {
+        ++$this->depth;
     }
 
     #[\Override]
