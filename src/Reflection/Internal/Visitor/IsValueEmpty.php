@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Reflection\Internal\Visitor;
 
+use Thesis\Protobuf\Map;
 use Thesis\Protobuf\Reflection\BoolT;
 use Thesis\Protobuf\Reflection\BytesT;
 use Thesis\Protobuf\Reflection\DoubleT;
@@ -63,7 +64,7 @@ final class IsValueEmpty extends DefaultTypeVisitor
     #[\Override]
     public function map(MapT $type): \Closure
     {
-        return static fn(mixed $value): bool => $value === [];
+        return static fn(mixed $value): bool => $value === [] || ($value instanceof Map && \count($value) === 0);
     }
 
     #[\Override]

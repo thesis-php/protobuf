@@ -169,6 +169,9 @@ final readonly class ToProtobufValueTypeVisitor implements Visitor
         return static fn(array $value): Protobuf\Value => new Protobuf\Value($value, $listT);
     }
 
+    /**
+     * A map property holds a Map, an array or any other iterable: the codec of the map reads the entries of any.
+     */
     #[\Override]
     public function map(MapT $type): \Closure
     {
@@ -178,13 +181,18 @@ final readonly class ToProtobufValueTypeVisitor implements Visitor
         /** @var Type<mixed, *, *, 'map-value'> $valueT */
         $valueT = $type->valueT->accept($this->typeVisitor);
 
-        $mapValue = static fn(Protobuf\Map $value): Protobuf\Map => $value;
+        $mapT = Protobuf\mapT($keyT, $valueT);
 
         if ($type->valueT->accept(new IsObjectType())) {
             $mapper = $type->valueT->accept(new ToProtobufMessageTypeVisitor($this->reflector));
 
-            // The user's map must stay untouched: build a new one with the mapped values.
-            $mapValue = static function (Protobuf\Map $map) use ($mapper): Protobuf\Map {
+            // The user's map must stay untouched: build a new one with the mapped values. An array keeps its keys,
+            // anything else may have keys of any type, which a Map holds.
+            $mapValue = static function (iterable $map) use ($mapper): iterable {
+                if (\is_array($map)) {
+                    return array_map($mapper, $map);
+                }
+
                 $mapped = new Protobuf\Map();
 
                 foreach ($map as $key => $val) {
@@ -193,12 +201,13 @@ final readonly class ToProtobufValueTypeVisitor implements Visitor
 
                 return $mapped;
             };
+
+            /** @phpstan-ignore return.type */
+            return static fn(iterable $value): Protobuf\Value => new Protobuf\Value($mapValue($value), $mapT);
         }
 
-        $mapT = Protobuf\mapT($keyT, $valueT);
-
         /** @phpstan-ignore return.type */
-        return static fn(Protobuf\Map $value): Protobuf\Value => new Protobuf\Value($mapValue($value), $mapT);
+        return static fn(iterable $value): Protobuf\Value => new Protobuf\Value($value, $mapT);
     }
 
     #[\Override]

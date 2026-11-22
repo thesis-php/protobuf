@@ -20,7 +20,8 @@ use Thesis\Protobuf\WireType;
  * Every occurrence adds its entry to the entries read so far; the last entry of a key wins.
  * An entry without a key or a value has the zero value of its type there, as if it were written.
  * An int key of a string map is written as its decimal string: PHP turns a numeric string array key into an int,
- * so `Map::fromArray(['1' => ...])` holds the key 1.
+ * so `Map::fromArray(['1' => ...])` holds the key 1. The entries are read from a Map, an array or any other iterable:
+ * the reflection encodes a map property that holds an array as is.
  *
  * @internal
  */
@@ -45,7 +46,7 @@ final readonly class MapCodec implements FieldCodec
     #[\Override]
     public function encode(WriteBuffer $buffer, int $num, mixed $value): void
     {
-        /** @var Map<mixed, mixed> $value */
+        /** @var iterable<mixed, mixed> $value */
         foreach ($value as $key => $val) {
             if (\is_int($key) && $this->stringKey) {
                 $key = (string) $key;

@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A map field can be declared as an `array` property as well as a `Map` one, e.g.
+  `#[Field(1, new MapT(StringT::T, Int32T::T))] public array $values = []`. A map property is encoded from a `Map`,
+  an array or any other iterable of the entries, and the values of a map of messages are converted as in a `Map`.
+  It is decoded as an array when its type accepts an array but not a `Map` (`array`, `?array`, `array|string`), and
+  as a `Map` otherwise, as before (`Map`, `array|Map`, `iterable`, `\Countable`, `object`, `mixed`, no type). An array
+  key is an int or a string, so such a property for a map with `bool`, `uint64` or `fixed64` keys throws
+  `Reflection\Exception\InvalidProperty` when its class is reflected. PHP turns a numeric string key into an int, as
+  for any array: `['1' => 5]` is written with the key `"1"` and decoded as `[1 => 5]`, which is the same array, while
+  keys such as `"01"`, `"1.5"` or beyond `PHP_INT_MAX` stay strings. Such properties used to fail with `\TypeError`
+  when encoded and when decoded.
+
 ### Changed
 
 - Declaring a repeated field of a non-packable type (string, bytes, message) as `packed: true` now throws
@@ -45,10 +58,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   PHP type cannot hold the values of its protobuf type (e.g. `#[Field(1, Int32T::T)] public string $x`, an `int` for
   a `double` or a `uint64`, another class or enum than declared), or a oneof property whose type cannot hold one of
   its variants. Such declarations used to fail with `\TypeError` only when a value was encoded or decoded, if at all.
-  A property typed `array` for a map field is let through as before.
+  A property typed `array` for a map field is accepted, unless its keys cannot be array keys (see Added).
 - Errors in the declaration of a class, `Exception\InvalidSchema` of its field types included, are reported when the
   first object of the class is encoded, whatever the values of its properties. They used to be reported only when
   a property with the wrong field had a value.
+- An empty `Map` in a map property is not written by `Reflector::message()`, as an empty array is not: the message
+  has no such field. The encoded bytes are the same.
 - `Reflector::message()` gives a nested message value the type of its class, the one `Reflector::type()` returns,
   instead of a type built from the fields set in the value; list, map and enum values of a property, too, share one
   type object built once. The encoded bytes are the same.

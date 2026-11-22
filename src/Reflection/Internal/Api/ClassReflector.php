@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Reflection\Internal\Api;
 
+use Thesis\Protobuf\Map;
 use Thesis\Protobuf\Reflection\Exception\InvalidProperty;
 use Thesis\Protobuf\Reflection\Field;
 use Thesis\Protobuf\Reflection\Internal\Visitor\ToExpectedPhpType;
+use Thesis\Protobuf\Reflection\MapT;
 use Thesis\Protobuf\Reflection\OneOf;
 
 /**
@@ -68,7 +70,7 @@ final class ClassReflector
                 continue;
             }
 
-            $this->validate($property, $attributes);
+            $mapAsArray = $this->validate($property, $attributes);
 
             $defaultPropertyValue = null;
 
@@ -84,6 +86,7 @@ final class ClassReflector
                 $property,
                 $attributes,
                 $defaultPropertyValue,
+                $mapAsArray,
             );
         }
 
@@ -91,9 +94,11 @@ final class ClassReflector
     }
 
     /**
+     * @return bool whether the property is a map field that holds the map as an array: its type accepts an array,
+     *         but not a Map
      * @throws InvalidProperty
      */
-    private function validate(\ReflectionProperty $property, AttributeCollection $attributes): void
+    private function validate(\ReflectionProperty $property, AttributeCollection $attributes): bool
     {
         /** @var class-string $class */
         $class = $property->getDeclaringClass()->getName();
@@ -122,6 +127,24 @@ final class ClassReflector
                     $expected->describe(),
                 ));
             }
+
+            if ($field->type instanceof MapT && !new ExpectedPhpType(['iterable'], Map::class)->accepts($type, $class)) {
+                $key = $field->type->keyT->accept($this->expectedPhpType);
+
+                // An array key is an int or a string: PHP turns a bool key into an int, and a BcMath\Number cannot
+                // be one at all.
+                if (!\in_array('int', $key->builtins, true) && !\in_array('string', $key->builtins, true)) {
+                    throw new InvalidProperty($class, $name, \sprintf(
+                        'of type %s cannot hold the keys of the protobuf map field %d: an array key is an int or a string, not %s; declare the property as %s',
+                        $type ?? 'mixed',
+                        $field->num,
+                        $key->describe(),
+                        Map::class,
+                    ));
+                }
+
+                return true;
+            }
         } elseif ($attributes->has(OneOf::class)) {
             foreach ($attributes->get(OneOf::class)->variants as $variant) {
                 if (!new ExpectedPhpType(class: $variant)->accepts($type, $class)) {
@@ -133,6 +156,8 @@ final class ClassReflector
                 }
             }
         }
+
+        return false;
     }
 
     /**

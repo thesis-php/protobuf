@@ -73,6 +73,39 @@ $request = $decoder->decode(/** protobuf buffer here */, CreateUserRequest::clas
 echo $request->name;
 ```
 
+### Maps
+
+A map field is declared with `Reflection\MapT`, and the property may hold the map either as a `Thesis\Protobuf\Map`
+or as an array:
+```php
+use Thesis\Protobuf\Map;
+use Thesis\Protobuf\Reflection;
+
+final readonly class Inventory
+{
+    /**
+     * @param array<string, int> $counts
+     * @param Map<bool, string> $flags
+     */
+    public function __construct(
+        #[Reflection\Field(1, new Reflection\MapT(Reflection\StringT::T, Reflection\Int32T::T))]
+        public array $counts = [],
+        #[Reflection\Field(2, new Reflection\MapT(Reflection\BoolT::T, Reflection\StringT::T))]
+        public Map $flags = new Map(),
+    ) {}
+}
+```
+
+The encoder accepts a `Map`, an array or any other iterable of the entries. The decoder gives an array to a property
+whose type accepts an array but not a `Map` (`array`, `?array`), and a `Map` to any other (`Map`, `array|Map`,
+`iterable`, `mixed`, an untyped property).
+
+An array key is an int or a string, so only a map with string keys or with keys of an integer type other than `uint64`
+and `fixed64` can be held as an array; a `bool`, `uint64` or `fixed64` key needs a `Map`, and an array property for
+such a map fails with `Reflection\Exception\InvalidProperty`. As in any PHP array, a string key that is a decimal
+integer becomes an int: `['1' => 5]` is encoded with the key `"1"` and decoded as `[1 => 5]`, which is the same array,
+while keys such as `"01"` or `"1.5"` stay strings.
+
 ### Required fields
 
 `Reflector::map()` maps missing fields using property defaults when they exist.

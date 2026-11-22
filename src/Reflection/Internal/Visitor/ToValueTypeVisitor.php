@@ -68,6 +68,36 @@ final class ToValueTypeVisitor extends DefaultTypeVisitor
         };
     }
 
+    /**
+     * The conversion of a decoded map to an array, for a property that holds the map as an array. Its keys are ints
+     * or strings, which the property type was checked for, but PHP turns a numeric string key into an int, e.g. "1"
+     * into 1, as for any array.
+     *
+     * @param MapT<mixed, mixed> $type
+     * @return \Closure(mixed): array<array-key, mixed>
+     */
+    public function mapToArray(MapT $type): \Closure
+    {
+        $value = $type->valueT->accept($this);
+
+        if ($value === null) {
+            // The decoded value of a map field is a Map.
+            /** @phpstan-ignore return.type */
+            return iterator_to_array(...);
+        }
+
+        return static function (mixed $map) use ($value): array {
+            /** @var Map<array-key, mixed> $map */
+            $values = [];
+
+            foreach ($map as $key => $val) {
+                $values[$key] = $value($val);
+            }
+
+            return $values;
+        };
+    }
+
     #[\Override]
     public function object(ObjectT $type): \Closure
     {
