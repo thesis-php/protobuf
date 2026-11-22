@@ -64,16 +64,21 @@ final class Reflector
     /**
      * @param ?CacheInterface $cache deprecated and not used: the reflection of the classes, the types and how to encode
      *        and decode them are kept in memory for as long as the reflector lives, and nothing is stored in the cache
+     * @param ?UnknownFields\Handler $unknowns gets the unknown fields of each object map() builds that has any
+     * @param ?UnknownFields\Provider $unknownProvider gives the unknown fields that message() puts into the message of
+     *        each object, nested ones included; null puts none
      */
     public static function build(
         ?CacheInterface $cache = null,
         ?UnknownFields\Handler $unknowns = null,
+        ?UnknownFields\Provider $unknownProvider = null,
     ): self {
-        return new self($unknowns);
+        return new self($unknowns, $unknownProvider);
     }
 
     private function __construct(
         private readonly ?UnknownFields\Handler $unknowns = null,
+        private readonly ?UnknownFields\Provider $unknownProvider = null,
     ) {
         $this->typeVisitor = new ToProtobufTypeTypeVisitor($this);
         $this->valueVisitor = new ToProtobufValueTypeVisitor($this);
@@ -83,6 +88,10 @@ final class Reflector
     }
 
     /**
+     * The unknown fields of the message are those the provider given to build() has for the object, followed by
+     * those it has for the oneof variants the object holds: the fields of a variant are fields of the message of the
+     * object, and so are its unknown fields. Each nested message holds the unknown fields of its own object.
+     *
      * @throws ReflectionException if a property cannot be the protobuf field or oneof it is declared as, two properties
      *         declare the same field number, or a property declared as a field or oneof is not initialized
      */
@@ -320,6 +329,7 @@ final class Reflector
     private function doGetMessage(object $message, bool $present = false): Message
     {
         $descriptors = [];
+        $variantUnknowns = [];
 
         foreach ($this->encoders($message::class) as $encoder) {
             try {
@@ -350,10 +360,12 @@ final class Reflector
             } else {
                 foreach ($encoder->variants as $it) {
                     if ($value instanceof $it) {
+                        $variant = $this->doGetMessage($value, true);
                         $descriptors = [
                             ...$descriptors,
-                            ...$this->doGetMessage($value, true)->fields,
+                            ...$variant->fields,
                         ];
+                        $variantUnknowns = [...$variantUnknowns, ...$variant->unknowns];
 
                         break;
                     }
@@ -361,7 +373,13 @@ final class Reflector
             }
         }
 
-        return Protobuf\message(...$descriptors);
+        $unknowns = $this->unknownProvider?->provide($message) ?? [];
+
+        if ($variantUnknowns !== []) {
+            $unknowns = [...$unknowns, ...$variantUnknowns];
+        }
+
+        return new Message($descriptors, $unknowns);
     }
 
     /**

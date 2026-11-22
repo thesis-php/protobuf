@@ -40,7 +40,15 @@ final readonly class Serializer
     }
 
     /**
-     * @throws Exception\ValueOutOfRange if a value does not fit its protobuf type
+     * Writes the known fields of each message, nested ones included, followed by its unknown fields in the order they
+     * are held: a message deserialize() returns is written back with the unknown fields it was read with, byte for
+     * byte, except that they come after the known fields and a varint takes its shortest form.
+     *
+     * @throws Exception\ValueOutOfRange if a value does not fit its protobuf type, or a varint unknown field is not in
+     *         [0, 2^64-1]
+     * @throws Exception\InvalidSchema if an unknown field has an end group tag, or a value that does not fit its wire
+     *         type: a varint must hold a `Number`, any other field a string, of 4 bytes for a fixed32 and 8 for
+     *         a fixed64
      */
     public function serialize(Message $message): string
     {
