@@ -56,6 +56,15 @@ final readonly class ListCodec implements FieldCodec
         }
     }
 
+    /**
+     * An element as is, or, for packable elements, a packed record of them, whichever form the field is declared in.
+     */
+    #[\Override]
+    public function accepts(WireType $type): bool
+    {
+        return $this->element->accepts($type) || ($this->packable && $type === WireType::BYTES);
+    }
+
     #[\Override]
     public function decode(ReadBuffer $buffer, Tag $tag, mixed &$slot, array &$unknowns): void
     {
@@ -64,7 +73,7 @@ final readonly class ListCodec implements FieldCodec
 
         $deserializer = $this->element->deserializer;
 
-        if (!$this->packable || $tag->type !== WireType::BYTES) {
+        if ($tag->type === $this->element->wireType) {
             $value = $deserializer->deserialize($buffer);
 
             if ($value instanceof UnknownEnumValue) {

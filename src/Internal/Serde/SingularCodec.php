@@ -37,6 +37,12 @@ final readonly class SingularCodec implements FieldCodec
     }
 
     #[\Override]
+    public function accepts(WireType $type): bool
+    {
+        return $type === $this->wireType;
+    }
+
+    #[\Override]
     public function decode(ReadBuffer $buffer, Tag $tag, mixed &$slot, array &$unknowns): void
     {
         $value = $this->deserializer->deserialize($buffer);
