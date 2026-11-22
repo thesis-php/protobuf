@@ -27,8 +27,8 @@ final readonly class Serializer
     }
 
     /**
-     * Occurrences of a repeated or map field are merged wherever they are in the input, packed or not; for any
-     * other field the last occurrence wins.
+     * Occurrences of a repeated or map field are merged wherever they are in the input, packed or not, and so are
+     * occurrences of a message field, recursively; for any other field the last occurrence wins.
      *
      * @throws MalformedMessage if the bytes are not a valid protobuf encoding
      */
