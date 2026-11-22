@@ -19,9 +19,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for any array: `['1' => 5]` is written with the key `"1"` and decoded as `[1 => 5]`, which is the same array, while
   keys such as `"01"`, `"1.5"` or beyond `PHP_INT_MAX` stay strings. Such properties used to fail with `\TypeError`
   when encoded and when decoded.
+- The encoder writes back the unknown fields of each object it encodes, nested objects included (in lists, map
+  values and oneof variants), after its known fields, so that a decode and encode round trip keeps the fields of
+  a newer schema. They are taken from the new `UnknownFields\Provider`, set with
+  `Encoder\Builder::withUnknownProvider()`; the default is `UnknownFields::handler()`, which now implements it.
+  `withUnknownProvider(null)` writes none. `Reflector::build()` takes a provider as `$unknownProvider`, and
+  `Reflector::message()` puts its unknown fields into each message; without one it puts none, as before.
 
 ### Changed
 
+- `Serializer::serialize()` writes `Message::$unknowns` of each message, nested ones included, after its known
+  fields, in the order they are held, and as they were read: a message read by `Serializer::deserialize()` whose
+  input has the unknown fields after the known ones is written back byte for byte, but for varints written
+  longer than needed. The unknown fields used to be dropped. An unknown field whose value does not fit its wire type
+  (a varint that is not a `Number`, a fixed32 or fixed64 of another size, an end group tag, ...) throws
+  `Exception\InvalidSchema`, and a varint outside [0, 2^64-1] `Exception\ValueOutOfRange`.
+- An encoder built by `Encoder\Builder` now writes the unknown fields that `UnknownFields::handler()` holds for the
+  objects it encodes: an object decoded by a decoder built `withUnknownHandler(UnknownFields::handler())` is encoded
+  with the fields it was read with, which used to be dropped. Nothing changes for other objects. Build the encoder
+  `withUnknownProvider(null)` to keep dropping them.
 - Declaring a repeated field of a non-packable type (string, bytes, message) as `packed: true` now throws
   `Exception\InvalidSchema` when the type is created. It used to produce output that no parser reads correctly.
 - Serializing a value that its protobuf type cannot represent now throws `Exception\ValueOutOfRange` instead of

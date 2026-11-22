@@ -24,12 +24,7 @@ final class ToProtobufMessageTypeVisitor extends DefaultTypeVisitor
     public function object(ObjectT $type): \Closure
     {
         /** @phpstan-ignore return.type */
-        return fn(object $message) => Protobuf\message(
-            ...$this
-            ->reflector
-            ->message($message)
-            ->fields,
-        );
+        return $this->reflector->message(...);
     }
 
     #[\Override]

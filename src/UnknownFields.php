@@ -5,9 +5,14 @@ declare(strict_types=1);
 namespace Thesis\Protobuf;
 
 /**
+ * Keeps the unknown fields of each decoded object in a `WeakMap`, as a `Handler` of the decoder, and gives them back
+ * to the encoder, as its default `Provider`, so that a decoded object is encoded with the fields it was read with.
+ *
  * @api
  */
-final class UnknownFields implements UnknownFields\Handler
+final class UnknownFields implements
+    UnknownFields\Handler,
+    UnknownFields\Provider
 {
     private static self $instance;
 
@@ -38,6 +43,12 @@ final class UnknownFields implements UnknownFields\Handler
     public function handle(object $message, array $unknowns): void
     {
         $this->map[$message] = $unknowns;
+    }
+
+    #[\Override]
+    public function provide(object $message): array
+    {
+        return $this->map[$message] ?? [];
     }
 
     /**

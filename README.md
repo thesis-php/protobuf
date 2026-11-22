@@ -232,3 +232,63 @@ final readonly class MyHandler implements UnknownFields\Handler
     }
 }
 ```
+
+#### Writing unknown fields back
+
+The `Encoder` writes the unknown fields of every object it encodes, nested objects included, after its known fields.
+By default it takes them from `UnknownFields::handler()`, so an object decoded with that handler is encoded with
+the fields it was read with, and a service on an older schema can forward a message without losing the fields
+of a newer one:
+
+```php
+use Thesis\Protobuf\Decoder;
+use Thesis\Protobuf\Encoder;
+use Thesis\Protobuf\UnknownFields;
+
+$decoder = new Decoder\Builder()
+    ->withUnknownHandler(UnknownFields::handler())
+    ->build();
+$encoder = Encoder\Builder::buildDefault();
+
+$request = $decoder->decode($buffer, CreateUserRequest::class);
+
+// The same bytes, if the sender wrote the unknown fields of each message after its known ones.
+$forwarded = $encoder->encode($request);
+```
+
+Each unknown field is written as it was read: varints, fixed32 and fixed64 values, length-delimited values and
+groups alike. Only their place may differ, since they follow the known fields of their message; a varint also takes
+its shortest form. The unknown fields of a oneof variant belong to the message of the object that holds the oneof,
+as when it is decoded.
+
+To take the unknown fields from elsewhere, implement `UnknownFields\Provider`. It is asked once for every object
+encoded, so it should be cheap for an object that has none:
+
+```php
+use Thesis\Protobuf\Encoder;
+use Thesis\Protobuf\UnknownFields;
+
+final readonly class MyProvider implements UnknownFields\Provider
+{
+    #[\Override]
+    public function provide(object $message): array
+    {
+        return []; // a list of UnknownFields\UnknownField
+    }
+}
+
+$encoder = new Encoder\Builder()
+    ->withUnknownProvider(new MyProvider())
+    ->build();
+```
+
+To write no unknown fields at all, pass `null`: the encoder then does not look them up.
+
+```php
+$encoder = new Encoder\Builder()
+    ->withUnknownProvider(null)
+    ->build();
+```
+
+The low-level `Serializer::serialize()` writes `Message::$unknowns` the same way, after the known fields of each
+message.
