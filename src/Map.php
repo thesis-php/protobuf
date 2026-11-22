@@ -20,7 +20,7 @@ final class Map implements
 {
     private const string TRUE = 't';
     private const string FALSE = 'f';
-    private const string STRING_QUOTE = '`';
+    private const string STRING = '`';
 
     /** @var array<non-empty-string, KVPair<K, V>> */
     private array $pairs = [];
@@ -117,6 +117,10 @@ final class Map implements
     }
 
     /**
+     * The slot of a key. An int and a Number of the same value share one, so that a uint64 key decoded as a Number
+     * is found by its int; both are written as digits with an optional '-' and, for a Number, a fractional part.
+     * The other hashes start with a letter or the string prefix, which no such number does.
+     *
      * @return non-empty-string
      * @throws Exception\IllegalProtobufKeyMap
      */
@@ -127,7 +131,7 @@ final class Map implements
         }
 
         if (\is_string($value)) {
-            return self::STRING_QUOTE . addcslashes($value, self::STRING_QUOTE) . self::STRING_QUOTE;
+            return self::STRING . $value;
         }
 
         if ($value === true) {
@@ -139,6 +143,12 @@ final class Map implements
         }
 
         if ($value instanceof Number) {
+            // A Number keeps the scale it was made with: 1.0 is the same key as 1, as it is written.
+            if ($value->scale > 0) {
+                /** @var non-empty-string */
+                return rtrim(rtrim($value->value, '0'), '.');
+            }
+
             return $value->value;
         }
 

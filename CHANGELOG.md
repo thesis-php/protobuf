@@ -53,6 +53,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   class: `type()` returned a type for a class with a message field of it, and a class whose message field leads to
   it through a cycle of message fields was encoded and decoded as long as that field was not set. They now fail with
   the same exception as a fresh reflector, encoder or decoder.
+- A `Map` key that is a `BcMath\Number` with a scale, e.g. `new Number('1.0')` or the result of arithmetic such as
+  `new Number('0.5') * 2`, is the same key as the Number or int of its value, e.g. `new Number(1)` or `1`. Such
+  a key used to address an entry of its own: it was not found by the other and both were written, as two entries
+  with the same key of a `uint64` or `fixed64` map.
 
 ## [0.2.2] - 2026-11-22
 
