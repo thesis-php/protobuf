@@ -8,8 +8,10 @@ use Psr\SimpleCache\CacheInterface;
 use Thesis\Protobuf;
 use Thesis\Protobuf\Message;
 use Thesis\Protobuf\Reflection\Internal\Api\ClassReflector;
-use Thesis\Protobuf\Reflection\Internal\Cache\Cache;
-use Thesis\Protobuf\Reflection\Internal\Cache\InMemoryPsr16Cache;
+use Thesis\Protobuf\Reflection\Internal\Decoding\FieldDecoder;
+use Thesis\Protobuf\Reflection\Internal\Decoding\OneOfDecoder;
+use Thesis\Protobuf\Reflection\Internal\Encoding\FieldEncoder;
+use Thesis\Protobuf\Reflection\Internal\Encoding\OneOfEncoder;
 use Thesis\Protobuf\Reflection\Internal\Visitor\IsValueEmpty;
 use Thesis\Protobuf\Reflection\Internal\Visitor\RecursionBreakTypeVisitor;
 use Thesis\Protobuf\Reflection\Internal\Visitor\ToProtobufTypeTypeVisitor;
@@ -30,42 +32,63 @@ final class Reflector
 
     private readonly ClassReflector $classReflector;
 
+    private readonly IsValueEmpty $isValueEmpty;
+
+    private readonly ToValueTypeVisitor $toValue;
+
+    /** @var array<class-string, list<FieldEncoder|OneOfEncoder>> */
+    private array $encoders = [];
+
+    /** @var array<class-string, list<FieldDecoder|OneOfDecoder>> */
+    private array $decoders = [];
+
+    /** @var array<class-string, Type\MessageT> */
+    private array $types = [];
+
     /** @var array<class-string, true> */
     private array $visited = [];
 
+    /**
+     * @param ?CacheInterface $cache deprecated and not used: the reflection of the classes, the types and how to encode
+     *        and decode them are kept in memory for as long as the reflector lives, and nothing is stored in the cache
+     */
     public static function build(
         ?CacheInterface $cache = null,
         ?UnknownFields\Handler $unknowns = null,
     ): self {
-        return new self(
-            cache: new Cache(
-                $cache ?? new InMemoryPsr16Cache(),
-            ),
-            unknowns: $unknowns,
-        );
+        return new self($unknowns);
     }
 
     private function __construct(
-        private readonly Cache $cache,
         private readonly ?UnknownFields\Handler $unknowns = null,
     ) {
         $this->typeVisitor = new ToProtobufTypeTypeVisitor($this);
         $this->valueVisitor = new ToProtobufValueTypeVisitor($this);
         $this->classReflector = new ClassReflector();
+        $this->isValueEmpty = new IsValueEmpty();
+        $this->toValue = new ToValueTypeVisitor($this);
     }
 
+    /**
+     * @throws ReflectionException if a property cannot be the protobuf field or oneof it is declared as, or a property
+     *         declared as one is not initialized
+     */
     public function message(object $message): Message
     {
         return $this->doGetMessage($message);
     }
 
     /**
+     * The type is built once per class and kept for as long as the reflector lives.
+     *
      * @param class-string $class
+     * @throws \ReflectionException if the class does not exist
+     * @throws ReflectionException if a property cannot be the protobuf field or oneof it is declared as
      */
     public function type(string $class): Type\MessageT
     {
-        if (($messageT = $this->cache->get($class)) !== null) {
-            return $messageT;
+        if (isset($this->types[$class])) {
+            return $this->types[$class];
         }
 
         $this->visited[$class] = true;
@@ -100,10 +123,7 @@ final class Reflector
 
         unset($this->visited[$class]);
 
-        $messageT = Protobuf\messageT(...$fields);
-        $this->cache->set($class, $messageT);
-
-        return $messageT;
+        return $this->types[$class] = Protobuf\messageT(...$fields);
     }
 
     /**
@@ -115,62 +135,43 @@ final class Reflector
      */
     public function map(Message $message, string $class): object
     {
-        $classReflection = $this->classReflector->reflect($class);
-        $object = $classReflection->class->newInstanceWithoutConstructor();
+        $object = $this->classReflector->reflect($class)->class->newInstanceWithoutConstructor();
 
         $exceptions = [];
 
-        foreach ($classReflection->properties as $property) {
-            $propertyType = $property->reflection->getType();
-            \assert($propertyType !== null);
+        foreach ($this->decoders($class) as $decoder) {
+            if ($decoder instanceof FieldDecoder) {
+                if (isset($message->fields[$decoder->num])) {
+                    $value = $message->fields[$decoder->num]->value->value;
 
-            if ($property->attributes->has(Field::class)) {
-                $field = $property->attributes->get(Field::class);
-
-                if (isset($message->fields[$field->num])) {
-                    $value = $field
-                        ->type
-                        ->accept(new ToValueTypeVisitor(
-                            $this,
-                            $message->fields[$field->num]->value->value,
-                        ));
-                } elseif ($property->default !== null) {
-                    $value = $property->default->value;
+                    if ($decoder->value !== null) {
+                        $value = ($decoder->value)($value);
+                    }
+                } elseif ($decoder->default !== null) {
+                    $value = $decoder->default->value;
                 } else {
-                    $exceptions[] = new Exception\PropertyRequired(
-                        $property->reflection->getDeclaringClass()->getName(),
-                        $property->reflection->getName(),
-                    );
+                    $declaringClass = $decoder->property->getDeclaringClass()->getName();
+                    /** @var non-empty-string $name */
+                    $name = $decoder->property->getName();
+
+                    $exceptions[] = new Exception\PropertyRequired($declaringClass, $name);
 
                     continue;
                 }
 
-                $property->reflection->setValue(
-                    $object,
-                    $value,
-                );
-            } elseif ($property->attributes->has(OneOf::class)) {
-                $oneof = $property->attributes->get(OneOf::class);
+                $decoder->property->setValue($object, $value);
+            } else {
+                $variant = null;
 
-                foreach ($oneof->variants as $it) {
-                    $variantType = $this->type($it);
+                foreach ($decoder->variants as $num => $it) {
+                    if (isset($message->fields[$num])) {
+                        $variant = $this->map($message, $it);
 
-                    foreach ($variantType->fields as $num => $_) {
-                        if (isset($message->fields[$num])) {
-                            $property->reflection->setValue(
-                                $object,
-                                $this->map($message, $it),
-                            );
-
-                            continue 3;
-                        }
+                        break;
                     }
                 }
 
-                $property->reflection->setValue(
-                    $object,
-                    null,
-                );
+                $decoder->property->setValue($object, $variant);
             }
         }
 
@@ -262,40 +263,45 @@ final class Reflector
     }
 
     /**
-     * @param ?\Closure(Field, mixed): bool $presence
+     * @param bool $present whether every value but null is written, default values included: the fields of a oneof
+     *        variant are, since the variant set tells which one is chosen
      */
-    private function doGetMessage(object $message, ?\Closure $presence = null): Message
+    private function doGetMessage(object $message, bool $present = false): Message
     {
-        $presence ??= static fn(Field $field, mixed $value): bool => !$field->type->accept(new IsValueEmpty($value));
-
-        $classReflection = $this->classReflector->reflect($message::class);
-
         $descriptors = [];
 
-        foreach ($classReflection->properties as $property) {
-            $value = $property->reflection->getValue($message);
+        foreach ($this->encoders($message::class) as $encoder) {
+            try {
+                $value = $encoder->property->getValue($message);
+            } catch (\Error $e) {
+                if ($encoder->property->isInitialized($message)) {
+                    throw $e;
+                }
+
+                $class = $encoder->property->getDeclaringClass()->getName();
+                /** @var non-empty-string $name */
+                $name = $encoder->property->getName();
+
+                throw new Exception\PropertyNotInitialized($class, $name, $e);
+            }
 
             if ($value === null) {
                 continue;
             }
 
-            if ($property->attributes->has(Field::class)) {
-                $field = $property->attributes->get(Field::class);
-
-                if (($property->default !== null && $property->default->value === null) || $presence($field, $value)) {
+            if ($encoder instanceof FieldEncoder) {
+                if ($present || $encoder->isEmpty === null || !($encoder->isEmpty)($value)) {
                     $descriptors[] = Protobuf\fieldOf(
-                        $field->num,
-                        $field->type->accept($this->valueVisitor)($value),
+                        $encoder->num,
+                        ($encoder->value)($value),
                     );
                 }
-            } elseif ($property->attributes->has(OneOf::class)) {
-                $oneof = $property->attributes->get(OneOf::class);
-
-                foreach ($oneof->variants as $it) {
+            } else {
+                foreach ($encoder->variants as $it) {
                     if ($value instanceof $it) {
                         $descriptors = [
                             ...$descriptors,
-                            ...$this->doGetMessage($value, static fn() => true)->fields,
+                            ...$this->doGetMessage($value, true)->fields,
                         ];
 
                         break;
@@ -305,5 +311,85 @@ final class Reflector
         }
 
         return Protobuf\message(...$descriptors);
+    }
+
+    /**
+     * Builds how to encode the properties of the class once: the protobuf type of each field, the conversion of its
+     * values and the check for the default value.
+     *
+     * @param class-string $class
+     * @return list<FieldEncoder|OneOfEncoder>
+     */
+    private function encoders(string $class): array
+    {
+        if (isset($this->encoders[$class])) {
+            return $this->encoders[$class];
+        }
+
+        $encoders = [];
+
+        foreach ($this->classReflector->reflect($class)->properties as $property) {
+            if ($property->attributes->has(Field::class)) {
+                $field = $property->attributes->get(Field::class);
+
+                $encoders[] = new FieldEncoder(
+                    $property->reflection,
+                    $field->num,
+                    $field->type->accept($this->valueVisitor),
+                    // A nullable property that is null by default has explicit presence: any value set is written.
+                    $property->default !== null && $property->default->value === null
+                        ? null
+                        : $field->type->accept($this->isValueEmpty),
+                );
+            } elseif ($property->attributes->has(OneOf::class)) {
+                $encoders[] = new OneOfEncoder(
+                    $property->reflection,
+                    $property->attributes->get(OneOf::class)->variants,
+                );
+            }
+        }
+
+        return $this->encoders[$class] = $encoders;
+    }
+
+    /**
+     * Builds how to decode the properties of the class once: the conversion of the values of each field and,
+     * for a oneof, the variant of each field number.
+     *
+     * @param class-string $class
+     * @return list<FieldDecoder|OneOfDecoder>
+     */
+    private function decoders(string $class): array
+    {
+        if (isset($this->decoders[$class])) {
+            return $this->decoders[$class];
+        }
+
+        $decoders = [];
+
+        foreach ($this->classReflector->reflect($class)->properties as $property) {
+            if ($property->attributes->has(Field::class)) {
+                $field = $property->attributes->get(Field::class);
+
+                $decoders[] = new FieldDecoder(
+                    $property->reflection,
+                    $field->num,
+                    $field->type->accept($this->toValue),
+                    $property->default,
+                );
+            } elseif ($property->attributes->has(OneOf::class)) {
+                $variants = [];
+
+                foreach ($property->attributes->get(OneOf::class)->variants as $it) {
+                    foreach ($this->type($it)->fields as $num => $_) {
+                        $variants[$num] ??= $it;
+                    }
+                }
+
+                $decoders[] = new OneOfDecoder($property->reflection, $variants);
+            }
+        }
+
+        return $this->decoders[$class] = $decoders;
     }
 }

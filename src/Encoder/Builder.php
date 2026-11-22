@@ -15,14 +15,13 @@ use Thesis\Protobuf\Serializer;
  */
 final class Builder
 {
-    private ?CacheInterface $cache = null;
-
+    /**
+     * @deprecated Does nothing: the reflection of the classes is kept in memory for as long as the built instance
+     *             lives, and nothing is stored in the cache any more. Will be removed in the next minor version.
+     */
     public function withCache(CacheInterface $cache): self
     {
-        $builder = clone $this;
-        $builder->cache = $cache;
-
-        return $builder;
+        return clone $this;
     }
 
     public static function buildDefault(): Encoder
@@ -34,7 +33,7 @@ final class Builder
     {
         return new ReflectionEncoder(
             new Serializer(),
-            Reflector::build($this->cache),
+            Reflector::build(),
         );
     }
 }

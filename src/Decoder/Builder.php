@@ -16,19 +16,18 @@ use Thesis\Protobuf\UnknownFields;
  */
 final class Builder
 {
-    private ?CacheInterface $cache = null;
-
     private ?UnknownFields\Handler $unknowns = null;
 
     /** @var non-negative-int */
     private int $recursionLimit = Serializer::DEFAULT_RECURSION_LIMIT;
 
+    /**
+     * @deprecated Does nothing: the reflection of the classes is kept in memory for as long as the built instance
+     *             lives, and nothing is stored in the cache any more. Will be removed in the next minor version.
+     */
     public function withCache(CacheInterface $cache): self
     {
-        $builder = clone $this;
-        $builder->cache = $cache;
-
-        return $builder;
+        return clone $this;
     }
 
     public function withUnknownHandler(UnknownFields\Handler $handler): self
@@ -68,7 +67,7 @@ final class Builder
     {
         return new ReflectionDecoder(
             new Serializer($this->recursionLimit),
-            Reflector::build($this->cache, $this->unknowns),
+            Reflector::build(unknowns: $this->unknowns),
         );
     }
 }

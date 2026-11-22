@@ -46,7 +46,11 @@ final class ReflectionDecoderTest extends TestCase
     public function testConfigurationErrorsAreNotMaskedAsDecodingErrors(): void
     {
         // The property type does not match the declared protobuf type: a bug in the schema, not in the input.
-        $this->expectException(\TypeError::class);
+        $this->expectExceptionObject(new Reflection\Exception\InvalidProperty(
+            MismatchedPropertyType::class,
+            'value',
+            'of type int cannot hold the values of the protobuf field 1: expected string',
+        ));
 
         Builder::buildDefault()->decode("\x0a\x03abc", MismatchedPropertyType::class);
     }

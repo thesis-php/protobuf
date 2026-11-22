@@ -40,9 +40,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Such input used to be decoded as deep as the PHP stack allowed. The limit is set with
   `Decoder\Builder::withRecursionLimit()` or `new Serializer($recursionLimit)`; the default is
   `Serializer::DEFAULT_RECURSION_LIMIT`. A map entry is not a level of its own, but a message value in it is.
+- A property declared as a field or a oneof is checked when its class is reflected for the first time, and a wrong
+  declaration throws the new `Reflection\Exception\InvalidProperty`: a static or virtual property, a property whose
+  PHP type cannot hold the values of its protobuf type (e.g. `#[Field(1, Int32T::T)] public string $x`, an `int` for
+  a `double` or a `uint64`, another class or enum than declared), or a oneof property whose type cannot hold one of
+  its variants. Such declarations used to fail with `\TypeError` only when a value was encoded or decoded, if at all.
+  A property typed `array` for a map field is let through as before.
+- Errors in the declaration of a class, `Exception\InvalidSchema` of its field types included, are reported when the
+  first object of the class is encoded, whatever the values of its properties. They used to be reported only when
+  a property with the wrong field had a value.
+- `Reflector::message()` gives a nested message value the type of its class, the one `Reflector::type()` returns,
+  instead of a type built from the fields set in the value; list, map and enum values of a property, too, share one
+  type object built once. The encoded bytes are the same.
+- `Encoder` and `Decoder` reflect a class once, when the first object of the class is encoded or decoded, and keep,
+  for as long as they live, how to encode and decode its properties: an object of the same class is encoded about
+  2.5 times and decoded about 1.9 times as fast as before, and a long packed field or map is decoded about a quarter
+  faster.
 
 ### Deprecated
 
+- `Encoder\Builder::withCache()`, `Decoder\Builder::withCache()` and the `$cache` argument of `Reflector::build()`
+  do nothing: the reflection of the classes is kept in memory by the encoder and the decoder, and the PSR-16 cache
+  is neither read nor written any more. Entries that earlier versions stored in it under the class names are ignored
+  and may be deleted. They will be removed in the next minor version.
 - `Encoder\EncodingError` is not thrown any more: a `catch (EncodingError)` no longer catches anything. Catch
   `ProtobufException` or one of its specific subclasses instead.
 
@@ -72,3 +92,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   group that is not closed throws `Exception\BufferUnderflow`.
 - A map entry whose enum value has no case in the PHP enum is kept among the unknown fields of the message, with
   the bytes of the entry as they were written, as protobuf does for closed enums. It used to be lost entirely.
+- A public property without `#[Field]` or `#[OneOf]`, static and virtual ones included, is neither read nor written
+  by the encoder and the decoder. Such a property that was not initialized used to fail encoding with `\Error`.
+  A property declared as a field or a oneof that is not initialized makes encoding throw the new
+  `Reflection\Exception\PropertyNotInitialized`, which names it, instead of `\Error`.
+- Recursive types, such as a message with a field of its own class, are encoded and decoded whatever PSR-16 cache
+  is given to the builders. A cache that serializes its values used to fail with
+  `Serialization of 'Closure' is not allowed`, and a strict one rejected the keys, which were class names with `\`,
+  a character that PSR-16 reserves.

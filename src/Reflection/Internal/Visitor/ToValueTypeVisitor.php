@@ -4,214 +4,85 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Reflection\Internal\Visitor;
 
-use BcMath\Number;
 use Thesis\Protobuf\Map;
 use Thesis\Protobuf\Message;
-use Thesis\Protobuf\Reflection\BoolT;
-use Thesis\Protobuf\Reflection\BytesT;
-use Thesis\Protobuf\Reflection\DoubleT;
-use Thesis\Protobuf\Reflection\EnumT;
-use Thesis\Protobuf\Reflection\Fixed32T;
-use Thesis\Protobuf\Reflection\FloatT;
-use Thesis\Protobuf\Reflection\Int32T;
-use Thesis\Protobuf\Reflection\Int64T;
 use Thesis\Protobuf\Reflection\ListT;
 use Thesis\Protobuf\Reflection\MapT;
 use Thesis\Protobuf\Reflection\ObjectT;
 use Thesis\Protobuf\Reflection\Reflector;
-use Thesis\Protobuf\Reflection\SFixed32T;
-use Thesis\Protobuf\Reflection\SFixed64T;
-use Thesis\Protobuf\Reflection\SInt32T;
-use Thesis\Protobuf\Reflection\SInt64T;
-use Thesis\Protobuf\Reflection\StringT;
 use Thesis\Protobuf\Reflection\Type;
-use Thesis\Protobuf\Reflection\Uint32T;
 
 /**
+ * Builds the conversion of a decoded protobuf value to the value of a property once per property. A scalar or
+ * an enum is decoded as the property holds it, so it needs none: null stands for keeping the value as is.
+ *
+ * The property types are checked against the protobuf types when the class is reflected, so the values are not.
+ *
  * @internal
- * @template-extends DefaultTypeVisitor<mixed>
+ * @template-extends DefaultTypeVisitor<?\Closure(mixed): mixed>
  */
 final class ToValueTypeVisitor extends DefaultTypeVisitor
 {
     public function __construct(
         private readonly Reflector $reflector,
-        private readonly mixed $value,
     ) {}
 
     #[\Override]
-    public function bool(BoolT $type): mixed
+    public function list(ListT $type): ?\Closure
     {
-        \assert(\is_bool($this->value));
+        $element = $type->element->accept($this);
 
-        return $this->value;
-    }
-
-    #[\Override]
-    public function float(FloatT $type): mixed
-    {
-        \assert(\is_float($this->value));
-
-        return $this->value;
-    }
-
-    #[\Override]
-    public function double(DoubleT $type): mixed
-    {
-        \assert(\is_float($this->value));
-
-        return $this->value;
-    }
-
-    #[\Override]
-    public function int32(Int32T $type): mixed
-    {
-        \assert(\is_int($this->value));
-
-        return $this->value;
-    }
-
-    #[\Override]
-    public function uint32(Uint32T $type): mixed
-    {
-        \assert(\is_int($this->value));
-
-        return $this->value;
-    }
-
-    #[\Override]
-    public function sint32(SInt32T $type): mixed
-    {
-        \assert(\is_int($this->value));
-
-        return $this->value;
-    }
-
-
-    #[\Override]
-    public function fixed32(Fixed32T $type): mixed
-    {
-        \assert(\is_int($this->value));
-
-        return $this->value;
-    }
-
-    #[\Override]
-    public function sfixed32(SFixed32T $type): mixed
-    {
-        \assert(\is_int($this->value));
-
-        return $this->value;
-    }
-
-    #[\Override]
-    public function int64(Int64T $type): mixed
-    {
-        \assert(\is_int($this->value));
-
-        return $this->value;
-    }
-
-    #[\Override]
-    public function sint64(SInt64T $type): mixed
-    {
-        \assert(\is_int($this->value));
-
-        return $this->value;
-    }
-
-    #[\Override]
-    public function sfixed64(SFixed64T $type): mixed
-    {
-        \assert(\is_int($this->value));
-
-        return $this->value;
-    }
-
-    #[\Override]
-    public function string(StringT $type): mixed
-    {
-        \assert(\is_string($this->value));
-
-        return $this->value;
-    }
-
-    #[\Override]
-    public function bytes(BytesT $type): mixed
-    {
-        \assert(\is_string($this->value));
-
-        return $this->value;
-    }
-
-    #[\Override]
-    public function enum(EnumT $type): mixed
-    {
-        \assert($this->value instanceof \BackedEnum);
-
-        return $this->value;
-    }
-
-    #[\Override]
-    public function list(ListT $type): mixed
-    {
-        \assert(\is_array($this->value) && array_is_list($this->value));
-
-        $list = [];
-
-        foreach ($this->value as $value) {
-            $list[] = $type
-                ->element
-                ->accept(new self(
-                    $this->reflector,
-                    $value,
-                ));
+        if ($element === null) {
+            return null;
         }
 
-        return $list;
+        return static function (mixed $values) use ($element): array {
+            /** @var list<mixed> $values */
+            return array_map($element, $values);
+        };
     }
 
     #[\Override]
-    public function map(MapT $type): mixed
+    public function map(MapT $type): \Closure
     {
-        \assert(is_iterable($this->value));
+        // The keys are scalars: only the values may need a conversion.
+        $value = $type->valueT->accept($this);
 
-        $map = new Map();
-
-        foreach ($this->value as $key => $value) {
-            /** @var array-key $mapKey */
-            $mapKey = $type
-                ->keyT
-                ->accept(new self(
-                    $this->reflector,
-                    $key,
-                ));
-
-            $mapValue = $type
-                ->valueT
-                ->accept(new self(
-                    $this->reflector,
-                    $value,
-                ));
-
-            $map[$mapKey] = $mapValue;
+        if ($value === null) {
+            // The map of the message is not shared with the object.
+            return static function (mixed $map): Map {
+                /** @var Map<mixed, mixed> $map */
+                return clone $map;
+            };
         }
 
-        return $map;
+        return static function (mixed $map) use ($value): Map {
+            /** @var Map<mixed, mixed> $map */
+            $mapped = new Map();
+
+            foreach ($map as $key => $val) {
+                $mapped[$key] = $value($val);
+            }
+
+            return $mapped;
+        };
     }
 
     #[\Override]
-    public function object(ObjectT $type): mixed
+    public function object(ObjectT $type): \Closure
     {
-        \assert($this->value instanceof Message);
+        $reflector = $this->reflector;
+        $class = $type->class;
 
-        return $this->reflector->map($this->value, $type->class);
+        return static function (mixed $message) use ($reflector, $class): object {
+            /** @var Message $message */
+            return $reflector->map($message, $class);
+        };
     }
 
     #[\Override]
-    protected function default(Type $type): mixed
+    protected function default(Type $type): null
     {
-        \assert($this->value instanceof Number);
-
-        return $this->value;
+        return null;
     }
 }

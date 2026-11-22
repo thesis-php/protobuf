@@ -29,6 +29,9 @@ use Thesis\Protobuf\Reflection\Visitor;
 use Thesis\Protobuf\Type;
 
 /**
+ * Builds the conversion of a property value to a protobuf value once per property: the protobuf type of the value
+ * is built once and shared by every value converted, so that the codec of the type is built once too.
+ *
  * @internal
  * @template T
  * @template-implements Visitor<\Closure(T): Protobuf\Value<T>>
@@ -153,22 +156,17 @@ final readonly class ToProtobufValueTypeVisitor implements Visitor
     {
         /** @var Type<mixed, 'repeatable'> $element */
         $element = $type->element->accept($this->typeVisitor);
-
-        $mapValue = static fn(array $value): array => $value;
+        $listT = Protobuf\listT($element, $type->packed);
 
         if ($type->element->accept(new IsObjectType())) {
             $mapper = $type->element->accept(new ToProtobufMessageTypeVisitor($this->reflector));
 
-            $mapValue = static fn(array $value): array => array_map($mapper, $value);
+            /** @phpstan-ignore return.type */
+            return static fn(array $value): Protobuf\Value => new Protobuf\Value(array_map($mapper, $value), $listT);
         }
 
         /** @phpstan-ignore return.type */
-        return static fn(array $value) => Protobuf\listOf(
-            $element,
-            /** @phpstan-ignore argument.type */
-            $mapValue($value),
-            $type->packed,
-        );
+        return static fn(array $value): Protobuf\Value => new Protobuf\Value($value, $listT);
     }
 
     #[\Override]
@@ -197,30 +195,28 @@ final readonly class ToProtobufValueTypeVisitor implements Visitor
             };
         }
 
+        $mapT = Protobuf\mapT($keyT, $valueT);
+
         /** @phpstan-ignore return.type */
-        return static fn(Protobuf\Map $value) => Protobuf\mapOf(
-            $keyT,
-            $valueT,
-            $mapValue($value),
-        );
+        return static fn(Protobuf\Map $value): Protobuf\Value => new Protobuf\Value($mapValue($value), $mapT);
     }
 
     #[\Override]
     public function enum(EnumT $type): \Closure
     {
+        $enumT = Protobuf\enumT($type->enum);
+
         /** @phpstan-ignore return.type */
-        return Protobuf\enumOf(...);
+        return static fn(\BackedEnum $value): Protobuf\Value => new Protobuf\Value($value, $enumT);
     }
 
     #[\Override]
     public function object(ObjectT $type): \Closure
     {
+        $reflector = $this->reflector;
+        $messageT = $reflector->type($type->class);
+
         /** @phpstan-ignore return.type */
-        return fn(object $message) => Protobuf\messageOf(
-            ...$this
-            ->reflector
-            ->message($message)
-            ->fields,
-        );
+        return static fn(object $message): Protobuf\Value => new Protobuf\Value($reflector->message($message), $messageT);
     }
 }
