@@ -68,7 +68,12 @@ final class PropertyTypeValidationTest extends TestCase
 
         yield 'other class' => [
             PropertyTypeValidationTestOtherClass::class,
-            \sprintf('of type ?self cannot hold the values of the protobuf field 1: expected %s', PropertyTypeValidationTestInner::class),
+            // The property is typed ?self, which PHP reports as written or as the class name, depending on its version.
+            \sprintf(
+                'of type %s cannot hold the values of the protobuf field 1: expected %s',
+                (string) new \ReflectionProperty(PropertyTypeValidationTestOtherClass::class, 'value')->getType(),
+                PropertyTypeValidationTestInner::class,
+            ),
         ];
 
         yield 'string for map' => [
