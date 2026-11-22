@@ -124,6 +124,20 @@ try {
 Both `Encoder::encode()` and `Decoder::decode()` throw `Thesis\Protobuf\ProtobufException`.
 Domain protobuf exceptions are preserved and are not wrapped into generic runtime errors.
 
+### Recursion limit
+
+To keep untrusted input from exhausting the stack, the `Decoder` accepts messages and groups nested at most 100 levels
+deep below the top-level message, as the official C++ and Java implementations do. A deeper input fails with
+`Thesis\Protobuf\Exception\RecursionLimitExceeded`. If your messages are legitimately nested deeper, raise the limit:
+
+```php
+use Thesis\Protobuf\Decoder;
+
+$decoder = new Decoder\Builder()
+    ->withRecursionLimit(1000)
+    ->build();
+```
+
 ### Unknown fields
 
 When a protobuf message is decoded, it may contain fields that are not defined in the target class.

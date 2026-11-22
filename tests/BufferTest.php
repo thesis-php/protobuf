@@ -7,6 +7,7 @@ namespace Thesis\Protobuf;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Thesis\Protobuf\Exception\BufferUnderflow;
+use Thesis\Protobuf\Exception\RecursionLimitExceeded;
 use Thesis\Protobuf\Internal\Buffer\ByteBuffer;
 use Thesis\Protobuf\Internal\Buffer\Reader;
 
@@ -70,6 +71,22 @@ final class BufferTest extends TestCase
 
         $this->expectExceptionObject(new BufferUnderflow("Expected '3' bytes, but the buffer only has '2' bytes."));
         $buffer->pushLimit(3);
+    }
+
+    public function testLevelsLeftAreNotCountedAgainstTheRecursionLimit(): void
+    {
+        $buffer = new Reader('', 2);
+        $buffer->enterNested();
+        $buffer->enterNested();
+        $buffer->leaveNested();
+        $buffer->enterNested();
+        $buffer->leaveNested();
+        $buffer->leaveNested();
+        $buffer->enterNested();
+        $buffer->enterNested();
+
+        $this->expectExceptionObject(new RecursionLimitExceeded(2));
+        $buffer->enterNested();
     }
 
     public function testNegativeLimitFails(): void

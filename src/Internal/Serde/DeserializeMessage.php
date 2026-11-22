@@ -23,9 +23,11 @@ final readonly class DeserializeMessage implements DeserializeValue
     #[\Override]
     public function deserialize(ReadBuffer $buffer): Message
     {
+        $buffer->enterNested();
         $limit = Buffer\enterRecord($buffer);
         $message = MessageFields::deserialize($buffer, $this->messageT);
         $buffer->popLimit($limit);
+        $buffer->leaveNested();
 
         return $message;
     }
@@ -37,9 +39,11 @@ final readonly class DeserializeMessage implements DeserializeValue
      */
     public function merge(ReadBuffer $buffer, Message $into): Message
     {
+        $buffer->enterNested();
         $limit = Buffer\enterRecord($buffer);
         $message = MessageFields::deserialize($buffer, $this->messageT, $into);
         $buffer->popLimit($limit);
+        $buffer->leaveNested();
 
         return $message;
     }

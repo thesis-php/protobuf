@@ -8,6 +8,7 @@ use BcMath\Number;
 use Thesis\Protobuf\Exception\BufferUnderflow;
 use Thesis\Protobuf\Exception\MalformedGroup;
 use Thesis\Protobuf\Exception\MalformedMessage;
+use Thesis\Protobuf\Exception\RecursionLimitExceeded;
 use Thesis\Protobuf\Internal\Buffer\ByteBuffer;
 use Thesis\Protobuf\Internal\Buffer\ReadBuffer;
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
@@ -25,6 +26,7 @@ use Thesis\Protobuf\WireType;
  *
  * @internal
  * @throws MalformedMessage
+ * @throws RecursionLimitExceeded
  */
 function discardUnknown(ReadBuffer $buffer, Tag $tag): UnknownField
 {
@@ -59,17 +61,20 @@ function readBytes(ReadBuffer $buffer): string
 
 /**
  * Reads the fields of a group, whose start group tag is read already, up to the end group tag of the same field.
- * Nested groups are tracked on a list rather than by recursion, so the depth of nesting is bounded by the input only.
+ * Nested groups are tracked on a list rather than by recursion; each of them, this one too, is a level of nesting
+ * counted against the recursion limit of the buffer, as a nested message is.
  *
  * @internal
  * @param positive-int $num the field number of the group
  * @return string the fields of the group as they were written, without its end group tag
  * @throws MalformedMessage
+ * @throws RecursionLimitExceeded
  */
 function readGroup(ReadBuffer $buffer, int $num): string
 {
     $start = $buffer->position();
     $open = [$num];
+    $buffer->enterNested();
 
     while (true) {
         if (\count($buffer) === 0) {
@@ -80,6 +85,7 @@ function readGroup(ReadBuffer $buffer, int $num): string
         $tag = readTag($buffer);
 
         if ($tag->type === WireType::SGROUP) {
+            $buffer->enterNested();
             $open[] = $tag->num;
         } elseif ($tag->type !== WireType::EGROUP) {
             match ($tag->type) {
@@ -92,8 +98,12 @@ function readGroup(ReadBuffer $buffer, int $num): string
             throw new MalformedGroup(
                 \sprintf('Unexpected end group tag of field %d: the group of field %d is open.', $tag->num, $expected),
             );
-        } elseif ($open === []) {
-            return substr($buffer->bytesSince($start), 0, $end - $start);
+        } else {
+            $buffer->leaveNested();
+
+            if ($open === []) {
+                return substr($buffer->bytesSince($start), 0, $end - $start);
+            }
         }
     }
 }

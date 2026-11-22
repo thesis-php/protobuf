@@ -6,6 +6,7 @@ namespace Thesis\Protobuf\Internal\Buffer;
 
 use Thesis\Protobuf\Exception\BufferUnderflow;
 use Thesis\Protobuf\Exception\MalformedVarint;
+use Thesis\Protobuf\Exception\RecursionLimitExceeded;
 
 /**
  * @internal
@@ -40,6 +41,15 @@ interface ReadBuffer extends \Countable
     public function pushLimit(int $length): int;
 
     public function popLimit(int $limit): void;
+
+    /**
+     * Counts a level of nesting, a nested message or group, against the recursion limit, until leaveNested().
+     *
+     * @throws RecursionLimitExceeded if the levels entered and not left exceed the limit
+     */
+    public function enterNested(): void;
+
+    public function leaveNested(): void;
 
     /**
      * The offset of the cursor in the input, to take the bytes read from there on with bytesSince().
