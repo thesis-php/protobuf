@@ -374,7 +374,9 @@ final class Reflector
                 $decoders[] = new FieldDecoder(
                     $property->reflection,
                     $field->num,
-                    $field->type->accept($this->toValue),
+                    $property->mapAsArray && $field->type instanceof MapT
+                        ? $this->toValue->mapToArray($field->type)
+                        : $field->type->accept($this->toValue),
                     $property->default,
                 );
             } elseif ($property->attributes->has(OneOf::class)) {

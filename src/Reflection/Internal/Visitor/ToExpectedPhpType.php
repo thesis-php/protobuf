@@ -79,7 +79,7 @@ final class ToExpectedPhpType extends DefaultTypeVisitor
     #[\Override]
     public function map(MapT $type): ExpectedPhpType
     {
-        // An array property is let through as before: whether it may hold a map is a decision of its own.
+        // An array property holds the map as an array, if its keys can be array keys: see ClassReflector.
         return new ExpectedPhpType(['array', 'iterable'], Map::class);
     }
 
