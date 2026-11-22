@@ -6,6 +6,8 @@ namespace Thesis\Protobuf\Reflection;
 
 use Psr\SimpleCache\CacheInterface;
 use Thesis\Protobuf;
+use Thesis\Protobuf\Internal\Serde\MessageFields;
+use Thesis\Protobuf\Internal\Serde\OneOfs;
 use Thesis\Protobuf\Message;
 use Thesis\Protobuf\Reflection\Internal\Api\ClassReflector;
 use Thesis\Protobuf\Reflection\Internal\Decoding\FieldDecoder;
@@ -79,7 +81,9 @@ final class Reflector
     }
 
     /**
-     * The type is built once per class and kept for as long as the reflector lives.
+     * The type is built once per class and kept for as long as the reflector lives. When read, of the variants of
+     * a oneof only the last one in the input is kept: reading a field of a variant drops the fields read so far
+     * of any other variant of the oneof.
      *
      * @param class-string $class
      * @throws \ReflectionException if the class does not exist
@@ -96,6 +100,7 @@ final class Reflector
         $classReflection = $this->classReflector->reflect($class);
 
         $fields = [];
+        $oneofs = [];
 
         foreach ($classReflection->properties as $property) {
             if ($property->attributes->has(Field::class)) {
@@ -111,22 +116,37 @@ final class Reflector
                 );
             } elseif ($property->attributes->has(OneOf::class)) {
                 $oneof = $property->attributes->get(OneOf::class);
+                $variants = [];
 
                 foreach ($oneof->variants as $it) {
+                    $variantFields = $this->type($it)->fields;
+                    $variants[] = array_keys($variantFields);
+
                     $fields = [
                         ...$fields,
-                        ...$this->type($it)->fields,
+                        ...$variantFields,
                     ];
                 }
+
+                $oneofs[] = $variants;
             }
         }
 
         unset($this->visited[$class]);
 
-        return $this->types[$class] = Protobuf\messageT(...$fields);
+        $type = Protobuf\messageT(...$fields);
+
+        if ($oneofs !== []) {
+            MessageFields::declareOneOfs($type, new OneOfs($oneofs));
+        }
+
+        return $this->types[$class] = $type;
     }
 
     /**
+     * A message read with the type of the class (see type()) holds the fields of at most one variant of each oneof:
+     * the last one read. Given fields of several variants of a oneof, the first variant declared is chosen.
+     *
      * @template T of object
      * @param class-string<T> $class
      * @return T
@@ -135,49 +155,7 @@ final class Reflector
      */
     public function map(Message $message, string $class): object
     {
-        $object = $this->classReflector->reflect($class)->class->newInstanceWithoutConstructor();
-
-        $exceptions = [];
-
-        foreach ($this->decoders($class) as $decoder) {
-            if ($decoder instanceof FieldDecoder) {
-                if (isset($message->fields[$decoder->num])) {
-                    $value = $message->fields[$decoder->num]->value->value;
-
-                    if ($decoder->value !== null) {
-                        $value = ($decoder->value)($value);
-                    }
-                } elseif ($decoder->default !== null) {
-                    $value = $decoder->default->value;
-                } else {
-                    $declaringClass = $decoder->property->getDeclaringClass()->getName();
-                    /** @var non-empty-string $name */
-                    $name = $decoder->property->getName();
-
-                    $exceptions[] = new Exception\PropertyRequired($declaringClass, $name);
-
-                    continue;
-                }
-
-                $decoder->property->setValue($object, $value);
-            } else {
-                $variant = null;
-
-                foreach ($decoder->variants as $num => $it) {
-                    if (isset($message->fields[$num])) {
-                        $variant = $this->map($message, $it);
-
-                        break;
-                    }
-                }
-
-                $decoder->property->setValue($object, $variant);
-            }
-        }
-
-        if ($exceptions !== []) {
-            throw new Exception\MappingError($exceptions);
-        }
+        $object = $this->mapFields($message, $class);
 
         if ($message->unknowns !== []) {
             $this->unknowns?->handle($object, $message->unknowns);
@@ -260,6 +238,65 @@ final class Reflector
         }
 
         return $path;
+    }
+
+    /**
+     * Maps the fields of the message to a new object of the class, without passing on the unknown fields: the fields
+     * of a oneof variant are fields of the message of the object the oneof belongs to, and so are its unknown fields.
+     *
+     * @template T of object
+     * @param class-string<T> $class
+     * @return T
+     * @throws \ReflectionException
+     * @throws ReflectionException
+     */
+    private function mapFields(Message $message, string $class): object
+    {
+        $object = $this->classReflector->reflect($class)->class->newInstanceWithoutConstructor();
+
+        $exceptions = [];
+
+        foreach ($this->decoders($class) as $decoder) {
+            if ($decoder instanceof FieldDecoder) {
+                if (isset($message->fields[$decoder->num])) {
+                    $value = $message->fields[$decoder->num]->value->value;
+
+                    if ($decoder->value !== null) {
+                        $value = ($decoder->value)($value);
+                    }
+                } elseif ($decoder->default !== null) {
+                    $value = $decoder->default->value;
+                } else {
+                    $declaringClass = $decoder->property->getDeclaringClass()->getName();
+                    /** @var non-empty-string $name */
+                    $name = $decoder->property->getName();
+
+                    $exceptions[] = new Exception\PropertyRequired($declaringClass, $name);
+
+                    continue;
+                }
+
+                $decoder->property->setValue($object, $value);
+            } else {
+                $variant = null;
+
+                foreach ($decoder->variants as $num => $it) {
+                    if (isset($message->fields[$num])) {
+                        $variant = $this->mapFields($message, $it);
+
+                        break;
+                    }
+                }
+
+                $decoder->property->setValue($object, $variant);
+            }
+        }
+
+        if ($exceptions !== []) {
+            throw new Exception\MappingError($exceptions);
+        }
+
+        return $object;
     }
 
     /**

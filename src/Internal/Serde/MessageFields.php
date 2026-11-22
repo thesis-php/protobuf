@@ -13,6 +13,7 @@ use Thesis\Protobuf\Message;
 use Thesis\Protobuf\ProtobufException;
 use Thesis\Protobuf\Type\Field;
 use Thesis\Protobuf\Type\MessageT;
+use Thesis\Protobuf\UnknownFields;
 use Thesis\Protobuf\Value;
 
 /**
@@ -22,8 +23,25 @@ use Thesis\Protobuf\Value;
  */
 final class MessageFields
 {
-    /** @var ?\WeakMap<MessageT, array<positive-int, FieldCodec>> */
-    private static ?\WeakMap $codecs = null;
+    /** @var ?\WeakMap<MessageT, array{array<positive-int, FieldCodec>, ?OneOfs}> */
+    private static ?\WeakMap $plans = null;
+
+    /** @var ?\WeakMap<MessageT, OneOfs> */
+    private static ?\WeakMap $oneofs = null;
+
+    /**
+     * Makes the fields of the type that belong to oneofs be read as such: of the variants of a oneof read, only the
+     * last one is kept (see OneOfs). Must be called before the type is read.
+     */
+    public static function declareOneOfs(MessageT $type, OneOfs $oneofs): void
+    {
+        $registry = self::$oneofs ??= new \WeakMap();
+        $registry[$type] = $oneofs;
+
+        if (self::$plans !== null) {
+            unset(self::$plans[$type]);
+        }
+    }
 
     /**
      * @throws ValueOutOfRange
@@ -47,11 +65,14 @@ final class MessageFields
      * added, nested messages are merged in turn, and any other field read replaces its value. Maps of `into` are
      * updated in place, so it must not be used afterwards.
      *
+     * Of the variants of a oneof declared with declareOneOfs(), only the last one read is kept, and an occurrence of
+     * a variant does not merge into the fields of that variant read before another variant was.
+     *
      * @throws ProtobufException
      */
     public static function deserialize(ReadBuffer $buffer, MessageT $type, ?Message $into = null): Message
     {
-        $codecs = self::codecs($type);
+        [$codecs, $oneofs] = self::plan($type);
 
         /** @var array<positive-int, mixed> $values */
         $values = [];
@@ -65,17 +86,21 @@ final class MessageFields
             $unknowns = $into->unknowns;
         }
 
-        while (\count($buffer) > 0) {
-            $tag = Wire\readTag($buffer);
+        if ($oneofs === null) {
+            while (\count($buffer) > 0) {
+                $tag = Wire\readTag($buffer);
 
-            $codec = $codecs[$tag->num] ?? null;
-            if ($codec === null || !$codec->accepts($tag->type)) {
-                $unknowns[] = Wire\discardUnknown($buffer, $tag);
+                $codec = $codecs[$tag->num] ?? null;
+                if ($codec === null || !$codec->accepts($tag->type)) {
+                    $unknowns[] = Wire\discardUnknown($buffer, $tag);
 
-                continue;
+                    continue;
+                }
+
+                $codec->decode($buffer, $tag, $values[$tag->num], $unknowns);
             }
-
-            $codec->decode($buffer, $tag, $values[$tag->num], $unknowns);
+        } else {
+            self::readWithOneOfs($buffer, $codecs, $oneofs, $values, $unknowns);
         }
 
         $fields = [];
@@ -93,15 +118,84 @@ final class MessageFields
     }
 
     /**
-     * @return array<positive-int, FieldCodec>
+     * The same as the loop of deserialize(), but a field of a oneof variant other than the one set replaces it.
+     *
+     * @param array<positive-int, FieldCodec> $codecs
+     * @param array<positive-int, mixed> $values
+     * @param list<UnknownFields\UnknownField> $unknowns
+     * @throws ProtobufException
      */
-    private static function codecs(MessageT $type): array
-    {
-        $codecs = self::$codecs ??= new \WeakMap();
+    private static function readWithOneOfs(
+        ReadBuffer $buffer,
+        array $codecs,
+        OneOfs $oneofs,
+        array &$values,
+        array &$unknowns,
+    ): void {
+        /** @var array<non-negative-int, OneOfVariant> $set the variant set of each oneof */
+        $set = [];
 
-        return $codecs[$type] ??= array_map(
-            static fn(Field $field): FieldCodec => FieldCodecs::of($field->type),
-            $type->fields,
-        );
+        // The fields merged into hold at most one variant of each oneof: the one they were read with.
+        foreach ($values as $num => $_) {
+            $variant = $oneofs->variantOf[$num] ?? null;
+
+            if ($variant !== null) {
+                $set[$variant->oneof] = $variant;
+            }
+        }
+
+        while (\count($buffer) > 0) {
+            $tag = Wire\readTag($buffer);
+
+            $codec = $codecs[$tag->num] ?? null;
+            if ($codec === null || !$codec->accepts($tag->type)) {
+                $unknowns[] = Wire\discardUnknown($buffer, $tag);
+
+                continue;
+            }
+
+            $variant = $oneofs->variantOf[$tag->num] ?? null;
+            $previous = $variant === null ? null : $set[$variant->oneof] ?? null;
+
+            if ($variant === null || $previous === $variant) {
+                $codec->decode($buffer, $tag, $values[$tag->num], $unknowns);
+
+                continue;
+            }
+
+            // A field of a variant that is not set: none of the fields of the variant are in the values.
+            $value = null;
+            $codec->decode($buffer, $tag, $value, $unknowns);
+
+            // An unknown enum number does not set the variant: the oneof keeps the one it has, if any.
+            if ($value === null) {
+                continue;
+            }
+
+            if ($previous !== null) {
+                foreach ($previous->fields as $num) {
+                    unset($values[$num]);
+                }
+            }
+
+            $set[$variant->oneof] = $variant;
+            $values[$tag->num] = $value;
+        }
+    }
+
+    /**
+     * @return array{array<positive-int, FieldCodec>, ?OneOfs}
+     */
+    private static function plan(MessageT $type): array
+    {
+        $plans = self::$plans ??= new \WeakMap();
+
+        return $plans[$type] ??= [
+            array_map(
+                static fn(Field $field): FieldCodec => FieldCodecs::of($field->type),
+                $type->fields,
+            ),
+            self::$oneofs[$type] ?? null,
+        ];
     }
 }
