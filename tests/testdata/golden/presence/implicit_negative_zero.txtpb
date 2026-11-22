@@ -1,0 +1,6 @@
+# proto-file: reflection/presence.proto
+# proto-message: test.v1.Presence
+# -0.0 differs from the zero value in the sign bit, so it is written.
+
+i_float: -0.0
+i_double: -0.0

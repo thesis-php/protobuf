@@ -38,9 +38,6 @@ final class ReflectorTest extends TestCase
      */
     public static function provideRoundTripCases(): iterable
     {
-        /** @var array<non-empty-string, class-string> $requires */
-        static $requires = [];
-
         $f = fopen(__DIR__ . '/testdata/message_testcases.csv', 'r');
         if (!\is_resource($f)) {
             throw new \RuntimeException('Could not open file with testcases.');
@@ -57,16 +54,9 @@ final class ReflectorTest extends TestCase
 
             [$hex, $path] = $row;
 
-            if (!isset($requires[$path])) {
-                /** @var class-string $class */
-                $class = require_once $path;
-
-                $requires[$path] = $class;
-            }
-
             yield [
                 new MessageTestData(
-                    $requires[$path],
+                    ReflectionFixture::load(basename($path, '.php')),
                     $hex,
                 ),
             ];

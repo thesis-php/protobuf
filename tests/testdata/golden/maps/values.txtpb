@@ -1,0 +1,14 @@
+# proto-file: reflection/maps.proto
+# proto-message: test.v1.Maps
+
+bytes_value { key: "deadbeef" value: "\xde\xad\xbe\xef" }
+bytes_value { key: "nul" value: "\000" }
+double_value { key: "pi" value: 3.141592653589793 }
+double_value { key: "minus zero" value: -0.0 }
+double_value { key: "inf" value: inf }
+float_value { key: "half" value: 0.5 }
+float_value { key: "minus inf" value: -inf }
+enum_value { key: "light" value: SHADE_LIGHT }
+enum_value { key: "dark" value: SHADE_DARK }
+message_value { key: "alice" value { points: 10 by: "bob" } }
+message_value { key: "bob" value { points: -1 } }

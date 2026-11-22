@@ -1,0 +1,13 @@
+# proto-file: reflection/repeated.proto
+# proto-message: test.v1.Repeated
+# An element that holds the zero value is written, packed or not.
+
+p_int32: [0]
+p_bool: [false]
+p_direction: [DIRECTION_NONE]
+u_int32: [0]
+u_bool: [false]
+u_direction: [DIRECTION_NONE]
+strings: [""]
+blobs: [""]
+items {}

@@ -1,0 +1,20 @@
+# proto-file: reflection/presence.proto
+# proto-message: test.v1.Presence
+
+o_int32: -2147483648
+o_int64: 9223372036854775807
+o_uint32: 4294967295
+o_uint64: 18446744073709551615
+o_sint32: -1
+o_sint64: -9223372036854775808
+o_fixed32: 1
+o_fixed64: 18446744073709551615
+o_sfixed32: 2147483647
+o_sfixed64: -9223372036854775808
+o_float: -inf
+o_double: 0.1
+o_bool: true
+o_string: "строка"
+o_bytes: "\377"
+o_sign: SIGN_POSITIVE
+point { x: -1 y: 1 }

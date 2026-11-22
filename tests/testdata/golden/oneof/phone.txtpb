@@ -1,0 +1,6 @@
+# proto-file: reflection/oneof.proto
+# proto-message: test.v1.Developer
+
+name: "kafkiansky"
+organizations { name: "thesis" role: ROLE_MAINTAINER }
+phone: "+7 999 888-77-66"

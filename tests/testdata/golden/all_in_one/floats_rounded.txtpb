@@ -1,0 +1,6 @@
+# proto-file: reflection/all_in_one.proto
+# proto-message: test.v1.MegaTest
+# 0.1 has no exact binary form: a float holds the nearest value of 32 bits, a double of 64.
+
+a_float: 0.1
+a_double: 0.1

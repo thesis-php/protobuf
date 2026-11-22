@@ -1,0 +1,6 @@
+# proto-file: reflection/oneof.proto
+# proto-message: test.v1.Developer
+
+name: "kafkiansky"
+telegram { id: -123456789 username: "кафкианский" }
+url: "https://t.me"

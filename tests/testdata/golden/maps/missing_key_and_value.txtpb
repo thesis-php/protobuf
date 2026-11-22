@@ -1,0 +1,7 @@
+# proto-file: reflection/maps.proto
+# proto-message: test.v1.Maps
+# Entries without a key or a value in the input: protoc writes both anyway.
+
+int32_key { value: "no key" }
+string_key { key: "no value" }
+message_value { key: "no value" }

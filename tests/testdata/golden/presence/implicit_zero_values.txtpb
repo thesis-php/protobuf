@@ -1,0 +1,12 @@
+# proto-file: reflection/presence.proto
+# proto-message: test.v1.Presence
+# Fields without presence that hold the zero value are not written.
+
+i_int32: 0
+i_uint64: 0
+i_float: 0
+i_double: 0
+i_bool: false
+i_string: ""
+i_bytes: ""
+i_sign: SIGN_ZERO

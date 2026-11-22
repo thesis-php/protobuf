@@ -1,0 +1,21 @@
+# proto-file: reflection/all_in_one.proto
+# proto-message: test.v1.MegaTest
+
+nested {
+  id: 7
+  name: "seven"
+  values: [1, -1, 9223372036854775807, -9223372036854775808, 0]
+}
+nested_list {}
+nested_list { id: 1 }
+nested_list { name: "two" values: [2] }
+deep {
+  title: "deep"
+  inner {
+    x: -5
+    y: 5
+    lvl { label: "first" items { id: 1 } items { id: 2 name: "b" } }
+    lvl {}
+    lvl { label: "third" }
+  }
+}

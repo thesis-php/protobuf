@@ -1,0 +1,9 @@
+# proto-file: reflection/repeated.proto
+# proto-message: test.v1.Repeated
+# Strings, bytes and messages are never packed.
+
+strings: ["a", "", "ü", "日本語"]
+blobs: ["\000", "\377\376", ""]
+items { name: "first" }
+items {}
+items { name: "third" }

@@ -1,0 +1,11 @@
+# proto-file: reflection/presence.proto
+# proto-message: test.v1.Presence
+
+i_int32: -1
+i_uint64: 18446744073709551615
+i_float: 0.5
+i_double: -1e-300
+i_bool: true
+i_string: "ü"
+i_bytes: "\000"
+i_sign: SIGN_NEGATIVE

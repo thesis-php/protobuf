@@ -1,0 +1,6 @@
+# proto-file: reflection/all_in_one.proto
+# proto-message: test.v1.MegaTest
+
+r_int32: [0, 1, -1, 2147483647, -2147483648]
+r_strings: ["", "a", "ü", "日本"]
+r_bytes: ["", "\000\377", "abc"]

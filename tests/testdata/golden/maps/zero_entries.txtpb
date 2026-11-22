@@ -1,0 +1,21 @@
+# proto-file: reflection/maps.proto
+# proto-message: test.v1.Maps
+# Entries whose key and value are zero values: a map entry writes both.
+
+int32_key { key: 0 value: "" }
+int64_key { key: 0 value: "" }
+uint32_key { key: 0 value: "" }
+uint64_key { key: 0 value: "" }
+sint32_key { key: 0 value: "" }
+sint64_key { key: 0 value: "" }
+fixed32_key { key: 0 value: "" }
+fixed64_key { key: 0 value: "" }
+sfixed32_key { key: 0 value: "" }
+sfixed64_key { key: 0 value: "" }
+bool_key { key: false value: "" }
+string_key { key: "" value: "" }
+bytes_value { key: "" value: "" }
+double_value { key: "" value: 0 }
+float_value { key: "" value: 0 }
+enum_value { key: "" value: SHADE_NONE }
+message_value { key: "" value {} }

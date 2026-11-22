@@ -1,0 +1,18 @@
+# proto-file: reflection/repeated.proto
+# proto-message: test.v1.Repeated
+# A repeated scalar field declared [packed = false] is written as a record per element.
+
+u_int32: [0, 1, -1, 2147483647, -2147483648]
+u_int64: [0, 1, -1, 9223372036854775807, -9223372036854775808]
+u_uint32: [0, 1, 4294967295]
+u_uint64: [0, 1, 18446744073709551615]
+u_sint32: [0, 1, -1, 2147483647, -2147483648]
+u_sint64: [0, 1, -1, 9223372036854775807, -9223372036854775808]
+u_fixed32: [0, 1, 4294967295]
+u_fixed64: [0, 1, 18446744073709551615]
+u_sfixed32: [0, 1, -1, 2147483647, -2147483648]
+u_sfixed64: [0, 1, -1, 9223372036854775807, -9223372036854775808]
+u_float: [0, -0.0, 1.5, inf, -inf]
+u_double: [0, -0.0, -2.25, inf, -inf]
+u_bool: [false, true, true]
+u_direction: [DIRECTION_NONE, DIRECTION_UP, DIRECTION_DOWN]

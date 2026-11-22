@@ -1,0 +1,18 @@
+# proto-file: reflection/all_in_one.proto
+# proto-message: test.v1.MegaTest
+
+a_int32: 150
+a_int64: -1234567890123
+a_uint32: 300
+a_uint64: 1234567890123456789
+a_sint32: -150
+a_sint64: 9876543210
+a_fixed32: 3735928559
+a_fixed64: 81985529216486895
+a_sfixed32: -559038737
+a_sfixed64: -81985529216486895
+a_float: 1.5
+a_double: -2.25
+a_bool: true
+a_string: "hello"
+a_bytes: "world"
