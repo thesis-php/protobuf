@@ -224,7 +224,7 @@ final class RecursionLimitTest extends TestCase
                 $length .= \chr($n & 0x7F | 0x80);
             }
 
-            $bytes = "\x0a" . $length . \chr($n) . $bytes;
+            $bytes = "\x0a" . $length . \chr($n & 0x7F) . $bytes;
         }
 
         return $bytes;
