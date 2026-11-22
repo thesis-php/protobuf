@@ -62,7 +62,8 @@ final class MalformedInputTest extends TestCase
         yield 'field number 0' => ['0001', InvalidFieldNumber::class, 'Invalid field number 0:'];
         yield 'field number 0 after a field' => ['080112016100', InvalidFieldNumber::class, 'Invalid field number 0:'];
         yield 'field number 2^29' => ['808080801001', InvalidFieldNumber::class, 'Invalid field number 536870912:'];
-        yield 'tag of 2^63 and above' => ['ffffffffffffffffff0101', InvalidFieldNumber::class, 'Invalid field number 2305843009213693951:'];
+        yield 'tag above 2^32-1' => ['f8ffffff1f01', InvalidFieldNumber::class, 'Invalid field number 1073741823:'];
+        yield 'tag longer than 5 bytes' => ['ffffffffffffffffff0101', MalformedVarint::class, 'Malformed tag: longer than 5 bytes.'];
         yield 'field number 0 inside a group' => ['1b00011c', InvalidFieldNumber::class, 'Invalid field number 0:'];
     }
 

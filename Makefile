@@ -111,8 +111,9 @@ var/tools/infection/vendor/bin/infection: | var
 	mkdir -p var/tools/infection
 	$(COMPOSER) --working-dir=var/tools/infection --no-interaction --no-plugins require infection/infection:^0.35
 
+# Infection keeps about 0.1 MB per mutant in memory until the run ends: past 1000 mutants it outgrows the 128M default.
 infect: var vendor var/tools/infection/vendor/bin/infection ## Run mutation tests using Infection
-	$(RUN) var/tools/infection/vendor/bin/infection --show-mutations $(ARGS)
+	$(RUN) php -d memory_limit=512M var/tools/infection/vendor/bin/infection --show-mutations $(ARGS)
 .PHONY: infect
 
 # protoc is not in the php image: the script downloads a pinned release into var/tools on first use.

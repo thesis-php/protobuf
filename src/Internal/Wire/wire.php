@@ -193,5 +193,5 @@ function tagBytes(int $num, WireType $type): string
  */
 function readTag(ReadBuffer $buffer): Tag
 {
-    return Tag::fromVarint($buffer->readVarint());
+    return Tag::fromVarint($buffer->readTag());
 }

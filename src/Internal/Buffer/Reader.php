@@ -50,6 +50,34 @@ final class Reader implements ReadBuffer
     }
 
     #[\Override]
+    public function readTag(): int
+    {
+        $offset = $this->offset;
+        $end = $offset + 5;
+        $value = 0;
+        $shift = 0;
+
+        while ($offset < $end) {
+            if ($offset >= $this->limit) {
+                throw new BufferUnderflow('Unexpected end of input: truncated varint.');
+            }
+
+            $byte = \ord($this->bytes[$offset++]);
+            $value |= ($byte & 0x7F) << $shift;
+
+            if ($byte < 0x80) {
+                $this->offset = $offset;
+
+                return $value;
+            }
+
+            $shift += 7;
+        }
+
+        throw new MalformedVarint('Malformed tag: longer than 5 bytes.');
+    }
+
+    #[\Override]
     public function read(int $n): string
     {
         $available = $this->limit - $this->offset;

@@ -57,6 +57,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `new Number('0.5') * 2`, is the same key as the Number or int of its value, e.g. `new Number(1)` or `1`. Such
   a key used to address an entry of its own: it was not found by the other and both were written, as two entries
   with the same key of a `uint64` or `fixed64` map.
+- A tag written in more than 5 bytes makes decoding throw `Exception\MalformedVarint`, as protobuf does, even when its
+  value fits in 32 bits: a tag is a 32-bit value. It used to be read as any other varint, in up to 10 bytes, and
+  accepted when its field number was valid.
 
 ## [0.2.2] - 2026-11-22
 
