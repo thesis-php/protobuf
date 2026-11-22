@@ -10,9 +10,6 @@ parameters:
         - examples
         - src
         - tests
-    excludePaths:
-        # Written by thesis/protoc-plugin: see tests/conformance/README.md. The classes are still known to the analysis.
-        - tests/conformance/generated
     tmpDir: var/phpstan
     additionalConstructors:
         - Thesis\Protobuf\Benchmarks\CodecBench::setUp

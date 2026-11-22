@@ -5,16 +5,3 @@
 #
 # Not here: the tests of the JSON and the text format, and of the messages of editions, which tests/conformance/testee.php
 # skips: the library supports neither format, and the messages are not generated.
-
-# Bug of the library: the varint of a tag is read as any other varint, up to 10 bytes, while a tag is a 32-bit value
-# that protobuf rejects in more than 5 bytes, even an overlong one whose value fits.
-Required.Proto2.ProtobufInput.BadTag_OverlongVarint # Should have failed to parse, but didn't.
-Required.Proto3.ProtobufInput.BadTag_OverlongVarint # Should have failed to parse, but didn't.
-
-# Limitation of thesis/protoc-plugin, not of the library: in proto3 the plugin drops [packed = false], so the unpacked_*
-# fields of TestAllTypesProto3 are generated as ListT without the packed flag, and the library writes them packed, as
-# proto3 does by default. The library itself writes a list unpacked when told so: the same fields of TestAllTypesProto2
-# pass. The oneof test writes a nested TestAllTypesProto3 with one of these fields.
-Recommended.Proto3.ProtobufInput.ValidDataRepeated.*.PackedInput.UnpackedOutput.ProtobufOutput
-Recommended.Proto3.ProtobufInput.ValidDataRepeated.*.UnpackedInput.UnpackedOutput.ProtobufOutput
-Recommended.Proto3.ProtobufInput.ValidDataOneofBinary.MESSAGE.Merge.ProtobufOutput

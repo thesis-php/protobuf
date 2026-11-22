@@ -28,6 +28,16 @@ interface ReadBuffer extends \Countable
     public function readVarint(): int;
 
     /**
+     * Reads the varint of a tag, a 32-bit value, which protobuf rejects in more than 5 bytes, even an overlong one
+     * whose value fits. Of a 5-byte varint, the bits above the 32nd are returned as they are, for the field number
+     * they make too large to be rejected.
+     *
+     * @throws BufferUnderflow if the input or the current limit ends inside the varint
+     * @throws MalformedVarint if the varint does not end within 5 bytes
+     */
+    public function readTag(): int;
+
+    /**
      * Read must remove `n` bytes of data from the buffer and return a `non-empty-string`, or throw an exception
      * if the buffer is empty or its length is less than the required `n` bytes.
      *
