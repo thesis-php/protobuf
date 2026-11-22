@@ -41,6 +41,14 @@ jobs:
       - uses: actions/checkout@v6
       - run: PHP_IMAGE_VERSION=${{ matrix.php }} make install-${{ matrix.deps }} test
 
+  conformance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      # conformance_test_runner is not built here: it is taken from the image built by `make conformance-runner-image`
+      # for the protobuf release pinned in tests/tools/protobuf.sh. See tests/conformance/README.md.
+      - run: PHP_IMAGE_VERSION=8.4 make install-highest conformance-runner-pull conformance
+
   infection:
     runs-on: ubuntu-latest
     steps:

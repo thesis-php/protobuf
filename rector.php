@@ -17,6 +17,8 @@ return RectorConfig::configure()
     ->withCache(__DIR__ . '/var/rector')
     ->withPhpSets()
     ->withSkip([
+        // Written by thesis/protoc-plugin: see tests/conformance/README.md.
+        __DIR__ . '/tests/conformance/generated',
         StringableForToStringRector::class,
         AddOverrideAttributeToOverriddenMethodsRector::class,
         SensitiveConstantNameRector::class,

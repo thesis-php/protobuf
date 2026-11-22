@@ -26,8 +26,10 @@ After adding or changing a `.txtpb` file, and an entry in `expected.php` for it,
 make golden
 ```
 
-It runs `generate.sh` in the php container, which rewrites every `.bin` file with protoc **36.2**, the static binary
-of the [official release](https://github.com/protocolbuffers/protobuf/releases/tag/v36.2). The binary is downloaded
-into `var/tools` on first use and checked against the SHA-256 that the release lists. protoc runs with
-`--deterministic_output`, so it writes the entries of a map in the order of their keys, and the same input always gives
-the same bytes. To move to another version of protoc, change it and the checksums in `generate.sh` and here.
+It runs `generate.sh` in the php container, which rewrites every `.bin` file with protoc **36.2**, the static binary of
+the [official release](https://github.com/protocolbuffers/protobuf/releases/tag/v36.2) pinned in
+`tests/tools/protobuf.sh`. The binary is downloaded into `var/tools` on first use and checked against the SHA-256 that
+the release lists. protoc runs with `--deterministic_output`, so it writes the entries of a map in the order of their
+keys, and the same input always gives the same bytes. To move to another version of protoc, change it and the checksums
+in `tests/tools/protobuf.sh`, and the version here: the conformance test runner moves with it, see
+`tests/conformance/README.md`.
