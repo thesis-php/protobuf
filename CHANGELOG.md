@@ -49,3 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   It used to be read as the declared type, which either failed with a misleading `BufferUnderflow` or silently
   produced a wrong value and swallowed the fields after it. A repeated field of a packable type still accepts
   both packed and unpacked elements, whichever form it is declared in.
+- Several occurrences of a singular message field, including a oneof variant, are merged as protobuf requires:
+  scalars of the later occurrence win, repeated fields are concatenated, map entries are added and nested
+  messages are merged in turn. Only the last occurrence used to be kept, so the fields set by the earlier ones
+  were lost.

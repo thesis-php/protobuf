@@ -42,15 +42,28 @@ final class MessageFields
     /**
      * Reads fields up to the end of the buffer, or of its current limit.
      *
+     * Given `into`, a message of the same type read from an earlier occurrence of the field, the fields read are
+     * merged into its fields as if both occurrences were one: repeated fields are concatenated, map entries are
+     * added, nested messages are merged in turn, and any other field read replaces its value. Maps of `into` are
+     * updated in place, so it must not be used afterwards.
+     *
      * @throws ProtobufException
      */
-    public static function deserialize(ReadBuffer $buffer, MessageT $type): Message
+    public static function deserialize(ReadBuffer $buffer, MessageT $type, ?Message $into = null): Message
     {
         $codecs = self::codecs($type);
 
         /** @var array<positive-int, mixed> $values */
         $values = [];
         $unknowns = [];
+
+        if ($into !== null) {
+            foreach ($into->fields as $num => $field) {
+                $values[$num] = $field->value->value;
+            }
+
+            $unknowns = $into->unknowns;
+        }
 
         while (\count($buffer) > 0) {
             $tag = Wire\readTag($buffer);

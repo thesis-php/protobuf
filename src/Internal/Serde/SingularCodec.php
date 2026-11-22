@@ -7,11 +7,13 @@ namespace Thesis\Protobuf\Internal\Serde;
 use Thesis\Protobuf\Internal\Buffer\ReadBuffer;
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
 use Thesis\Protobuf\Internal\Wire;
+use Thesis\Protobuf\Message;
 use Thesis\Protobuf\Tag;
 use Thesis\Protobuf\WireType;
 
 /**
- * A field holding a single value: a scalar, an enum or a message. The last occurrence wins.
+ * A field holding a single value: a scalar, an enum or a message. The last occurrence of a scalar or an enum wins;
+ * occurrences of a message are merged.
  *
  * @internal
  * @template T
@@ -45,6 +47,12 @@ final readonly class SingularCodec implements FieldCodec
     #[\Override]
     public function decode(ReadBuffer $buffer, Tag $tag, mixed &$slot, array &$unknowns): void
     {
+        if ($slot instanceof Message && $this->deserializer instanceof DeserializeMessage) {
+            $slot = $this->deserializer->merge($buffer, $slot);
+
+            return;
+        }
+
         $value = $this->deserializer->deserialize($buffer);
 
         if ($value instanceof UnknownEnumValue) {

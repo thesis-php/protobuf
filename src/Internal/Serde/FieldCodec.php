@@ -36,8 +36,8 @@ interface FieldCodec
     /**
      * Reads one occurrence of the field, whose tag is already read and accepted, and merges it into `slot`, the
      * value of the field read so far (null before the first occurrence): a repeated field appends its elements, a
-     * map adds its entry, any other field replaces the value. A field may occur any number of times, anywhere in
-     * the message.
+     * map adds its entry, a message is merged into the message read so far, any other field replaces the value.
+     * A field may occur any number of times, anywhere in the message.
      *
      * @param list<UnknownField> $unknowns enum numbers the PHP enum has no case for are appended here
      * @throws ProtobufException
