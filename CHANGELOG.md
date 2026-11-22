@@ -9,22 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- A map field can be declared as an `array` property as well as a `Map` one, e.g.
-  `#[Field(1, new MapT(StringT::T, Int32T::T))] public array $values = []`. A map property is encoded from a `Map`,
-  an array or any other iterable of the entries, and the values of a map of messages are converted as in a `Map`.
-  It is decoded as an array when its type accepts an array but not a `Map` (`array`, `?array`, `array|string`), and
-  as a `Map` otherwise, as before (`Map`, `array|Map`, `iterable`, `\Countable`, `object`, `mixed`, no type). An array
-  key is an int or a string, so such a property for a map with `bool`, `uint64` or `fixed64` keys throws
-  `Reflection\Exception\InvalidProperty` when its class is reflected. PHP turns a numeric string key into an int, as
-  for any array: `['1' => 5]` is written with the key `"1"` and decoded as `[1 => 5]`, which is the same array, while
-  keys such as `"01"`, `"1.5"` or beyond `PHP_INT_MAX` stay strings. Such properties used to fail with `\TypeError`
-  when encoded and when decoded.
-- The encoder writes back the unknown fields of each object it encodes, nested objects included (in lists, map
-  values and oneof variants), after its known fields, so that a decode and encode round trip keeps the fields of
-  a newer schema. They are taken from the new `UnknownFields\Provider`, set with
-  `Encoder\Builder::withUnknownProvider()`; the default is `UnknownFields::handler()`, which now implements it.
-  `withUnknownProvider(null)` writes none. `Reflector::build()` takes a provider as `$unknownProvider`, and
-  `Reflector::message()` puts its unknown fields into each message; without one it puts none, as before.
 - `Type\BytesT` is the type of bytes fields: `bytesT` and `bytesOf()` now refer to it, and `Value::bytes()` is new.
   It is written and read as a string is, but never checked for UTF-8; as protobuf requires, it is declared
   `'not-indexed'` for PHPStan, i.e. not a map key, and so is `Reflection\BytesT`, which the reflection now maps
@@ -49,6 +33,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Type\Visitor` has a new method, `bytes(Type\BytesT $type)`, which a class implementing the interface must add;
   a class extending `Type\Visitor\DefaultTypeVisitor` gets it, calling `default()`. `bytesT` used to be visited
   by `string()`.
+
+## [0.2.2] - 2026-11-22
+
+### Added
+
+- A map field can be declared as an `array` property as well as a `Map` one, e.g.
+  `#[Field(1, new MapT(StringT::T, Int32T::T))] public array $values = []`. A map property is encoded from a `Map`,
+  an array or any other iterable of the entries, and the values of a map of messages are converted as in a `Map`.
+  It is decoded as an array when its type accepts an array but not a `Map` (`array`, `?array`, `array|string`), and
+  as a `Map` otherwise, as before (`Map`, `array|Map`, `iterable`, `\Countable`, `object`, `mixed`, no type). An array
+  key is an int or a string, so such a property for a map with `bool`, `uint64` or `fixed64` keys throws
+  `Reflection\Exception\InvalidProperty` when its class is reflected. PHP turns a numeric string key into an int, as
+  for any array: `['1' => 5]` is written with the key `"1"` and decoded as `[1 => 5]`, which is the same array, while
+  keys such as `"01"`, `"1.5"` or beyond `PHP_INT_MAX` stay strings. Such properties used to fail with `\TypeError`
+  when encoded and when decoded.
+- The encoder writes back the unknown fields of each object it encodes, nested objects included (in lists, map
+  values and oneof variants), after its known fields, so that a decode and encode round trip keeps the fields of
+  a newer schema. They are taken from the new `UnknownFields\Provider`, set with
+  `Encoder\Builder::withUnknownProvider()`; the default is `UnknownFields::handler()`, which now implements it.
+  `withUnknownProvider(null)` writes none. `Reflector::build()` takes a provider as `$unknownProvider`, and
+  `Reflector::message()` puts its unknown fields into each message; without one it puts none, as before.
+
+### Changed
+
 - `Serializer::serialize()` writes `Message::$unknowns` of each message, nested ones included, after its known
   fields, in the order they are held, and as they were read: a message read by `Serializer::deserialize()` whose
   input has the unknown fields after the known ones is written back byte for byte, but for varints written
