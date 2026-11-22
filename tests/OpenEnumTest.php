@@ -79,7 +79,7 @@ final class OpenEnumTest extends TestCase
         self::assertSame([[], [[2, WireType::VARINT, '68']]], array_map(self::unknowns(...), $decoded->children));
     }
 
-    public function testMapEntriesWithUnknownValuesAreDropped(): void
+    public function testMapEntriesWithUnknownValuesAreKeptAsUnknownFields(): void
     {
         $decoded = self::decode(
             new OpenEnumTestWire(map: new Map(new KVPair('known', 1), new KVPair('unknown', 68))),
@@ -87,6 +87,7 @@ final class OpenEnumTest extends TestCase
         );
 
         self::assertEquals(new Map(new KVPair('known', OpenEnumTestColor::RED)), $decoded->map);
+        self::assertSame([[7, WireType::BYTES, "\x0a\x07unknown\x10\x44"]], self::unknowns($decoded), 'The whole entry is kept.');
     }
 
     /**

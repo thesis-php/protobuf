@@ -40,4 +40,19 @@ interface ReadBuffer extends \Countable
     public function pushLimit(int $length): int;
 
     public function popLimit(int $limit): void;
+
+    /**
+     * The offset of the cursor in the input, to take the bytes read from there on with bytesSince().
+     *
+     * @return non-negative-int
+     */
+    public function position(): int;
+
+    /**
+     * Returns the bytes read since the cursor was at `position`, e.g. the body of a record read field by field,
+     * without moving the cursor.
+     *
+     * @param non-negative-int $position a position() taken earlier
+     */
+    public function bytesSince(int $position): string;
 }

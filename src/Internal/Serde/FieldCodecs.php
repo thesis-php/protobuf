@@ -154,7 +154,14 @@ final class FieldCodecs implements Visitor
     #[\Override]
     public function map(MapT $type): FieldCodec
     {
-        return new MapCodec(self::of($type->keyT), self::of($type->valueT));
+        $zero = new ZeroValue();
+
+        return new MapCodec(
+            self::of($type->keyT),
+            self::of($type->valueT),
+            $type->keyT->accept($zero),
+            $type->valueT->accept($zero),
+        );
     }
 
     #[\Override]

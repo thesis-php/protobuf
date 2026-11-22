@@ -75,6 +75,21 @@ final class Reader implements ReadBuffer
         $this->limit = $limit;
     }
 
+    #[\Override]
+    public function position(): int
+    {
+        return $this->offset;
+    }
+
+    #[\Override]
+    public function bytesSince(int $position): string
+    {
+        // A position taken later lies past the cursor.
+        \assert($position <= $this->offset, 'The position must be taken before the bytes are read.');
+
+        return substr($this->bytes, $position, $this->offset - $position);
+    }
+
     /**
      * @param non-negative-int $offset where the varint starts; on return, where it ends
      * @throws BufferUnderflow
