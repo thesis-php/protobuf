@@ -23,6 +23,8 @@ final class Builder
 
     private bool $validateUtf8 = true;
 
+    private bool $missingFieldsAsZeroValues = false;
+
     /**
      * @deprecated Does nothing: the reflection of the classes is kept in memory for as long as the built instance
      *             lives, and nothing is stored in the cache any more. Will be removed in the next minor version.
@@ -73,6 +75,27 @@ final class Builder
         return $builder;
     }
 
+    /**
+     * Sets whether a missing field gives a property that has no default and cannot be null the zero value of the
+     * field, as proto3 reads a field without presence: a proto3 sender does not write a zero value, so such a property
+     * is otherwise required (see `Reflection\Exception\PropertyRequired`) and fails on every zero. The zero value is
+     * 0, `new BcMath\Number(0)` for uint64 and fixed64, 0.0, false, '', an empty list, an empty map, as a `Map` or
+     * an array as the property holds it, and the enum case for 0 or, failing that, the first case. Nested objects,
+     * oneof variants included, are decoded the same way.
+     *
+     * A message field and an enum without cases have no zero value: a property for one with no default that cannot be
+     * null stays required, as proto3 tells an absent message from an empty one. A oneof with no variant in the input
+     * is null, as without the option. A default of the property, and null for one that can be null, still come first.
+     * The default is false.
+     */
+    public function withMissingFieldsAsZeroValues(bool $zeroValues): self
+    {
+        $builder = clone $this;
+        $builder->missingFieldsAsZeroValues = $zeroValues;
+
+        return $builder;
+    }
+
     public static function buildDefault(): Decoder
     {
         return new self()->build();
@@ -82,7 +105,7 @@ final class Builder
     {
         return new ReflectionDecoder(
             new Serializer($this->recursionLimit, $this->validateUtf8),
-            Reflector::build(unknowns: $this->unknowns),
+            Reflector::build(unknowns: $this->unknowns, missingFieldsAsZeroValues: $this->missingFieldsAsZeroValues),
         );
     }
 }

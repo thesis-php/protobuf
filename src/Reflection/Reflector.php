@@ -10,6 +10,8 @@ use Thesis\Protobuf\Internal\Serde\MessageFields;
 use Thesis\Protobuf\Internal\Serde\OneOfs;
 use Thesis\Protobuf\Message;
 use Thesis\Protobuf\Reflection\Internal\Api\ClassReflector;
+use Thesis\Protobuf\Reflection\Internal\Api\ExpectedPhpType;
+use Thesis\Protobuf\Reflection\Internal\Api\PropertyReflection;
 use Thesis\Protobuf\Reflection\Internal\Decoding\FieldDecoder;
 use Thesis\Protobuf\Reflection\Internal\Decoding\OneOfDecoder;
 use Thesis\Protobuf\Reflection\Internal\Encoding\FieldEncoder;
@@ -19,6 +21,7 @@ use Thesis\Protobuf\Reflection\Internal\Visitor\RecursionBreakTypeVisitor;
 use Thesis\Protobuf\Reflection\Internal\Visitor\ToProtobufTypeTypeVisitor;
 use Thesis\Protobuf\Reflection\Internal\Visitor\ToProtobufValueTypeVisitor;
 use Thesis\Protobuf\Reflection\Internal\Visitor\ToValueTypeVisitor;
+use Thesis\Protobuf\Reflection\Internal\Visitor\ToZeroValueTypeVisitor;
 use Thesis\Protobuf\Type;
 use Thesis\Protobuf\UnknownFields;
 
@@ -37,6 +40,9 @@ final class Reflector
     private readonly IsValueEmpty $isValueEmpty;
 
     private readonly ToValueTypeVisitor $toValue;
+
+    /** Null if missing fields are not zero values. */
+    private readonly ?ToZeroValueTypeVisitor $toZeroValue;
 
     /** @var array<class-string, list<FieldEncoder|OneOfEncoder>> */
     private array $encoders = [];
@@ -67,24 +73,32 @@ final class Reflector
      * @param ?UnknownFields\Handler $unknowns gets the unknown fields of each object map() builds that has any
      * @param ?UnknownFields\Provider $unknownProvider gives the unknown fields that message() puts into the message of
      *        each object, nested ones included; null puts none
+     * @param bool $missingFieldsAsZeroValues whether map() gives a property that has no default and cannot be null
+     *        the zero value of its field when the field is missing, as proto3 reads a field without presence,
+     *        instead of failing with Exception\PropertyRequired: 0, 0.0, false, '', an empty list or map, the enum
+     *        case for 0 or, failing that, the first case. A message field and an enum without cases have no zero
+     *        value: they stay required. A oneof with no variant in the message is null either way
      */
     public static function build(
         ?CacheInterface $cache = null,
         ?UnknownFields\Handler $unknowns = null,
         ?UnknownFields\Provider $unknownProvider = null,
+        bool $missingFieldsAsZeroValues = false,
     ): self {
-        return new self($unknowns, $unknownProvider);
+        return new self($unknowns, $unknownProvider, $missingFieldsAsZeroValues);
     }
 
     private function __construct(
-        private readonly ?UnknownFields\Handler $unknowns = null,
-        private readonly ?UnknownFields\Provider $unknownProvider = null,
+        private readonly ?UnknownFields\Handler $unknowns,
+        private readonly ?UnknownFields\Provider $unknownProvider,
+        bool $missingFieldsAsZeroValues,
     ) {
         $this->typeVisitor = new ToProtobufTypeTypeVisitor($this);
         $this->valueVisitor = new ToProtobufValueTypeVisitor($this);
         $this->classReflector = new ClassReflector();
         $this->isValueEmpty = new IsValueEmpty();
         $this->toValue = new ToValueTypeVisitor($this);
+        $this->toZeroValue = $missingFieldsAsZeroValues ? new ToZeroValueTypeVisitor($this->typeVisitor) : null;
     }
 
     /**
@@ -290,6 +304,8 @@ final class Reflector
                     }
                 } elseif ($decoder->default !== null) {
                     $value = $decoder->default->value;
+                } elseif ($decoder->zero !== null) {
+                    $value = ($decoder->zero)();
                 } else {
                     $declaringClass = $decoder->property->getDeclaringClass()->getName();
                     /** @var non-empty-string $name */
@@ -427,8 +443,8 @@ final class Reflector
     }
 
     /**
-     * Builds how to decode the properties of the class once: the conversion of the values of each field and,
-     * for a oneof, the variant of each field number.
+     * Builds how to decode the properties of the class once: the conversion of the values of each field, its zero
+     * value if missing fields are zero values and, for a oneof, the variant of each field number.
      *
      * @param class-string $class
      * @return list<FieldDecoder|OneOfDecoder>
@@ -454,6 +470,7 @@ final class Reflector
                         ? $this->toValue->mapToArray($field->type)
                         : $field->type->accept($this->toValue),
                     $property->default,
+                    $this->toZeroValue === null ? null : self::zeroValue($property, $field, $this->toZeroValue),
                 );
             } elseif ($property->attributes->has(OneOf::class)) {
                 $variants = [];
@@ -469,6 +486,27 @@ final class Reflector
         }
 
         return $this->decoders[$class] = $decoders;
+    }
+
+    /**
+     * @return ?\Closure(): mixed the zero value of the field for the property, if it has one the property can hold
+     */
+    private static function zeroValue(
+        PropertyReflection $property,
+        Field $field,
+        ToZeroValueTypeVisitor $toZeroValue,
+    ): ?\Closure {
+        // The only property type that accepts the values of a field, but not its zero value: true for a bool field.
+        if ($field->type instanceof BoolT && !new ExpectedPhpType(['bool', 'false'])->accepts(
+            $property->reflection->getType(),
+            $property->reflection->getDeclaringClass()->getName(),
+        )) {
+            return null;
+        }
+
+        return $property->mapAsArray && $field->type instanceof MapT
+            ? $toZeroValue->mapToArray($field->type)
+            : $field->type->accept($toZeroValue);
     }
 
     /**
