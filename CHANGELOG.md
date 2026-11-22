@@ -100,3 +100,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   is given to the builders. A cache that serializes its values used to fail with
   `Serialization of 'Closure' is not allowed`, and a strict one rejected the keys, which were class names with `\`,
   a character that PSR-16 reserves.
+- An int key of a map with `string` keys is written as its decimal string. PHP turns a numeric string array key
+  into an int, so `Map::fromArray(['1' => 1])` used to fail encoding with `\TypeError`. Such a key is decoded as
+  the string `'1'`.
