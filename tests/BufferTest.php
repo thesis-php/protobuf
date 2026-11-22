@@ -101,6 +101,33 @@ final class BufferTest extends TestCase
         new Reader('abc')->popLimit(4);
     }
 
+    public function testBytesSinceAPositionDoNotMoveTheCursor(): void
+    {
+        $buffer = new Reader('abcdef');
+        $buffer->read(1);
+        $limit = $buffer->pushLimit(4);
+
+        $start = $buffer->position();
+        self::assertSame(1, $start);
+        self::assertSame('', $buffer->bytesSince($start));
+
+        $buffer->read(3);
+        self::assertSame(4, $buffer->position());
+        self::assertSame('bcd', $buffer->bytesSince($start));
+        self::assertSame('e', $buffer->read(1), 'the cursor stays');
+
+        $buffer->popLimit($limit);
+        self::assertSame('bcde', $buffer->bytesSince($start));
+    }
+
+    public function testBytesSinceAPositionAheadOfTheCursorIsCaught(): void
+    {
+        $this->expectException(\AssertionError::class);
+        $this->expectExceptionMessage('The position must be taken before the bytes are read.');
+
+        new Reader('abc')->bytesSince(1);
+    }
+
     public function testWriterAppendsAndFlushes(): void
     {
         $buffer = new ByteBuffer();

@@ -12,11 +12,13 @@ use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
 use Thesis\Protobuf\Internal\Wire;
 use Thesis\Protobuf\Map;
 use Thesis\Protobuf\Tag;
+use Thesis\Protobuf\UnknownFields\UnknownField;
 use Thesis\Protobuf\WireType;
 
 /**
  * A map field: a repeated record per entry, with the key in field 1 and the value in field 2.
  * Every occurrence adds its entry to the entries read so far; the last entry of a key wins.
+ * An entry without a key or a value has the zero value of its type there, as if it were written.
  *
  * @internal
  */
@@ -25,9 +27,15 @@ final readonly class MapCodec implements FieldCodec
     private const int KEY = 1;
     private const int VALUE = 2;
 
+    /**
+     * @param mixed $zeroKey the key of an entry that has none
+     * @param mixed $zeroValue the value of an entry that has none, null if the type has no zero value
+     */
     public function __construct(
         private FieldCodec $key,
         private FieldCodec $value,
+        private mixed $zeroKey,
+        private mixed $zeroValue,
     ) {}
 
     #[\Override]
@@ -66,29 +74,37 @@ final readonly class MapCodec implements FieldCodec
         $slot ??= new Map();
         /** @var Map<mixed, mixed> $slot */
         $limit = Buffer\enterRecord($buffer);
+        $start = $buffer->position();
 
         $key = null;
         $value = null;
-        // Unknown enum numbers in an entry are not kept, as the entry they belong to is dropped below.
-        $ignored = [];
+        $unknownValues = [];
+        // Whether the PHP enum has no case for the number of the last value: the last value wins.
+        $unknownValue = false;
 
         while (\count($buffer) > 0) {
             $entryTag = Wire\readTag($buffer);
 
             if ($entryTag->num === self::KEY && $this->key->accepts($entryTag->type)) {
-                $this->key->decode($buffer, $entryTag, $key, $ignored);
+                $this->key->decode($buffer, $entryTag, $key, $unknownValues);
             } elseif ($entryTag->num === self::VALUE && $this->value->accepts($entryTag->type)) {
-                $this->value->decode($buffer, $entryTag, $value, $ignored);
+                $this->value->decode($buffer, $entryTag, $value, $unknownValues);
+                $unknownValue = $unknownValues !== [];
+                $unknownValues = [];
             } else {
                 Wire\discardUnknown($buffer, $entryTag);
             }
         }
 
-        $buffer->popLimit($limit);
-
-        // An entry without a key or a value, e.g. one whose enum value is unknown, is dropped.
-        if ($key !== null && $value !== null) {
-            $slot[$key] = $value;
+        // An enum number the PHP enum has no case for, or an enum without cases in place of a missing value,
+        // cannot be put into the map: the entry is kept among the unknown fields instead, as it was written,
+        // as protobuf does with an entry of a closed enum.
+        if ($unknownValue || ($value ??= $this->zeroValue) === null) {
+            $unknowns[] = new UnknownField(new Tag($tag->num, WireType::BYTES), $buffer->bytesSince($start));
+        } else {
+            $slot[$key ?? $this->zeroKey] = $value;
         }
+
+        $buffer->popLimit($limit);
     }
 }

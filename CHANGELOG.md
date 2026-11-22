@@ -53,3 +53,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   scalars of the later occurrence win, repeated fields are concatenated, map entries are added and nested
   messages are merged in turn. Only the last occurrence used to be kept, so the fields set by the earlier ones
   were lost.
+- A map entry without a key or a value is decoded with the zero value of the missing part, as protobuf requires:
+  `0`, `false`, `''`, an empty message, or the enum case for 0 (the first case if there is none for 0). Such
+  entries, which other protobuf implementations write for default keys and values, used to be dropped.
+- A map entry whose enum value has no case in the PHP enum is kept among the unknown fields of the message, with
+  the bytes of the entry as they were written, as protobuf does for closed enums. It used to be lost entirely.
