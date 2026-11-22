@@ -43,16 +43,8 @@ use Thesis\Protobuf\Encoder;
 $encoder = Encoder\Builder::buildDefault();
 ```
 
-Or using `PSR-16` cache implementation to cache the reflection:
-```php
-use Thesis\Protobuf\Encoder;
-
-$encoder = new Encoder\Builder()
-    ->withCache(/** cache implementation */)
-    ->build();
-```
-
-By default, simple `InMemoryPsr16Cache` implementation will be used.
+The encoder reflects each class once, when it encodes the first object of the class, and keeps the result in memory
+for as long as it lives, so build it once and reuse it.
 
 Now we are ready to encode the message:
 ```php
@@ -72,16 +64,7 @@ use Thesis\Protobuf\Decoder;
 $decoder = Decoder\Builder::buildDefault();
 ```
 
-Since the `Decoder` also uses reflection, you can configure caching yourself or leave the default in-memory implementation,
-which is already efficient enough for long-running applications.
-
-```php
-use Thesis\Protobuf\Decoder;
-
-$decoder = new Decoder\Builder()
-    ->withCache(/** cache implementation */)
-    ->build();
-```
+The decoder, too, reflects each class once and keeps the result in memory for as long as it lives.
 
 And now you are ready to decode the message:
 ```php

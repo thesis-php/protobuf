@@ -25,7 +25,11 @@ final class ReflectionEncoderTest extends TestCase
     public function testConfigurationErrorsAreNotWrapped(): void
     {
         // The property type does not match the declared protobuf type: a bug in the schema, not an encoding error.
-        $this->expectException(\TypeError::class);
+        $this->expectExceptionObject(new Reflection\Exception\InvalidProperty(
+            MismatchedPropertyType::class,
+            'value',
+            'of type string cannot hold the values of the protobuf field 1: expected int',
+        ));
 
         Builder::buildDefault()->encode(new MismatchedPropertyType('abc'));
     }

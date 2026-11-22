@@ -17,77 +17,76 @@ use Thesis\Protobuf\Reflection\Type;
 use function Thesis\Protobuf\Reflection\Internal\zeroed;
 
 /**
+ * Builds the check whether a value of the type is its default value, which is not written, once per type.
+ *
  * @internal
- * @template-extends DefaultTypeVisitor<bool>
+ * @template-extends DefaultTypeVisitor<\Closure(mixed): bool>
  */
 final class IsValueEmpty extends DefaultTypeVisitor
 {
-    public function __construct(
-        private readonly mixed $value,
-    ) {}
-
     #[\Override]
-    public function bool(BoolT $type): bool
+    public function bool(BoolT $type): \Closure
     {
-        return $this->value === false;
+        return static fn(mixed $value): bool => $value === false;
     }
 
     #[\Override]
-    public function float(FloatT $type): bool
+    public function float(FloatT $type): \Closure
     {
-        return self::isPositiveZero($this->value);
+        return self::isPositiveZero(...);
     }
 
     #[\Override]
-    public function double(DoubleT $type): bool
+    public function double(DoubleT $type): \Closure
     {
-        return self::isPositiveZero($this->value);
+        return self::isPositiveZero(...);
     }
 
     #[\Override]
-    public function string(StringT $type): bool
+    public function string(StringT $type): \Closure
     {
-        return $this->value === '';
+        return static fn(mixed $value): bool => $value === '';
     }
 
     #[\Override]
-    public function bytes(BytesT $type): bool
+    public function bytes(BytesT $type): \Closure
     {
-        return $this->value === '';
+        return static fn(mixed $value): bool => $value === '';
     }
 
     #[\Override]
-    public function list(ListT $type): bool
+    public function list(ListT $type): \Closure
     {
-        return $this->value === [];
+        return static fn(mixed $value): bool => $value === [];
     }
 
     #[\Override]
-    public function map(MapT $type): bool
+    public function map(MapT $type): \Closure
     {
-        return $this->value === [];
+        return static fn(mixed $value): bool => $value === [];
     }
 
     #[\Override]
-    public function enum(EnumT $type): bool
+    public function enum(EnumT $type): \Closure
     {
-        if ($this->value instanceof \BackedEnum) {
-            return $this->value->value === 0;
-        }
-
-        return false;
+        return static fn(mixed $value): bool => $value instanceof \BackedEnum && $value->value === 0;
     }
 
     #[\Override]
-    public function object(ObjectT $type): bool
+    public function object(ObjectT $type): \Closure
     {
-        return !$this->value instanceof $type->class;
+        $class = $type->class;
+
+        return static fn(mixed $value): bool => !$value instanceof $class;
     }
 
+    /**
+     * @return \Closure(mixed): bool
+     */
     #[\Override]
-    protected function default(Type $type): bool
+    protected function default(Type $type): \Closure
     {
-        return zeroed($this->value);
+        return zeroed(...);
     }
 
     /**
