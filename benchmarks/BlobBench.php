@@ -9,21 +9,29 @@ use Thesis\Protobuf\Benchmarks\Fixture\Blob;
 use Thesis\Protobuf\Benchmarks\Fixture\Text;
 
 /**
- * 1 MB of bytes and 1 MB of valid non-ASCII UTF-8 text: identical today, they part ways once strings are validated.
+ * 1 MB of bytes and 1 MB of valid non-ASCII UTF-8 text: the same on the wire, but a string is checked for valid UTF-8
+ * unless the check is turned off.
  *
- * @extends CodecBench<array{kind: 'bytes'|'string'}>
+ * @extends CodecBench<array{kind: 'bytes'|'string', validateUtf8?: bool}>
  */
 #[Bench\Revs(1000)]
 #[Bench\ParamProviders('provideKinds')]
 final class BlobBench extends CodecBench
 {
     /**
-     * @return iterable<string, array{kind: 'bytes'|'string'}>
+     * @return iterable<string, array{kind: 'bytes'|'string', validateUtf8?: bool}>
      */
     public function provideKinds(): iterable
     {
         yield 'bytes 1MB' => ['kind' => 'bytes'];
         yield 'string 1MB' => ['kind' => 'string'];
+        yield 'string 1MB unchecked' => ['kind' => 'string', 'validateUtf8' => false];
+    }
+
+    #[\Override]
+    protected function validateUtf8(array $params): bool
+    {
+        return $params['validateUtf8'] ?? true;
     }
 
     #[\Override]

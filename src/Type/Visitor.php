@@ -80,6 +80,11 @@ interface Visitor
     public function string(StringT $type): mixed;
 
     /**
+     * @return TResult
+     */
+    public function bytes(BytesT $type): mixed;
+
+    /**
      * @template T
      * @param ListT<T> $type
      * @return TResult

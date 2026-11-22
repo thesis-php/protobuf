@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Thesis\Protobuf\Decoder\Internal;
 
 use Thesis\Protobuf\Decoder;
+use Thesis\Protobuf\Exception\MalformedUtf8;
 use Thesis\Protobuf\Reflection\Reflector;
 use Thesis\Protobuf\Serializer;
 
@@ -29,6 +30,8 @@ final readonly class ReflectionDecoder implements Decoder
                 ),
                 $classType,
             );
+        } catch (MalformedUtf8 $e) {
+            throw $e->withProperties($this->reflector->propertyPath($classType, $e->fields));
         } catch (\ReflectionException $e) {
             throw new Decoder\DecodingError($e->getMessage(), $e->getCode(), $e);
         }

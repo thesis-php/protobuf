@@ -28,10 +28,12 @@ final class Reader implements ReadBuffer
 
     /**
      * @param non-negative-int $recursionLimit how many messages and groups may be nested in one another
+     * @param bool $validateUtf8 whether a string field must be valid UTF-8
      */
     public function __construct(
         private readonly string $bytes,
         private readonly int $recursionLimit = Serializer::DEFAULT_RECURSION_LIMIT,
+        public readonly bool $validateUtf8 = true,
     ) {
         $this->limit = \strlen($bytes);
         $this->depth = $recursionLimit;

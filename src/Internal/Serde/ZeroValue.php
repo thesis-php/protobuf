@@ -7,6 +7,7 @@ namespace Thesis\Protobuf\Internal\Serde;
 use BcMath\Number;
 use Thesis\Protobuf\Message;
 use Thesis\Protobuf\Type\BoolT;
+use Thesis\Protobuf\Type\BytesT;
 use Thesis\Protobuf\Type\DoubleT;
 use Thesis\Protobuf\Type\EnumT;
 use Thesis\Protobuf\Type\Fixed32T;
@@ -118,6 +119,12 @@ final class ZeroValue implements Visitor
 
     #[\Override]
     public function string(StringT $type): string
+    {
+        return '';
+    }
+
+    #[\Override]
+    public function bytes(BytesT $type): string
     {
         return '';
     }

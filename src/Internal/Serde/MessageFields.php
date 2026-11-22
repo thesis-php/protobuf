@@ -6,6 +6,8 @@ namespace Thesis\Protobuf\Internal\Serde;
 
 use BcMath\Number;
 use Thesis\Protobuf\Exception\InvalidSchema;
+use Thesis\Protobuf\Exception\InvalidUtf8;
+use Thesis\Protobuf\Exception\MalformedUtf8;
 use Thesis\Protobuf\Exception\ValueOutOfRange;
 use Thesis\Protobuf\FieldDescriptor;
 use Thesis\Protobuf\Internal\Buffer\ReadBuffer;
@@ -51,6 +53,7 @@ final class MessageFields
      * deserialize() is written as it was read, except that a varint is written in its shortest form.
      *
      * @throws ValueOutOfRange
+     * @throws InvalidUtf8
      * @throws InvalidSchema if an unknown field has an end group tag, or a value that does not fit its wire type
      */
     public static function serialize(WriteBuffer $buffer, Message $message): void
@@ -58,7 +61,7 @@ final class MessageFields
         foreach ($message->fields as $field) {
             try {
                 FieldCodecs::of($field->value->type)->encode($buffer, $field->num, $field->value->value);
-            } catch (ValueOutOfRange $e) {
+            } catch (ValueOutOfRange|InvalidUtf8 $e) {
                 throw $e->inField($field->num);
             }
         }
@@ -108,7 +111,12 @@ final class MessageFields
                     continue;
                 }
 
-                $codec->decode($buffer, $tag, $values[$tag->num], $unknowns);
+                // A try costs nothing in PHP until something is thrown.
+                try {
+                    $codec->decode($buffer, $tag, $values[$tag->num], $unknowns);
+                } catch (MalformedUtf8 $e) {
+                    throw $e->inField($tag->num);
+                }
             }
         } else {
             self::readWithOneOfs($buffer, $codecs, $oneofs, $values, $unknowns);
@@ -168,15 +176,19 @@ final class MessageFields
             $variant = $oneofs->variantOf[$tag->num] ?? null;
             $previous = $variant === null ? null : $set[$variant->oneof] ?? null;
 
-            if ($variant === null || $previous === $variant) {
-                $codec->decode($buffer, $tag, $values[$tag->num], $unknowns);
+            try {
+                if ($variant === null || $previous === $variant) {
+                    $codec->decode($buffer, $tag, $values[$tag->num], $unknowns);
 
-                continue;
+                    continue;
+                }
+
+                // A field of a variant that is not set: none of the fields of the variant are in the values.
+                $value = null;
+                $codec->decode($buffer, $tag, $value, $unknowns);
+            } catch (MalformedUtf8 $e) {
+                throw $e->inField($tag->num);
             }
-
-            // A field of a variant that is not set: none of the fields of the variant are in the values.
-            $value = null;
-            $codec->decode($buffer, $tag, $value, $unknowns);
 
             // An unknown enum number does not set the variant: the oneof keeps the one it has, if any.
             if ($value === null) {

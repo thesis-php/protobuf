@@ -166,10 +166,10 @@ const stringT = Type\StringT::T;
  */
 function bytesOf(string $value): Value
 {
-    return stringOf($value);
+    return Value::bytes($value);
 }
 
-const bytesT = stringT;
+const bytesT = Type\BytesT::T;
 
 /**
  * @api

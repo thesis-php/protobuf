@@ -18,6 +18,11 @@ final class ByteBuffer implements
 
     private string $buffer = '';
 
+    /**
+     * Set right after the buffer is created, as a constructor would cost a call for every nested message and map entry.
+     */
+    public bool $validateUtf8 = true;
+
     #[\Override]
     public function write(string $value): void
     {

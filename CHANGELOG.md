@@ -9,6 +9,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `Type\BytesT` is the type of bytes fields: `bytesT` and `bytesOf()` now refer to it, and `Value::bytes()` is new.
+  It is written and read as a string is, but never checked for UTF-8; as protobuf requires, it is declared
+  `'not-indexed'` for PHPStan, i.e. not a map key, and so is `Reflection\BytesT`, which the reflection now maps
+  to it. `bytesT` used to be `stringT`.
+- A string field must hold valid UTF-8 (see Changed). Invalid input throws the new `Exception\MalformedUtf8`,
+  a subclass of `Exception\MalformedMessage`, and an invalid value to write the new `Exception\InvalidUtf8`. Both
+  name the field numbers that lead to the string (`$fields`, e.g. `field 3.2`, a map entry adding 1 for its key
+  and 2 for its value) and, for an object, the class properties (`$properties`), as `Exception\ValueOutOfRange`
+  does; neither includes the bytes. The check is turned off with `new Serializer(validateUtf8: false)`,
+  `Encoder\Builder::withUtf8Validation(false)` and `Decoder\Builder::withUtf8Validation(false)`.
+
+### Changed
+
+- Strings are checked for valid UTF-8, as protobuf requires and its reference implementations do: decoding a string
+  field, list element, map key or map value that is not valid UTF-8 throws `Exception\MalformedUtf8`, encoding one
+  `Exception\InvalidUtf8`. Overlong encodings, surrogates and code points above U+10FFFF are invalid. Such strings
+  used to be accepted, so binary data in a `StringT` field now fails: declare the field as `BytesT`, or turn the check
+  off with `Decoder\Builder::withUtf8Validation(false)`, `Encoder\Builder::withUtf8Validation(false)` or
+  `new Serializer(validateUtf8: false)`. The check is `preg_match('//u')` and needs no extension; turned off, it
+  costs nothing. Decoding a 1 MB string takes about 10 times as long with it (about 0.38 ms instead of 0.04 ms),
+  and encoding or decoding a small message with one short string about 7% longer.
+- `Type\Visitor` has a new method, `bytes(Type\BytesT $type)`, which a class implementing the interface must add;
+  a class extending `Type\Visitor\DefaultTypeVisitor` gets it, calling `default()`. `bytesT` used to be visited
+  by `string()`.
+
+## [0.2.2] - 2026-11-22
+
+### Added
+
 - A map field can be declared as an `array` property as well as a `Map` one, e.g.
   `#[Field(1, new MapT(StringT::T, Int32T::T))] public array $values = []`. A map property is encoded from a `Map`,
   an array or any other iterable of the entries, and the values of a map of messages are converted as in a `Map`.

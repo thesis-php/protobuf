@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Thesis\Protobuf\Encoder\Internal;
 
 use Thesis\Protobuf\Encoder;
+use Thesis\Protobuf\Exception\InvalidUtf8;
 use Thesis\Protobuf\Exception\ValueOutOfRange;
 use Thesis\Protobuf\Reflection\Reflector;
 use Thesis\Protobuf\Serializer;
@@ -26,7 +27,7 @@ final readonly class ReflectionEncoder implements Encoder
             return $this->serializer->serialize(
                 $this->reflector->message($message),
             );
-        } catch (ValueOutOfRange $e) {
+        } catch (ValueOutOfRange|InvalidUtf8 $e) {
             throw $e->withProperties($this->reflector->propertyPath($message::class, $e->fields));
         }
     }

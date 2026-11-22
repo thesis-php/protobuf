@@ -38,8 +38,9 @@ abstract class CodecBench
      */
     final public function setUp(array $params): void
     {
-        $this->encoder = Encoder\Builder::buildDefault();
-        $this->decoder = Decoder\Builder::buildDefault();
+        $validateUtf8 = $this->validateUtf8($params);
+        $this->encoder = new Encoder\Builder()->withUtf8Validation($validateUtf8)->build();
+        $this->decoder = new Decoder\Builder()->withUtf8Validation($validateUtf8)->build();
         $this->message = $this->message($params);
         $this->class = $this->message::class;
         $this->bytes = $this->encoder->encode($this->message);
@@ -65,4 +66,14 @@ abstract class CodecBench
      * @param TParams $params
      */
     abstract protected function message(array $params): object;
+
+    /**
+     * Whether strings are checked for valid UTF-8, as by default.
+     *
+     * @param TParams $params
+     */
+    protected function validateUtf8(array $params): bool
+    {
+        return true;
+    }
 }

@@ -125,6 +125,14 @@ final readonly class Value
     }
 
     /**
+     * @return self<string>
+     */
+    public static function bytes(string $value): self
+    {
+        return new self($value, bytesT);
+    }
+
+    /**
      * @return self<\BackedEnum>
      */
     public static function enum(\BackedEnum $enum): self

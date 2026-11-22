@@ -6,6 +6,7 @@ namespace Thesis\Protobuf\Internal\Serde;
 
 use Thesis\Protobuf\Type;
 use Thesis\Protobuf\Type\BoolT;
+use Thesis\Protobuf\Type\BytesT;
 use Thesis\Protobuf\Type\DoubleT;
 use Thesis\Protobuf\Type\EnumT;
 use Thesis\Protobuf\Type\Fixed32T;
@@ -140,6 +141,12 @@ final class FieldCodecs implements Visitor
     }
 
     #[\Override]
+    public function bytes(BytesT $type): FieldCodec
+    {
+        return new SingularCodec(SerdeBytes::T, SerdeBytes::T, WireType::BYTES);
+    }
+
+    #[\Override]
     public function list(ListT $type): FieldCodec
     {
         // ListT rejects lists and maps as elements, so the element is a scalar, an enum or a message.
@@ -161,7 +168,8 @@ final class FieldCodecs implements Visitor
             self::of($type->valueT),
             $type->keyT->accept($zero),
             $type->valueT->accept($zero),
-            $type->keyT instanceof StringT,
+            // Bytes are not a valid map key, but `bytesT` used to be `stringT`: a map declared so keeps working.
+            $type->keyT instanceof StringT || $type->keyT instanceof BytesT,
         );
     }
 
