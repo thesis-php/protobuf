@@ -29,6 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Library errors are `ProtobufException`s already; anything else, such as a `\TypeError` from a property whose
   PHP type does not match its protobuf type, is a bug in the schema or the code and now propagates as is.
   `Decoder::decode()` still reports a class that cannot be reflected as `DecodingError`.
+- A tag with field number 0 or above 2^29-1 makes decoding throw the new `Exception\InvalidFieldNumber`, a subclass
+  of `Exception\MalformedMessage`, as protobuf requires. Such a field used to be accepted as an unknown field.
+  `Tag::from()` rejects these numbers the same way.
 - A repeated field whose elements are lists or maps (`listT(listT(...))`, `listT(mapT(...))`, and the same with
   `Reflection\ListT`) throws `Exception\InvalidSchema` when the type is created: protobuf has no such fields.
 
@@ -56,5 +59,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A map entry without a key or a value is decoded with the zero value of the missing part, as protobuf requires:
   `0`, `false`, `''`, an empty message, or the enum case for 0 (the first case if there is none for 0). Such
   entries, which other protobuf implementations write for default keys and values, used to be dropped.
+- Groups, the deprecated proto2 encoding of nested messages, are skipped as unknown fields, wherever they are and
+  however deeply they are nested. `WireType` has the new cases `SGROUP` and `EGROUP`; the value of a skipped group
+  is the bytes of the fields inside it. Groups used to fail decoding with `Exception\UnsupportedWireType`. An end
+  group tag that closes no group, or a group of another field, throws the new `Exception\MalformedGroup`, and a
+  group that is not closed throws `Exception\BufferUnderflow`.
 - A map entry whose enum value has no case in the PHP enum is kept among the unknown fields of the message, with
   the bytes of the entry as they were written, as protobuf does for closed enums. It used to be lost entirely.

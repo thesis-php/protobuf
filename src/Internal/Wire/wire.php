@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Thesis\Protobuf\Internal\Wire;
 
 use BcMath\Number;
+use Thesis\Protobuf\Exception\BufferUnderflow;
+use Thesis\Protobuf\Exception\MalformedGroup;
 use Thesis\Protobuf\Exception\MalformedMessage;
 use Thesis\Protobuf\Internal\Buffer\ByteBuffer;
 use Thesis\Protobuf\Internal\Buffer\ReadBuffer;
@@ -18,7 +20,8 @@ use Thesis\Protobuf\WireType;
  *   fixed32 - 4,
  *   fixed64 - 8,
  *   varint  - 1 ≤ size ≤ 10,
- *   bytes   - 1 ≤ size ≤ 10 + length.
+ *   bytes   - 1 ≤ size ≤ 10 + length,
+ *   group   - the fields up to its end group tag, which is read but not returned.
  *
  * @internal
  * @throws MalformedMessage
@@ -29,16 +32,70 @@ function discardUnknown(ReadBuffer $buffer, Tag $tag): UnknownField
         WireType::FIXED32 => $buffer->read(4),
         WireType::FIXED64 => $buffer->read(8),
         WireType::VARINT => toUnsigned($buffer->readVarint()),
-        WireType::BYTES => (static function () use ($buffer): string {
-            $length = $buffer->readVarint();
-            if ($length !== 0) {
-                // A negative length is a varint of 2^63 or above: far more than any input holds.
-                return $buffer->read($length > 0 ? $length : PHP_INT_MAX);
-            }
-
-            return '';
-        })(),
+        WireType::BYTES => readBytes($buffer),
+        WireType::SGROUP => readGroup($buffer, $tag->num),
+        WireType::EGROUP => throw new MalformedGroup(
+            \sprintf('Unexpected end group tag of field %d: no group is open.', $tag->num),
+        ),
     });
+}
+
+/**
+ * Reads a length-delimited value.
+ *
+ * @internal
+ * @throws MalformedMessage
+ */
+function readBytes(ReadBuffer $buffer): string
+{
+    $length = $buffer->readVarint();
+    if ($length !== 0) {
+        // A negative length is a varint of 2^63 or above: far more than any input holds.
+        return $buffer->read($length > 0 ? $length : PHP_INT_MAX);
+    }
+
+    return '';
+}
+
+/**
+ * Reads the fields of a group, whose start group tag is read already, up to the end group tag of the same field.
+ * Nested groups are tracked on a list rather than by recursion, so the depth of nesting is bounded by the input only.
+ *
+ * @internal
+ * @param positive-int $num the field number of the group
+ * @return string the fields of the group as they were written, without its end group tag
+ * @throws MalformedMessage
+ */
+function readGroup(ReadBuffer $buffer, int $num): string
+{
+    $start = $buffer->position();
+    $open = [$num];
+
+    while (true) {
+        if (\count($buffer) === 0) {
+            throw new BufferUnderflow("Unexpected end of input: the group of field {$num} is not closed.");
+        }
+
+        $end = $buffer->position();
+        $tag = readTag($buffer);
+
+        if ($tag->type === WireType::SGROUP) {
+            $open[] = $tag->num;
+        } elseif ($tag->type !== WireType::EGROUP) {
+            match ($tag->type) {
+                WireType::VARINT => $buffer->readVarint(),
+                WireType::FIXED32 => $buffer->read(4),
+                WireType::FIXED64 => $buffer->read(8),
+                WireType::BYTES => readBytes($buffer),
+            };
+        } elseif (($expected = array_pop($open)) !== $tag->num) {
+            throw new MalformedGroup(
+                \sprintf('Unexpected end group tag of field %d: the group of field %d is open.', $tag->num, $expected),
+            );
+        } elseif ($open === []) {
+            return substr($buffer->bytesSince($start), 0, $end - $start);
+        }
+    }
 }
 
 /**

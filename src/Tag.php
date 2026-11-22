@@ -11,10 +11,14 @@ use BcMath\Number;
  */
 final class Tag
 {
+    /** The largest field number protobuf allows: 2^29-1. */
+    private const int MAX_FIELD_NUMBER = 0x1FFF_FFFF;
+
     /** @phpstan-ignore property.uninitialized */
     public private(set) Number $number { get => $this->number ??= new Number($this->num << 3 | $this->type->value); }
 
     /**
+     * @throws Exception\InvalidFieldNumber
      * @throws Exception\UnsupportedWireType
      */
     public static function from(Number $number): self
@@ -24,6 +28,7 @@ final class Tag
 
     /**
      * @internal
+     * @throws Exception\InvalidFieldNumber
      * @throws Exception\UnsupportedWireType
      */
     public static function fromVarint(int $tag): self
@@ -32,9 +37,11 @@ final class Tag
         $num = ($tag >> 3) & 0x1FFF_FFFF_FFFF_FFFF;
         $type = $tag & 7;
 
+        if ($num < 1 || $num > self::MAX_FIELD_NUMBER) {
+            throw new Exception\InvalidFieldNumber($num);
+        }
+
         return new self(
-            // Field number 0 is invalid but still accepted here, as it always was.
-            /** @phpstan-ignore argument.type */
             $num,
             WireType::tryFrom($type) ?? throw new Exception\UnsupportedWireType($type, $num),
         );
