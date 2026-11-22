@@ -1,0 +1,6 @@
+# proto-file: reflection/oneof.proto
+# proto-message: test.v1.Developer
+
+name: "kafkiansky"
+email: "user@example.com"
+url: "https://example.com"

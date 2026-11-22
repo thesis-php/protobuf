@@ -1,0 +1,6 @@
+# proto-file: reflection/presence.proto
+# proto-message: test.v1.Presence
+# A negative enum number is written, as an int32, as a varint of 10 bytes.
+
+i_sign: SIGN_MIN
+o_sign: SIGN_MAX

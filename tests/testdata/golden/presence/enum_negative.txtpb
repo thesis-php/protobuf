@@ -1,0 +1,5 @@
+# proto-file: reflection/presence.proto
+# proto-message: test.v1.Presence
+
+i_sign: SIGN_MAX
+o_sign: SIGN_NEGATIVE

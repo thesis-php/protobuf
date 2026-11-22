@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package test.v1;
+
+enum Shade {
+  SHADE_NONE = 0;
+  SHADE_LIGHT = 1;
+  SHADE_DARK = 2;
+}
+
+message Score {
+  int32 points = 1;
+  string by = 2;
+}
+
+message Maps {
+  map<int32, string> int32_key = 1;
+  map<int64, string> int64_key = 2;
+  map<uint32, string> uint32_key = 3;
+  map<uint64, string> uint64_key = 4;
+  map<sint32, string> sint32_key = 5;
+  map<sint64, string> sint64_key = 6;
+  map<fixed32, string> fixed32_key = 7;
+  map<fixed64, string> fixed64_key = 8;
+  map<sfixed32, string> sfixed32_key = 9;
+  map<sfixed64, string> sfixed64_key = 10;
+  map<bool, string> bool_key = 11;
+  map<string, string> string_key = 12;
+
+  map<string, bytes> bytes_value = 13;
+  map<string, double> double_value = 14;
+  map<string, float> float_value = 15;
+  map<string, Shade> enum_value = 16;
+  map<string, Score> message_value = 17;
+}

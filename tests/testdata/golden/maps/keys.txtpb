@@ -1,0 +1,38 @@
+# proto-file: reflection/maps.proto
+# proto-message: test.v1.Maps
+# protoc --deterministic_output writes map entries in the order of their keys, whatever order the input has.
+
+int32_key { key: 1 value: "one" }
+int32_key { key: -2147483648 value: "min" }
+int32_key { key: 2147483647 value: "max" }
+int32_key { key: -1 value: "minus one" }
+int64_key { key: 9223372036854775807 value: "max" }
+int64_key { key: -9223372036854775808 value: "min" }
+int64_key { key: 1 value: "one" }
+uint32_key { key: 4294967295 value: "max" }
+uint32_key { key: 1 value: "one" }
+uint64_key { key: 18446744073709551615 value: "max" }
+uint64_key { key: 9223372036854775808 value: "2^63" }
+uint64_key { key: 1 value: "one" }
+sint32_key { key: 2147483647 value: "max" }
+sint32_key { key: -1 value: "minus one" }
+sint32_key { key: -2147483648 value: "min" }
+sint64_key { key: -9223372036854775808 value: "min" }
+sint64_key { key: 9223372036854775807 value: "max" }
+sint64_key { key: 1 value: "one" }
+fixed32_key { key: 4294967295 value: "max" }
+fixed32_key { key: 2147483648 value: "2^31" }
+fixed64_key { key: 18446744073709551615 value: "max" }
+fixed64_key { key: 9223372036854775808 value: "2^63" }
+fixed64_key { key: 2 value: "two" }
+sfixed32_key { key: -2147483648 value: "min" }
+sfixed32_key { key: 2147483647 value: "max" }
+sfixed64_key { key: 9223372036854775807 value: "max" }
+sfixed64_key { key: -9223372036854775808 value: "min" }
+bool_key { key: true value: "yes" }
+bool_key { key: false value: "no" }
+string_key { key: "b" value: "bee" }
+string_key { key: "A" value: "upper" }
+string_key { key: "a" value: "lower" }
+string_key { key: "ключ" value: "значение" }
+string_key { key: "key with spaces" value: "" }

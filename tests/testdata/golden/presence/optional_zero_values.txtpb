@@ -1,0 +1,21 @@
+# proto-file: reflection/presence.proto
+# proto-message: test.v1.Presence
+# Fields with explicit presence are written whenever they are set, to the zero value too.
+
+o_int32: 0
+o_int64: 0
+o_uint32: 0
+o_uint64: 0
+o_sint32: 0
+o_sint64: 0
+o_fixed32: 0
+o_fixed64: 0
+o_sfixed32: 0
+o_sfixed64: 0
+o_float: 0
+o_double: 0
+o_bool: false
+o_string: ""
+o_bytes: ""
+o_sign: SIGN_ZERO
+point {}

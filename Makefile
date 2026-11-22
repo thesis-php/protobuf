@@ -112,6 +112,11 @@ infect: var vendor var/tools/infection/vendor/bin/infection ## Run mutation test
 	$(RUN) var/tools/infection/vendor/bin/infection --show-mutations $(ARGS)
 .PHONY: infect
 
+# protoc is not in the php image: the script downloads a pinned release into var/tools on first use.
+golden: var ## Regenerate the golden files in tests/testdata/golden with the reference protoc
+	$(RUN) sh tests/testdata/golden/generate.sh
+.PHONY: golden
+
 deps-analyze: vendor ## Analyze project dependencies using Composer dependency analyser
 	$(RUN) composer-dependency-analyser $(ARGS)
 .PHONY: deps-analyze

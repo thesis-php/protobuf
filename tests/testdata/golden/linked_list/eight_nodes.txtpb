@@ -1,0 +1,25 @@
+# proto-file: reflection/linked_list.proto
+# proto-message: test.v1.LinkedList
+
+root {
+  value: "1"
+  next {
+    value: "два"
+    next {
+      value: "three"
+      next {
+        value: "4"
+        next {
+          value: "五"
+          next {
+            value: "six"
+            next {
+              value: "7"
+              next { value: "🐘" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,6 @@
+# proto-file: reflection/all_in_one.proto
+# proto-message: test.v1.MegaTest
+# -0.0 differs from the zero value in the sign bit, so it is written.
+
+a_float: -0.0
+a_double: -0.0

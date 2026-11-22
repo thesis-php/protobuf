@@ -1,0 +1,6 @@
+# proto-file: reflection/oneof.proto
+# proto-message: test.v1.Developer
+# Fields without presence that hold the zero value are not written.
+
+name: ""
+url: ""

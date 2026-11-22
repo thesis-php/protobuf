@@ -1,0 +1,10 @@
+# proto-file: reflection/all_in_one.proto
+# proto-message: test.v1.MegaTest
+# Values around the lengths of a varint: 127 takes 1 byte, 128 two, 16383 two, 16384 three.
+
+a_int32: 127
+a_int64: 128
+a_uint32: 16383
+a_uint64: 16384
+a_sint32: -64
+a_sint64: 64

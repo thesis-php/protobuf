@@ -1,0 +1,9 @@
+# proto-file: reflection/all_in_one.proto
+# proto-message: test.v1.MegaTest
+# Entries whose key and value are zero values.
+
+map_str_int32 { key: "" value: 0 }
+map_int32_str { key: 0 value: "" }
+map_uint64_bool { key: 0 value: false }
+map_str_msg { key: "" value {} }
+map_int32_msg { key: 0 value {} }

@@ -1,0 +1,4 @@
+# proto-file: reflection/linked_list.proto
+# proto-message: test.v1.LinkedList
+
+root { value: "only" }

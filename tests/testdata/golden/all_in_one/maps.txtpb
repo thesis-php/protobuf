@@ -1,0 +1,17 @@
+# proto-file: reflection/all_in_one.proto
+# proto-message: test.v1.MegaTest
+# protoc --deterministic_output writes map entries in the order of their keys.
+
+map_str_int32 { key: "b" value: 2 }
+map_str_int32 { key: "a" value: -1 }
+map_str_int32 { key: "ключ" value: 2147483647 }
+map_int32_str { key: 10 value: "ten" }
+map_int32_str { key: -10 value: "minus ten" }
+map_int32_str { key: 2147483647 value: "max" }
+map_uint64_bool { key: 18446744073709551615 value: true }
+map_uint64_bool { key: 1 value: true }
+map_uint64_bool { key: 9223372036854775808 value: false }
+map_str_msg { key: "x" value { id: 1 name: "one" values: [1, 2] } }
+map_str_msg { key: "e" value {} }
+map_int32_msg { key: -1 value { name: "neg" } }
+map_int32_msg { key: 1 value { id: 4294967295 } }

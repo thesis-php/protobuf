@@ -1,0 +1,19 @@
+# proto-file: reflection/all_in_one.proto
+# proto-message: test.v1.MegaTest
+# Fields without presence that hold the zero value are not written.
+
+a_int32: 0
+a_int64: 0
+a_uint32: 0
+a_uint64: 0
+a_sint32: 0
+a_sint64: 0
+a_fixed32: 0
+a_fixed64: 0
+a_sfixed32: 0
+a_sfixed64: 0
+a_float: 0
+a_double: 0
+a_bool: false
+a_string: ""
+a_bytes: ""

@@ -1,0 +1,52 @@
+// The schema of ../../../reflection/repeated.proto with the packing of every repeated scalar field flipped: the p_
+// fields are written a record per element and the u_ fields packed. It has no PHP class: the golden files written
+// with it are decoded into the class of repeated.proto.
+syntax = "proto3";
+
+package test.v1;
+
+enum Direction {
+  DIRECTION_NONE = 0;
+  DIRECTION_UP = 1;
+  DIRECTION_DOWN = -1;
+}
+
+message RepeatedItem {
+  string name = 1;
+}
+
+message Repeated {
+  repeated int32 p_int32 = 1 [packed = false];
+  repeated int64 p_int64 = 2 [packed = false];
+  repeated uint32 p_uint32 = 3 [packed = false];
+  repeated uint64 p_uint64 = 4 [packed = false];
+  repeated sint32 p_sint32 = 5 [packed = false];
+  repeated sint64 p_sint64 = 6 [packed = false];
+  repeated fixed32 p_fixed32 = 7 [packed = false];
+  repeated fixed64 p_fixed64 = 8 [packed = false];
+  repeated sfixed32 p_sfixed32 = 9 [packed = false];
+  repeated sfixed64 p_sfixed64 = 10 [packed = false];
+  repeated float p_float = 11 [packed = false];
+  repeated double p_double = 12 [packed = false];
+  repeated bool p_bool = 13 [packed = false];
+  repeated Direction p_direction = 14 [packed = false];
+
+  repeated int32 u_int32 = 21;
+  repeated int64 u_int64 = 22;
+  repeated uint32 u_uint32 = 23;
+  repeated uint64 u_uint64 = 24;
+  repeated sint32 u_sint32 = 25;
+  repeated sint64 u_sint64 = 26;
+  repeated fixed32 u_fixed32 = 27;
+  repeated fixed64 u_fixed64 = 28;
+  repeated sfixed32 u_sfixed32 = 29;
+  repeated sfixed64 u_sfixed64 = 30;
+  repeated float u_float = 31;
+  repeated double u_double = 32;
+  repeated bool u_bool = 33;
+  repeated Direction u_direction = 34;
+
+  repeated string strings = 40;
+  repeated bytes blobs = 41;
+  repeated RepeatedItem items = 42;
+}

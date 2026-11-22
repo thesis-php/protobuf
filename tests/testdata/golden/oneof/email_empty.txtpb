@@ -1,0 +1,5 @@
+# proto-file: reflection/oneof.proto
+# proto-message: test.v1.Developer
+# A field of a oneof has presence: the variant set is written even if it holds the zero value.
+
+email: ""

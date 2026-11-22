@@ -1,0 +1,7 @@
+# proto-file: reflection/oneof.proto
+# proto-message: test.v1.Developer
+# An element of a repeated message field is written even when its message is empty.
+
+organizations {}
+organizations { role: ROLE_UNSPECIFIED }
+organizations { name: "last" }

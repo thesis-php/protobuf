@@ -1,0 +1,18 @@
+# proto-file: golden/repeated/decode-only/flipped.proto
+# proto-message: test.v1.Repeated
+# The input of ../packed.txtpb written by a schema whose p_ fields are [packed = false]: the decoder reads both forms.
+
+p_int32: [0, 1, -1, 2147483647, -2147483648]
+p_int64: [0, 1, -1, 9223372036854775807, -9223372036854775808]
+p_uint32: [0, 1, 4294967295]
+p_uint64: [0, 1, 18446744073709551615]
+p_sint32: [0, 1, -1, 2147483647, -2147483648]
+p_sint64: [0, 1, -1, 9223372036854775807, -9223372036854775808]
+p_fixed32: [0, 1, 4294967295]
+p_fixed64: [0, 1, 18446744073709551615]
+p_sfixed32: [0, 1, -1, 2147483647, -2147483648]
+p_sfixed64: [0, 1, -1, 9223372036854775807, -9223372036854775808]
+p_float: [0, -0.0, 1.5, inf, -inf]
+p_double: [0, -0.0, -2.25, inf, -inf]
+p_bool: [false, true, true]
+p_direction: [DIRECTION_NONE, DIRECTION_UP, DIRECTION_DOWN]
