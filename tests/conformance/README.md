@@ -12,10 +12,10 @@ runner compares what it gets with what the reference implementation of C++ does.
   the library does not support, and of the messages of editions, which are not generated.
 - `generated/` holds the classes of `conformance.proto`, `test_messages_proto3.proto` and `test_messages_proto2.proto`,
   written by [thesis/protoc-plugin](https://github.com/thesis-php/protoc-plugin). The well-known types they refer to are
-  those of the dev dependency `thesis/protobuf-known-types`. Do not edit them: they are excluded from PHP-CS-Fixer,
-  Rector and PHPStan.
+  those of the dev dependency `thesis/protobuf-known-types`. Do not edit them: they are excluded from PHP-CS-Fixer and
+  Rector.
 - `failure_list.txt` lists the tests the library is known to fail, each with the reason, a limitation of the library or
-  of the plugin, or a bug of the library not fixed yet.
+  of the plugin, or a bug of the library not fixed yet. It has none now.
 - `Dockerfile` builds the runner from the sources of protobuf with CMake, and `static-jsoncpp.cmake` makes it link
   statically.
 
