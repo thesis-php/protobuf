@@ -132,44 +132,53 @@ final class Reflector
 
         $this->fieldPaths($class);
 
-        $this->visited[$class] = true;
-
         $classReflection = $this->classReflector->reflect($class);
 
         $fields = [];
         $oneofs = [];
 
-        foreach ($classReflection->properties as $property) {
-            if ($property->attributes->has(Field::class)) {
-                $field = $property->attributes->get(Field::class);
+        // A type built while the class is in progress may refer to it by recursion: if the class fails, so do they.
+        $types = $this->types;
+        $this->visited[$class] = true;
 
-                $fields[] = Protobuf\fieldT(
-                    $field->num,
-                    $field->type->accept(new RecursionBreakTypeVisitor(
-                        $this,
-                        $this->typeVisitor,
-                        $this->visited,
-                    )),
-                );
-            } elseif ($property->attributes->has(OneOf::class)) {
-                $oneof = $property->attributes->get(OneOf::class);
-                $variants = [];
+        try {
+            foreach ($classReflection->properties as $property) {
+                if ($property->attributes->has(Field::class)) {
+                    $field = $property->attributes->get(Field::class);
 
-                foreach ($oneof->variants as $it) {
-                    $variantFields = $this->type($it)->fields;
-                    $variants[] = array_keys($variantFields);
+                    $fields[] = Protobuf\fieldT(
+                        $field->num,
+                        $field->type->accept(new RecursionBreakTypeVisitor(
+                            $this,
+                            $this->typeVisitor,
+                            $this->visited,
+                        )),
+                    );
+                } elseif ($property->attributes->has(OneOf::class)) {
+                    $oneof = $property->attributes->get(OneOf::class);
+                    $variants = [];
 
-                    $fields = [
-                        ...$fields,
-                        ...$variantFields,
-                    ];
+                    foreach ($oneof->variants as $it) {
+                        $variantFields = $this->type($it)->fields;
+                        $variants[] = array_keys($variantFields);
+
+                        $fields = [
+                            ...$fields,
+                            ...$variantFields,
+                        ];
+                    }
+
+                    $oneofs[] = $variants;
                 }
-
-                $oneofs[] = $variants;
             }
-        }
+        } catch (\Throwable $e) {
+            $this->types = $types;
 
-        unset($this->visited[$class]);
+            throw $e;
+        } finally {
+            // A class whose reflection failed is not in progress anymore: a later reference to it is not a recursion.
+            unset($this->visited[$class]);
+        }
 
         $type = Protobuf\messageT(...$fields);
 

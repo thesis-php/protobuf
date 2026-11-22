@@ -46,6 +46,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   which used to be written and read as one with `stringT` keys, must be declared with `stringT` keys. For
   `Reflection\MapT` the exception is thrown when the class that declares the field is reflected.
 
+### Fixed
+
+- After the reflection of a class failed because of a class its message fields lead to, e.g. one with an invalid
+  property, `Reflection\Reflector::type()`, the encoder and the decoder could accept classes that refer to the failed
+  class: `type()` returned a type for a class with a message field of it, and a class whose message field leads to
+  it through a cycle of message fields was encoded and decoded as long as that field was not set. They now fail with
+  the same exception as a fresh reflector, encoder or decoder.
+
 ## [0.2.2] - 2026-11-22
 
 ### Added
