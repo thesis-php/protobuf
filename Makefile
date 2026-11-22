@@ -5,7 +5,10 @@ DOCKER_COMPOSE ?= $(DOCKER) compose $(shell test -f .env.local && echo '--env-fi
 export CONTAINER_USER ?= $(shell id -u):$(shell id -g)
 
 RUN ?= $(if $(INSIDE_DEVCONTAINER),,$(DOCKER_COMPOSE) run --rm php)
-COMPOSER ?= $(RUN) composer
+# thesis/protobuf-known-types, a dev dependency, requires this very package, and Composer cannot tell the version of the
+# root package on a detached checkout, as in CI. Move it to the next minor version together with the branch.
+COMPOSER_ROOT_VERSION ?= 0.2.x-dev
+COMPOSER ?= $(RUN) env COMPOSER_ROOT_VERSION=$(COMPOSER_ROOT_VERSION) composer
 
 ##
 ## Project
@@ -116,6 +119,42 @@ infect: var vendor var/tools/infection/vendor/bin/infection ## Run mutation test
 golden: var ## Regenerate the golden files in tests/testdata/golden with the reference protoc
 	$(RUN) sh tests/testdata/golden/generate.sh
 .PHONY: golden
+
+# The release of protobuf pinned in tests/tools/protobuf.sh: the conformance test runner is built from its sources.
+PROTOBUF_VERSION := $(shell sed -n 's/^protobuf_version=//p' tests/tools/protobuf.sh)
+PROTOBUF_SHA256 := $(shell sed -n 's/^protobuf_source_sha256=//p' tests/tools/protobuf.sh)
+CONFORMANCE_RUNNER := var/tools/conformance-$(PROTOBUF_VERSION)/conformance_test_runner
+CONFORMANCE_RUNNER_IMAGE ?= ghcr.io/thesis-php/protobuf-conformance-runner:$(PROTOBUF_VERSION)
+CONFORMANCE_RUNNER_BUILD = $(DOCKER) build --file tests/conformance/Dockerfile \
+	--build-arg PROTOBUF_VERSION=$(PROTOBUF_VERSION) --build-arg PROTOBUF_SHA256=$(PROTOBUF_SHA256)
+
+# The runner is not in the release archives: it is built once into var/tools, statically, so it runs in the php container.
+$(CONFORMANCE_RUNNER): tests/conformance/Dockerfile tests/conformance/static-jsoncpp.cmake tests/tools/protobuf.sh | var
+	$(CONFORMANCE_RUNNER_BUILD) --output type=local,dest=$(dir $@) tests/conformance
+	@touch $@
+
+conformance-runner: $(CONFORMANCE_RUNNER) ## Build conformance_test_runner of the pinned protobuf release into var/tools
+.PHONY: conformance-runner
+
+conformance-runner-image: ## Build the image of conformance_test_runner to publish as CONFORMANCE_RUNNER_IMAGE
+	$(CONFORMANCE_RUNNER_BUILD) --tag $(CONFORMANCE_RUNNER_IMAGE) tests/conformance
+.PHONY: conformance-runner-image
+
+# The image holds nothing but the runner: exporting its file system puts the binary where the build would.
+conformance-runner-pull: | var ## Copy conformance_test_runner from CONFORMANCE_RUNNER_IMAGE into var/tools instead of building it
+	echo 'FROM $(CONFORMANCE_RUNNER_IMAGE)' | $(DOCKER) build --pull --output type=local,dest=$(dir $(CONFORMANCE_RUNNER)) -
+	@touch $(CONFORMANCE_RUNNER)
+.PHONY: conformance-runner-pull
+
+# protoc and the plugin are not in the php image: the script downloads the pinned releases into var/tools on first use.
+conformance-generate: var ## Regenerate the classes of the conformance test messages in tests/conformance/generated
+	$(RUN) sh tests/conformance/generate.sh
+.PHONY: conformance-generate
+
+conformance: var vendor $(CONFORMANCE_RUNNER) ## Run conformance_test_runner against the library: `make conformance ARGS='--test <name> --debug'`
+	$(RUN) $(CONFORMANCE_RUNNER) --enforce_recommended --failure_list tests/conformance/failure_list.txt \
+	  --output_dir var $(ARGS) /usr/bin/env php tests/conformance/testee.php
+.PHONY: conformance
 
 deps-analyze: vendor ## Analyze project dependencies using Composer dependency analyser
 	$(RUN) composer-dependency-analyser $(ARGS)

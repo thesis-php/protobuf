@@ -13,6 +13,8 @@ $config = new Config()
             ->in(__DIR__ . '/benchmarks')
             ->in(__DIR__ . '/src')
             ->in(__DIR__ . '/tests')
+            // Written by thesis/protoc-plugin: see tests/conformance/README.md.
+            ->exclude('conformance/generated')
             ->append([
                 __FILE__,
             ]),

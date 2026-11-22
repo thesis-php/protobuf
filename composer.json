@@ -27,7 +27,8 @@
         "ext-filter": "*",
         "phpbench/phpbench": "^1.7",
         "phpunit/phpunit": "^12.4.4",
-        "symfony/var-dumper": "^6.4.15 || ^7.3.5"
+        "symfony/var-dumper": "^6.4.15 || ^7.3.5",
+        "thesis/protobuf-known-types": "^0.3.1"
     },
     "autoload": {
         "psr-4": {
@@ -42,6 +43,8 @@
     },
     "autoload-dev": {
         "psr-4": {
+            "Conformance\\": "tests/conformance/generated/Conformance/",
+            "ProtobufTestMessages\\": "tests/conformance/generated/ProtobufTestMessages/",
             "Thesis\\Protobuf\\": "tests/",
             "Thesis\\Protobuf\\Benchmarks\\": "benchmarks/"
         }
