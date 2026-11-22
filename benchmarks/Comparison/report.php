@@ -1,8 +1,9 @@
 <?php
 
 /**
- * Prints the Markdown table of the comparison from the results `make bench-compare` dumps: those of the run without
- * the extension of google/protobuf and those of the run with it. See README.md next to this file.
+ * Prints the Markdown tables of the comparison from the results `make bench-compare` dumps: those of the run without
+ * the extension of google/protobuf and those of the run with it, first without the JIT and then with it. See
+ * README.md next to this file.
  */
 
 declare(strict_types=1);
@@ -84,32 +85,43 @@ function compare(float $other, float $thesis): string
     });
 }
 
-if ($argc !== 3) {
-    fwrite(STDERR, "Usage: php report.php <results without the extension> <results with the extension>\n");
+/**
+ * @param array<string, float> $php
+ * @param array<string, float> $extension
+ */
+function table(array $php, array $extension): string
+{
+    $table = "| Message | Operation | thesis/protobuf | google/protobuf, PHP | google/protobuf, extension |\n";
+    $table .= "|---|---|---|---|---|\n";
+
+    foreach (MESSAGES as $class => $message) {
+        foreach (OPERATIONS as $subject => $operation) {
+            $thesis = $php["{$class}.benchThesis{$subject}"];
+
+            $table .= \sprintf(
+                "| %s | %s | %s | %s | %s |\n",
+                $message,
+                $operation,
+                format($thesis),
+                compare($php["{$class}.benchGoogle{$subject}"], $thesis),
+                compare($extension["{$class}.benchGoogle{$subject}"], $thesis),
+            );
+        }
+    }
+
+    return $table;
+}
+
+if ($argc !== 5) {
+    fwrite(STDERR, "Usage: php report.php <without the extension> <with the extension> <the same two with the JIT>\n");
 
     exit(1);
 }
 
-$php = times($argv[1]);
-$extension = times($argv[2]);
-
-echo "| Message | Operation | thesis/protobuf | google/protobuf, PHP | google/protobuf, extension |\n";
-echo "|---|---|---|---|---|\n";
-
-foreach (MESSAGES as $class => $message) {
-    foreach (OPERATIONS as $subject => $operation) {
-        $thesis = $php["{$class}.benchThesis{$subject}"];
-
-        echo \sprintf(
-            "| %s | %s | %s | %s | %s |\n",
-            $message,
-            $operation,
-            format($thesis),
-            compare($php["{$class}.benchGoogle{$subject}"], $thesis),
-            compare($extension["{$class}.benchGoogle{$subject}"], $thesis),
-        );
-    }
-}
+echo "Without the JIT:\n\n";
+echo table(times($argv[1]), times($argv[2]));
+echo "\nWith the tracing JIT:\n\n";
+echo table(times($argv[3]), times($argv[4]));
 
 echo "\nThe time is the median of the iterations, and next to the time of google/protobuf is how it relates to the time of\n";
 echo "thesis/protobuf. Encoding the string of 1 MB flatters thesis/protobuf: PHP remembers that a string is valid UTF-8,\n";

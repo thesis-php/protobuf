@@ -161,6 +161,8 @@ conformance: var vendor $(CONFORMANCE_RUNNER) ## Run conformance_test_runner aga
 # with its extension are made on first use. The runtime is the release that goes with the pinned protoc.
 export GOOGLE_PROTOBUF_VERSION ?= 5.$(PROTOBUF_VERSION)
 COMPARISON_RUN ?= $(DOCKER_COMPOSE) run --rm
+# The directories of the image whose settings load the extension of google/protobuf and turn the JIT on.
+COMPARISON_INI := /usr/local/etc/php
 COMPARISON_BENCH = vendor/bin/phpbench run --config=benchmarks/Comparison/phpbench.json --report=aggregate $(ARGS)
 
 var/tools/google-protobuf/vendor/google/protobuf/composer.json: tests/tools/protobuf.sh | var
@@ -171,10 +173,14 @@ var/tools/google-protobuf/vendor/google/protobuf/composer.json: tests/tools/prot
 
 bench-compare: var vendor var/tools/google-protobuf/vendor/google/protobuf/composer.json ## Compare the speed of the library with google/protobuf, its PHP runtime and its extension
 	$(DOCKER_COMPOSE) build comparison
+	mkdir -p var/comparison
 	$(COMPARISON_RUN) comparison sh benchmarks/Comparison/generate.sh
 	$(COMPARISON_RUN) comparison $(COMPARISON_BENCH) --dump-file=var/comparison/php.xml
-	$(COMPARISON_RUN) --env PHP_INI_SCAN_DIR=:/usr/local/etc/php/protobuf comparison $(COMPARISON_BENCH) --group=google --dump-file=var/comparison/extension.xml
-	$(COMPARISON_RUN) comparison php benchmarks/Comparison/report.php var/comparison/php.xml var/comparison/extension.xml | tee var/comparison/report.md
+	$(COMPARISON_RUN) --env PHP_INI_SCAN_DIR=:$(COMPARISON_INI)/protobuf comparison $(COMPARISON_BENCH) --group=google --dump-file=var/comparison/extension.xml
+	$(COMPARISON_RUN) --env PHP_INI_SCAN_DIR=:$(COMPARISON_INI)/jit comparison $(COMPARISON_BENCH) --dump-file=var/comparison/php-jit.xml
+	$(COMPARISON_RUN) --env PHP_INI_SCAN_DIR=:$(COMPARISON_INI)/protobuf:$(COMPARISON_INI)/jit comparison $(COMPARISON_BENCH) --group=google --dump-file=var/comparison/extension-jit.xml
+	$(COMPARISON_RUN) comparison php benchmarks/Comparison/report.php var/comparison/php.xml var/comparison/extension.xml var/comparison/php-jit.xml var/comparison/extension-jit.xml > var/comparison/report.md
+	@cat var/comparison/report.md
 .PHONY: bench-compare
 
 deps-analyze: vendor ## Analyze project dependencies using Composer dependency analyser
