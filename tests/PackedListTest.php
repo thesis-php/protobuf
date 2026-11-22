@@ -12,6 +12,8 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(Reflection\ListT::class)]
 #[CoversClass(Type\Visitor\IsPackable::class)]
 #[CoversClass(Reflection\Internal\Visitor\IsPackable::class)]
+#[CoversClass(Internal\Serde\FieldCodecs::class)]
+#[CoversClass(Internal\Serde\ListCodec::class)]
 final class PackedListTest extends TestCase
 {
     /**
@@ -48,6 +50,23 @@ final class PackedListTest extends TestCase
         );
         self::assertFalse(new Reflection\ListT(Reflection\StringT::T, packed: false)->packed);
         self::assertNull(listT(stringT)->packed);
+    }
+
+    public function testPackableElementsAreWrittenAsDeclared(): void
+    {
+        $serializer = new Serializer();
+
+        self::assertSame('0a020102', bin2hex($serializer->serialize(message(fieldOf(1, listOf(int32T, [1, 2]))))), 'packed by default');
+        self::assertSame('0a020102', bin2hex($serializer->serialize(message(fieldOf(1, listOf(int32T, [1, 2], true))))), 'packed');
+        self::assertSame('08010802', bin2hex($serializer->serialize(message(fieldOf(1, listOf(int32T, [1, 2], false))))), 'unpacked');
+    }
+
+    public function testAListWithoutElementsIsNotWritten(): void
+    {
+        $serializer = new Serializer();
+
+        self::assertSame('', $serializer->serialize(message(fieldOf(1, listOf(int32T, [], true)))));
+        self::assertSame('', $serializer->serialize(message(fieldOf(1, listOf(int32T, [], false)))));
     }
 
     public function testPackedNonPackableAttributeFailsEncodingAndDecoding(): void

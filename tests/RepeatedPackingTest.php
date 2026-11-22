@@ -9,9 +9,11 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Thesis\Protobuf\Internal\Serde\ListCodec;
 use Thesis\Protobuf\Reflection\Internal\Visitor\ToProtobufValueTypeVisitor;
+use Thesis\Protobuf\Reflection\Internal\Visitor\ToValueTypeVisitor;
 
 #[CoversClass(ToProtobufValueTypeVisitor::class)]
 #[CoversClass(ListCodec::class)]
+#[CoversClass(ToValueTypeVisitor::class)]
 final class RepeatedPackingTest extends TestCase
 {
     public function testDeclaredPackingIsHonouredWhenEncoding(): void
@@ -67,6 +69,15 @@ final class RepeatedPackingTest extends TestCase
         self::assertSame([1, 2], $decoder->decode("\x08\x01\x08\x02", RepeatedPackingTestPacked::class)->ints);
         // Field 1 as one length-delimited record, read into a field declared unpacked.
         self::assertSame([1, 2], $decoder->decode("\x0a\x02\x01\x02", RepeatedPackingTestUnpacked::class)->ints);
+    }
+
+    public function testAListOfMessagesIsDecodedIntoObjects(): void
+    {
+        $object = new RepeatedPackingTestMessages([new RepeatedPackingTestStrings(['a']), new RepeatedPackingTestStrings()]);
+
+        $bytes = Encoder\Builder::buildDefault()->encode($object);
+
+        self::assertEquals($object, Decoder\Builder::buildDefault()->decode($bytes, RepeatedPackingTestMessages::class));
     }
 
     public function testNonPackableElementsStayLengthDelimited(): void
@@ -169,6 +180,17 @@ final readonly class RepeatedPackingTestStrings
      */
     public function __construct(
         #[Reflection\Field(1, new Reflection\ListT(Reflection\StringT::T, packed: false))]
+        public array $values = [],
+    ) {}
+}
+
+final readonly class RepeatedPackingTestMessages
+{
+    /**
+     * @param list<RepeatedPackingTestStrings> $values
+     */
+    public function __construct(
+        #[Reflection\Field(1, new Reflection\ListT(new Reflection\ObjectT(RepeatedPackingTestStrings::class)))]
         public array $values = [],
     ) {}
 }

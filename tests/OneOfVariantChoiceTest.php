@@ -134,6 +134,45 @@ final class OneOfVariantChoiceTest extends TestCase
         self::assertSame([1 => 7, 5 => 2], self::values($message));
     }
 
+    public function testTheTypesOfOtherClassesDoNotUndoTheOneofsOfAType(): void
+    {
+        $reflector = Reflector::build();
+        $type = $reflector->type(OneOfTestMessage::class);
+        $reflector->type(OneOfTestOtherHolder::class);
+
+        // text: "a", number: 5
+        $message = new Serializer()->deserialize($type, (string) hex2bin('1201611805'));
+
+        self::assertSame([3 => 5], self::values($message));
+    }
+
+    public function testFieldsAfterAnUnknownFieldAreRead(): void
+    {
+        // 15: 5, id: 7, text: "a"
+        $decoded = self::decode('78050807120161');
+
+        self::assertSame(7, $decoded->id);
+        self::assertEquals(new OneOfTestText('a'), $decoded->choice);
+    }
+
+    public function testFieldsAfterAnUnknownEnumNumberAreRead(): void
+    {
+        // color: 99, id: 7, label: "x"
+        $decoded = self::decode('48630807420178');
+
+        self::assertSame(7, $decoded->id);
+        self::assertNull($decoded->choice);
+        self::assertEquals(new OneOfTestLabel('x'), $decoded->other);
+    }
+
+    public function testAMessageWithFieldsOfSeveralVariantsIsMappedToTheFirstVariantDeclared(): void
+    {
+        // A message built by hand may hold the fields of several variants, unlike one read with the type of the class.
+        $decoded = Reflector::build()->map(message(fieldOf(3, int32Of(5)), fieldOf(2, stringOf('a'))), OneOfTestMessage::class);
+
+        self::assertEquals(new OneOfTestText('a'), $decoded->choice);
+    }
+
     public function testAMessageTypeBuiltByHandKeepsTheFieldsOfEveryVariant(): void
     {
         $type = messageT(fieldT(1, int32T), fieldT(2, stringT), fieldT(4, int32T), fieldT(5, int32T));
@@ -347,6 +386,14 @@ final readonly class OneOfTestColorVariant implements OneOfTestChoice
 }
 
 interface OneOfTestOther {}
+
+final readonly class OneOfTestOtherHolder
+{
+    public function __construct(
+        #[Reflection\OneOf([OneOfTestFlag::class, OneOfTestLabel::class])]
+        public ?OneOfTestOther $other = null,
+    ) {}
+}
 
 final readonly class OneOfTestFlag implements OneOfTestOther
 {

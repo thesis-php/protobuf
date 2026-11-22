@@ -6,6 +6,7 @@ namespace Thesis\Protobuf;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversFunction;
+use PHPUnit\Framework\Attributes\CoversTrait;
 use PHPUnit\Framework\TestCase;
 use Thesis\Protobuf\Internal\Serde\FieldCodecs;
 use Thesis\Protobuf\Internal\Serde\SerdeBytes;
@@ -21,6 +22,8 @@ use Thesis\Protobuf\Type\Visitor\IsPackable;
 
 #[CoversClass(BytesT::class)]
 #[CoversClass(StringT::class)]
+#[CoversClass(Type\MessageT::class)]
+#[CoversTrait(Type\Listed::class)]
 #[CoversClass(Value::class)]
 #[CoversClass(FieldCodecs::class)]
 #[CoversClass(ZeroValue::class)]
@@ -86,6 +89,16 @@ final class BytesTypeTest extends TestCase
         self::assertSame(['a', "\xFF"], $list->value);
         self::assertInstanceOf(Type\ListT::class, $list->type);
         self::assertSame(bytesT, $list->type->element);
+    }
+
+    public function testAListOfMessagesIsListedByTheType(): void
+    {
+        $type = messageT(fieldT(1, int32T));
+        $list = $type->list([message(fieldOf(1, int32Of(5)))]);
+
+        self::assertEquals([message(fieldOf(1, int32Of(5)))], $list->value);
+        self::assertInstanceOf(Type\ListT::class, $list->type);
+        self::assertSame($type, $list->type->element);
     }
 
     public function testTheReflectionMapsStringAndBytesToTheirTypes(): void

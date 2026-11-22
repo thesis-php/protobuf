@@ -108,6 +108,35 @@ final class UnknownFieldsEncodeTest extends TestCase
         );
     }
 
+    public function testTheUnknownFieldsOfEveryVariantAreWrittenAfterThoseOfTheObject(): void
+    {
+        $point = new UnknownFieldsEncodeTestPartialPoint(3);
+        $label = new UnknownFieldsEncodeTestLabel('b');
+        $top = new UnknownFieldsEncodeTestTwoOneOfs($point, $label);
+
+        $encoder = new Encoder\Builder()
+            ->withUnknownProvider(self::provider([
+                [$top, [
+                    new UnknownField(new Tag(20, WireType::VARINT), new Number(1)),
+                    new UnknownField(new Tag(21, WireType::VARINT), new Number(2)),
+                ]],
+                [$point, [
+                    new UnknownField(new Tag(23, WireType::VARINT), new Number(3)),
+                    new UnknownField(new Tag(24, WireType::VARINT), new Number(4)),
+                ]],
+                [$label, [new UnknownField(new Tag(25, WireType::VARINT), new Number(5))]],
+            ]))
+            ->build();
+
+        self::assertSame(
+            // point: x: 3, label: "b"
+            '28033a0162'
+            // the unknown fields of the object, then those of each variant in order
+            . 'a00101a80102b80103c00104c80105',
+            bin2hex($encoder->encode($top)),
+        );
+    }
+
     public function testAProviderThatGivesNothingWritesNoUnknownFields(): void
     {
         $object = new UnknownFieldsEncodeTestItem(1);
@@ -274,5 +303,29 @@ final readonly class UnknownFieldsEncodeTestPartialPoint
     public function __construct(
         #[Reflection\Field(5, Reflection\Int32T::T)]
         public int $x = 0,
+    ) {}
+}
+
+/**
+ * @internal
+ */
+final readonly class UnknownFieldsEncodeTestTwoOneOfs
+{
+    public function __construct(
+        #[Reflection\OneOf([UnknownFieldsEncodeTestPartialPoint::class])]
+        public ?UnknownFieldsEncodeTestPartialPoint $point = null,
+        #[Reflection\OneOf([UnknownFieldsEncodeTestLabel::class])]
+        public ?UnknownFieldsEncodeTestLabel $label = null,
+    ) {}
+}
+
+/**
+ * @internal
+ */
+final readonly class UnknownFieldsEncodeTestLabel
+{
+    public function __construct(
+        #[Reflection\Field(7, Reflection\StringT::T)]
+        public string $text = '',
     ) {}
 }

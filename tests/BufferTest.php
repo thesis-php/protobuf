@@ -25,6 +25,12 @@ final class BufferTest extends TestCase
         self::assertCount(0, $buffer);
     }
 
+    public function testStringsMustBeValidUtf8UnlessToldOtherwise(): void
+    {
+        self::assertTrue(new Reader('')->validateUtf8);
+        self::assertFalse(new Reader('', validateUtf8: false)->validateUtf8);
+    }
+
     public function testReadMovesTheCursor(): void
     {
         $buffer = new Reader('test');

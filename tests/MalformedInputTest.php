@@ -16,6 +16,7 @@ use Thesis\Protobuf\Exception\InvalidFieldNumber;
 use Thesis\Protobuf\Exception\MalformedMessage;
 use Thesis\Protobuf\Exception\MalformedVarint;
 use Thesis\Protobuf\Exception\UnsupportedWireType;
+use Thesis\Protobuf\Internal\Buffer\Reader;
 
 #[CoversClass(MalformedMessage::class)]
 #[CoversClass(InvalidFieldNumber::class)]
@@ -23,8 +24,8 @@ use Thesis\Protobuf\Exception\UnsupportedWireType;
 #[CoversClass(UnsupportedWireType::class)]
 #[CoversClass(Tag::class)]
 #[CoversClass(ReflectionDecoder::class)]
-#[CoversFunction('Thesis\Protobuf\Internal\Wire\readVarint')]
-#[CoversFunction('Thesis\Protobuf\Internal\Wire\decodeVarint')]
+#[CoversClass(Reader::class)]
+#[CoversFunction('Thesis\Protobuf\Internal\Wire\readTag')]
 final class MalformedInputTest extends TestCase
 {
     /**

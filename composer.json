@@ -36,7 +36,6 @@
         "files": [
             "src/constructors.php",
             "src/Internal/Buffer/buffer.php",
-            "src/Tag.php",
             "src/Internal/Wire/wire.php",
             "src/Reflection/Internal/numeric.php"
         ]

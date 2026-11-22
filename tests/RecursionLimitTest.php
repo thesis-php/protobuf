@@ -82,6 +82,20 @@ final class RecursionLimitTest extends TestCase
         self::assertCount(3, $list);
     }
 
+    public function testOccurrencesMergedIntoOneMessageDoNotAddUp(): void
+    {
+        // Three occurrences of a singular message field, each one level deep, merged into one message.
+        $message = new Serializer(1)->deserialize(
+            messageT(fieldT(1, messageT(fieldT(1, int32T), fieldT(2, int32T), fieldT(3, int32T)))),
+            (string) hex2bin('0a0208010a0210020a021803'),
+        );
+
+        $nested = ($message->fields[1] ?? null)?->value->value;
+
+        self::assertInstanceOf(Message::class, $nested);
+        self::assertCount(3, $nested);
+    }
+
     public function testAnOccurrenceMergedIntoAnEarlierOneIsCounted(): void
     {
         // The first occurrence of field 1 is one level deep, the second one holds another message.
@@ -180,6 +194,17 @@ final class RecursionLimitTest extends TestCase
 
         // The builder itself is not changed by withRecursionLimit().
         self::assertEquals($decoded, $builder->build()->decode($bytes, RecursionLimitTestNode::class));
+    }
+
+    public function testDecoderAcceptsALimitOfZero(): void
+    {
+        $bytes = Encoder\Builder::buildDefault()->encode(self::chain(0));
+        $builder = new Decoder\Builder()->withRecursionLimit(0);
+
+        self::assertEquals(self::chain(0), $builder->build()->decode($bytes, RecursionLimitTestNode::class));
+
+        $this->expectExceptionObject(new RecursionLimitExceeded(0));
+        $builder->build()->decode(Encoder\Builder::buildDefault()->encode(self::chain(1)), RecursionLimitTestNode::class);
     }
 
     public function testDecoderRejectsANegativeLimit(): void

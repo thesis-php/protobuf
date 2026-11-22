@@ -32,11 +32,7 @@ final class ToValueTypeVisitor extends DefaultTypeVisitor
     {
         $element = $type->element->accept($this);
 
-        if ($element === null) {
-            return null;
-        }
-
-        return static function (mixed $values) use ($element): array {
+        return $element === null ? null : static function (mixed $values) use ($element): array {
             /** @var list<mixed> $values */
             return array_map($element, $values);
         };

@@ -33,6 +33,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Type\Visitor` has a new method, `bytes(Type\BytesT $type)`, which a class implementing the interface must add;
   a class extending `Type\Visitor\DefaultTypeVisitor` gets it, calling `default()`. `bytesT` used to be visited
   by `string()`.
+- `Type\MapT`, `Reflection\MapT`, `mapT()` and `mapOf()` throw `Exception\InvalidSchema` for a key type other than
+  an integer type, `bool` or `string` (float, double, bytes, enum, message, list or map), and for a list or a map
+  as the value type: protobuf has no such fields. They used to be rejected only by PHPStan; a map with `bytesT` keys,
+  which used to be written and read as one with `stringT` keys, must be declared with `stringT` keys. For
+  `Reflection\MapT` the exception is thrown when the class that declares the field is reflected.
 
 ## [0.2.2] - 2026-11-22
 

@@ -44,6 +44,18 @@ final class NonFieldPropertyTest extends TestCase
         Encoder\Builder::buildDefault()->encode(new NonFieldPropertyTestMessage());
     }
 
+    public function testTheMessageNamesTheProperty(): void
+    {
+        $previous = new \Error('uninitialized');
+        $exception = new PropertyNotInitialized(NonFieldPropertyTestMessage::class, 'id', $previous);
+
+        self::assertSame(
+            \sprintf('The property "%s::$id" must be initialized before the object is encoded.', NonFieldPropertyTestMessage::class),
+            $exception->getMessage(),
+        );
+        self::assertSame($previous, $exception->getPrevious());
+    }
+
     public function testUninitializedOneOfIsReported(): void
     {
         $message = new NonFieldPropertyTestOneOf();

@@ -179,6 +179,7 @@ final readonly class Value
      * @param Type<V, *, *, 'map-value'> $valueT
      * @param Map<K, V> $map
      * @return self<Map<K, V>>
+     * @throws Exception\InvalidSchema if the key type is not an integer, bool or string, or the value type is a list or a map
      */
     public static function mapOf(
         Type $keyT,

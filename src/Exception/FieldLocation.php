@@ -58,11 +58,7 @@ trait FieldLocation
      */
     private function location(): string
     {
-        $location = '';
-
-        if ($this->fields !== []) {
-            $location .= ' in field ' . implode('.', $this->fields);
-        }
+        $location = $this->fields === [] ? '' : ' in field ' . implode('.', $this->fields);
 
         if ($this->properties !== []) {
             $location .= ' (' . implode(' → ', $this->properties) . ')';
