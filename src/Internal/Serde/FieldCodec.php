@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Internal\Serde;
 
+use Thesis\Protobuf\Exception\InvalidUtf8;
 use Thesis\Protobuf\Exception\ValueOutOfRange;
 use Thesis\Protobuf\Internal\Buffer\ReadBuffer;
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
@@ -24,6 +25,7 @@ interface FieldCodec
      *
      * @param positive-int $num
      * @throws ValueOutOfRange
+     * @throws InvalidUtf8
      */
     public function encode(WriteBuffer $buffer, int $num, mixed $value): void;
 

@@ -45,6 +45,7 @@ final class MapEntryDefaultsTest extends TestCase
         yield 'a uint64 key' => [uint64T, stringT, '0a03120161', [[new Number(0), 'a']]];
         yield 'a fixed64 key' => [fixed64T, stringT, '0a03120161', [[new Number(0), 'a']]];
         yield 'a string value' => [int32T, stringT, '0a020801', [[1, '']]];
+        yield 'a bytes value' => [int32T, bytesT, '0a020801', [[1, '']]];
         yield 'a float value' => [int32T, floatT, '0a020801', [[1, 0.0]]];
         yield 'a double value' => [int32T, doubleT, '0a020801', [[1, 0.0]]];
         yield 'a uint64 value' => [int32T, uint64T, '0a020801', [[1, new Number(0)]]];

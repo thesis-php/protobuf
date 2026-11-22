@@ -12,6 +12,7 @@ use Thesis\Protobuf\Internal\Buffer\ByteBuffer;
 use Thesis\Protobuf\Internal\Buffer\Reader;
 use Thesis\Protobuf\Internal\Serde\FieldCodecs;
 use Thesis\Protobuf\Internal\Serde\SerdeBool;
+use Thesis\Protobuf\Internal\Serde\SerdeBytes;
 use Thesis\Protobuf\Internal\Serde\SerdeDouble;
 use Thesis\Protobuf\Internal\Serde\SerdeFixed32;
 use Thesis\Protobuf\Internal\Serde\SerdeFixed64;
@@ -41,6 +42,7 @@ use Thesis\Protobuf\Internal\Serde\SingularCodec;
 #[CoversClass(SerdeFloat::class)]
 #[CoversClass(SerdeDouble::class)]
 #[CoversClass(SerdeString::class)]
+#[CoversClass(SerdeBytes::class)]
 #[CoversClass(FieldCodecs::class)]
 #[CoversClass(SingularCodec::class)]
 final class ScalarCardinalityTest extends TestCase
@@ -104,6 +106,8 @@ final class ScalarCardinalityTest extends TestCase
                         /** @phpstan-ignore argument.type */
                         'double' => Value::double(filter_var($value, FILTER_VALIDATE_FLOAT)),
                         'string' => Value::string($value),
+                        // The value of bytes is hex, as they need not be text.
+                        'bytes' => Value::bytes((string) hex2bin($value)),
                         /** @phpstan-ignore argument.type */
                         'int32' => Value::int32(filter_var($value, FILTER_VALIDATE_INT)),
                         /** @phpstan-ignore argument.type */

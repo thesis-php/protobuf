@@ -21,6 +21,7 @@ enum SerializeMessage implements SerializeValue
     public function serialize(WriteBuffer $buffer, mixed $value): void
     {
         $body = new ByteBuffer();
+        $body->validateUtf8 = $buffer->validateUtf8;
         MessageFields::serialize($body, $value);
         Buffer\copy($body, $buffer);
     }

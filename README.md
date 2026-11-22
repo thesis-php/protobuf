@@ -106,6 +106,33 @@ such a map fails with `Reflection\Exception\InvalidProperty`. As in any PHP arra
 integer becomes an int: `['1' => 5]` is encoded with the key `"1"` and decoded as `[1 => 5]`, which is the same array,
 while keys such as `"01"` or `"1.5"` stay strings.
 
+### Strings and bytes
+
+A `string` field (`Reflection\StringT`, `stringT`) holds text and, as protobuf requires, must be valid UTF-8: encoding
+a string that is not throws `Thesis\Protobuf\Exception\InvalidUtf8`, and decoding one
+`Thesis\Protobuf\Exception\MalformedUtf8`, for list elements, map keys and map values as well. Binary data belongs
+in a `bytes` field (`Reflection\BytesT`, `bytesT`), which holds any bytes and is never checked; unlike a string, it
+cannot be a map key.
+
+The check takes time in proportion to the length of the string. If the strings are known to be valid, or data that
+other implementations reject must be read or written, it can be turned off:
+
+```php
+use Thesis\Protobuf\Decoder;
+use Thesis\Protobuf\Encoder;
+use Thesis\Protobuf\Serializer;
+
+$encoder = new Encoder\Builder()
+    ->withUtf8Validation(false)
+    ->build();
+
+$decoder = new Decoder\Builder()
+    ->withUtf8Validation(false)
+    ->build();
+
+$serializer = new Serializer(validateUtf8: false);
+```
+
 ### Required fields
 
 `Reflector::map()` maps missing fields using property defaults when they exist.

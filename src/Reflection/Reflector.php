@@ -189,7 +189,7 @@ final class Reflector
 
     /**
      * Translates a path of field numbers (see Exception\ValueOutOfRange::$fields) into "Class::$property"
-     * names, starting from the class of the encoded object. Stops where the path leaves the known classes.
+     * names, starting from the class of the encoded or decoded object. Stops where the path leaves the known classes.
      *
      * @internal
      * @param class-string $class

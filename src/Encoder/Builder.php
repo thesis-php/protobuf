@@ -18,6 +18,8 @@ final class Builder
 {
     private ?UnknownFields\Provider $unknowns;
 
+    private bool $validateUtf8 = true;
+
     public function __construct()
     {
         $this->unknowns = UnknownFields::handler();
@@ -46,6 +48,19 @@ final class Builder
         return $builder;
     }
 
+    /**
+     * Sets whether a string property, a map key or value and a list element included, must be valid UTF-8, as
+     * protobuf requires; encoding one that is not throws `Exception\InvalidUtf8`. Bytes fields are never checked.
+     * The default is true.
+     */
+    public function withUtf8Validation(bool $validate): self
+    {
+        $builder = clone $this;
+        $builder->validateUtf8 = $validate;
+
+        return $builder;
+    }
+
     public static function buildDefault(): Encoder
     {
         return new self()->build();
@@ -54,7 +69,7 @@ final class Builder
     public function build(): Encoder
     {
         return new ReflectionEncoder(
-            new Serializer(),
+            new Serializer(validateUtf8: $this->validateUtf8),
             Reflector::build(unknownProvider: $this->unknowns),
         );
     }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Internal\Serde;
 
+use Thesis\Protobuf\Exception\InvalidUtf8;
+use Thesis\Protobuf\Exception\MalformedUtf8;
 use Thesis\Protobuf\Exception\ValueOutOfRange;
 use Thesis\Protobuf\Internal\Buffer;
 use Thesis\Protobuf\Internal\Buffer\ByteBuffer;
@@ -53,16 +55,17 @@ final readonly class MapCodec implements FieldCodec
             }
 
             $entry = new ByteBuffer();
+            $entry->validateUtf8 = $buffer->validateUtf8;
 
             try {
                 $this->key->encode($entry, self::KEY, $key);
-            } catch (ValueOutOfRange $e) {
+            } catch (ValueOutOfRange|InvalidUtf8 $e) {
                 throw $e->inField(self::KEY);
             }
 
             try {
                 $this->value->encode($entry, self::VALUE, $val);
-            } catch (ValueOutOfRange $e) {
+            } catch (ValueOutOfRange|InvalidUtf8 $e) {
                 throw $e->inField(self::VALUE);
             }
 
@@ -95,9 +98,18 @@ final readonly class MapCodec implements FieldCodec
             $entryTag = Wire\readTag($buffer);
 
             if ($entryTag->num === self::KEY && $this->key->accepts($entryTag->type)) {
-                $this->key->decode($buffer, $entryTag, $key, $unknownValues);
+                try {
+                    $this->key->decode($buffer, $entryTag, $key, $unknownValues);
+                } catch (MalformedUtf8 $e) {
+                    throw $e->inField(self::KEY);
+                }
             } elseif ($entryTag->num === self::VALUE && $this->value->accepts($entryTag->type)) {
-                $this->value->decode($buffer, $entryTag, $value, $unknownValues);
+                try {
+                    $this->value->decode($buffer, $entryTag, $value, $unknownValues);
+                } catch (MalformedUtf8 $e) {
+                    throw $e->inField(self::VALUE);
+                }
+
                 $unknownValue = $unknownValues !== [];
                 $unknownValues = [];
             } else {

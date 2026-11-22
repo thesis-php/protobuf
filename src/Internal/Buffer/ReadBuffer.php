@@ -14,6 +14,11 @@ use Thesis\Protobuf\Exception\RecursionLimitExceeded;
 interface ReadBuffer extends \Countable
 {
     /**
+     * Whether a string field read from the buffer must be valid UTF-8.
+     */
+    public bool $validateUtf8 { get; }
+
+    /**
      * Reads a varint as the 64 bits it encodes: values of 2^63 and above come back as negative ints.
      * Bits above the 64th, which only the 10th byte can carry, are dropped.
      *

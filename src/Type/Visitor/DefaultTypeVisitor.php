@@ -6,6 +6,7 @@ namespace Thesis\Protobuf\Type\Visitor;
 
 use Thesis\Protobuf\Type;
 use Thesis\Protobuf\Type\BoolT;
+use Thesis\Protobuf\Type\BytesT;
 use Thesis\Protobuf\Type\DoubleT;
 use Thesis\Protobuf\Type\EnumT;
 use Thesis\Protobuf\Type\Fixed32T;
@@ -111,6 +112,12 @@ abstract class DefaultTypeVisitor implements Visitor
 
     #[\Override]
     public function string(StringT $type): mixed
+    {
+        return $this->default($type);
+    }
+
+    #[\Override]
+    public function bytes(BytesT $type): mixed
     {
         return $this->default($type);
     }

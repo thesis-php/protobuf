@@ -21,6 +21,8 @@ final class Builder
     /** @var non-negative-int */
     private int $recursionLimit = Serializer::DEFAULT_RECURSION_LIMIT;
 
+    private bool $validateUtf8 = true;
+
     /**
      * @deprecated Does nothing: the reflection of the classes is kept in memory for as long as the built instance
      *             lives, and nothing is stored in the cache any more. Will be removed in the next minor version.
@@ -58,6 +60,19 @@ final class Builder
         return $builder;
     }
 
+    /**
+     * Sets whether a string field, a map key or value and a list element included, must be valid UTF-8, as protobuf
+     * requires; decoding one that is not throws `Exception\MalformedUtf8`. Bytes fields are never checked.
+     * The default is true.
+     */
+    public function withUtf8Validation(bool $validate): self
+    {
+        $builder = clone $this;
+        $builder->validateUtf8 = $validate;
+
+        return $builder;
+    }
+
     public static function buildDefault(): Decoder
     {
         return new self()->build();
@@ -66,7 +81,7 @@ final class Builder
     public function build(): Decoder
     {
         return new ReflectionDecoder(
-            new Serializer($this->recursionLimit),
+            new Serializer($this->recursionLimit, $this->validateUtf8),
             Reflector::build(unknowns: $this->unknowns),
         );
     }
