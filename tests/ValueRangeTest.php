@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Thesis\Protobuf\Exception\ValueOutOfRange;
+use Thesis\Protobuf\Internal\Serde\DeserializeEnum;
 use Thesis\Protobuf\Internal\Serde\Range;
 use Thesis\Protobuf\Internal\Serde\SerdeFixed32;
 use Thesis\Protobuf\Internal\Serde\SerdeFixed64;
@@ -29,6 +30,7 @@ use Thesis\Protobuf\Internal\Serde\SerializeEnum;
 #[CoversClass(SerdeSFixed32::class)]
 #[CoversClass(SerdeFixed64::class)]
 #[CoversClass(SerializeEnum::class)]
+#[CoversClass(DeserializeEnum::class)]
 final class ValueRangeTest extends TestCase
 {
     /**
@@ -98,8 +100,12 @@ final class ValueRangeTest extends TestCase
         yield 'sint32 min' => [fieldOf(1, sint32Of(-2 ** 31)), '08ffffffff0f'];
         yield 'sfixed32 max' => [fieldOf(1, sfixed32Of(2 ** 31 - 1)), '0dffffff7f'];
         yield 'sfixed32 min' => [fieldOf(1, sfixed32Of(-2 ** 31)), '0d00000080'];
+        yield 'uint32 min' => [fieldOf(1, uint32Of(0)), '0800'];
         yield 'uint32 max' => [fieldOf(1, uint32Of(2 ** 32 - 1)), '08ffffffff0f'];
+        yield 'fixed32 min' => [fieldOf(1, fixed32Of(0)), '0d00000000'];
         yield 'fixed32 max' => [fieldOf(1, fixed32Of(2 ** 32 - 1)), '0dffffffff'];
+        yield 'uint64 min' => [fieldOf(1, uint64Of(new Number(0))), '0800'];
+        yield 'fixed64 min' => [fieldOf(1, fixed64Of(new Number(0))), '090000000000000000'];
         yield 'uint64 max' => [fieldOf(1, uint64Of(new Number('18446744073709551615'))), '08ffffffffffffffffff01'];
         yield 'uint64 integral with a scale' => [fieldOf(1, uint64Of(new Number('5.0'))), '0805'];
         yield 'fixed64 max' => [fieldOf(1, fixed64Of(new Number('18446744073709551615'))), '09ffffffffffffffff'];
@@ -109,14 +115,33 @@ final class ValueRangeTest extends TestCase
         yield 'enum int32 max' => [fieldOf(1, enumOf(ValueRangeTestEnum::Max)), '08ffffffff07'];
     }
 
-    public function testNegativeEnumRoundTrips(): void
+    #[DataProvider('provideEnumBoundariesRoundTripCases')]
+    public function testEnumBoundariesRoundTrip(ValueRangeTestEnum $enum): void
     {
         $serializer = new Serializer();
-        $bytes = $serializer->serialize(message(fieldOf(1, enumOf(ValueRangeTestEnum::MinusOne))));
+        $bytes = $serializer->serialize(message(fieldOf(1, enumOf($enum))));
 
         $decoded = $serializer->deserialize(messageT(fieldT(1, enumT(ValueRangeTestEnum::class))), $bytes);
 
-        self::assertSame(ValueRangeTestEnum::MinusOne, ($decoded->fields[1] ?? null)?->value->value);
+        self::assertSame($enum, ($decoded->fields[1] ?? null)?->value->value);
+    }
+
+    /**
+     * @return iterable<string, array{ValueRangeTestEnum}>
+     */
+    public static function provideEnumBoundariesRoundTripCases(): iterable
+    {
+        yield '-1' => [ValueRangeTestEnum::MinusOne];
+        yield 'int32 min' => [ValueRangeTestEnum::Min];
+        yield 'int32 max' => [ValueRangeTestEnum::Max];
+    }
+
+    public function testTheMessageNamesTheValueTheTypeAndTheRange(): void
+    {
+        self::assertSame(
+            'Value -1 is out of range for uint32: expected an integer in [0, 4294967295].',
+            new ValueOutOfRange('uint32', -1, '[0, 4294967295]')->getMessage(),
+        );
     }
 
     public function testEncoderReportsOutOfRangeValues(): void

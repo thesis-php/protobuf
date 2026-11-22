@@ -103,8 +103,13 @@ bench: var vendor ## Run benchmarks: `make bench ARGS='--filter=Packed --tag=bas
 	$(RUN) vendor/bin/phpbench run --report=protobuf $(ARGS)
 .PHONY: bench
 
-infect: var vendor up ## Run mutation tests using Infection
-	$(RUN) infection --show-mutations $(ARGS)
+# The php image no longer ships Infection: it is installed into var/ on first use.
+var/tools/infection/vendor/bin/infection: | var
+	mkdir -p var/tools/infection
+	$(COMPOSER) --working-dir=var/tools/infection --no-interaction --no-plugins require infection/infection:^0.35
+
+infect: var vendor var/tools/infection/vendor/bin/infection ## Run mutation tests using Infection
+	$(RUN) var/tools/infection/vendor/bin/infection --show-mutations $(ARGS)
 .PHONY: infect
 
 deps-analyze: vendor ## Analyze project dependencies using Composer dependency analyser

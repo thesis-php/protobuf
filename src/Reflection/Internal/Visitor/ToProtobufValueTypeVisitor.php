@@ -189,17 +189,17 @@ final readonly class ToProtobufValueTypeVisitor implements Visitor
             // The user's map must stay untouched: build a new one with the mapped values. An array keeps its keys,
             // anything else may have keys of any type, which a Map holds.
             $mapValue = static function (iterable $map) use ($mapper): iterable {
-                if (\is_array($map)) {
-                    return array_map($mapper, $map);
+                if (!\is_array($map)) {
+                    $mapped = new Protobuf\Map();
+
+                    foreach ($map as $key => $val) {
+                        $mapped[$key] = $mapper($val);
+                    }
+
+                    return $mapped;
                 }
 
-                $mapped = new Protobuf\Map();
-
-                foreach ($map as $key => $val) {
-                    $mapped[$key] = $mapper($val);
-                }
-
-                return $mapped;
+                return array_map($mapper, $map);
             };
 
             /** @phpstan-ignore return.type */

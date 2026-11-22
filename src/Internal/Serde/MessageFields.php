@@ -42,10 +42,6 @@ final class MessageFields
     {
         $registry = self::$oneofs ??= new \WeakMap();
         $registry[$type] = $oneofs;
-
-        if (self::$plans !== null) {
-            unset(self::$plans[$type]);
-        }
     }
 
     /**
@@ -128,8 +124,8 @@ final class MessageFields
             // A field whose only occurrences held unknown enum numbers is null: it stays unset.
             if ($value !== null) {
                 // Only declared fields have a codec, so only they get here.
-                $field = $type->fields[$num] ?? throw new \LogicException("Field {$num} is not declared.");
-                $fields[] = new FieldDescriptor($num, new Value($value, $field->type));
+                /** @phpstan-ignore offsetAccess.notFound */
+                $fields[] = new FieldDescriptor($num, new Value($value, $type->fields[$num]->type));
             }
         }
 

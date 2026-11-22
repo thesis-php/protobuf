@@ -40,3 +40,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - run: PHP_IMAGE_VERSION=${{ matrix.php }} make install-${{ matrix.deps }} test
+
+  infection:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - run: PHP_IMAGE_VERSION=8.4 make install-highest infect ARGS='--threads=max'

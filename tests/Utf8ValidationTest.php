@@ -35,6 +35,15 @@ use Thesis\Protobuf\Type\MessageT;
 #[CoversClass(ReflectionDecoder::class)]
 final class Utf8ValidationTest extends TestCase
 {
+    public function testTheMessageWithoutALocation(): void
+    {
+        self::assertSame(
+            'The string is not valid UTF-8, as a protobuf string must be: use bytes for binary data.',
+            new InvalidUtf8()->getMessage(),
+        );
+        self::assertSame('The string is not valid UTF-8, as a protobuf string must be.', new MalformedUtf8()->getMessage());
+    }
+
     /**
      * @param list<positive-int> $fields
      */

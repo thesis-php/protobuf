@@ -58,7 +58,7 @@ final class ClassReflector
     {
         $reflection = new \ReflectionClass($class);
 
-        $parameters = $this->constructorParameters($reflection);
+        $promotedDefaults = $this->promotedDefaults($reflection);
 
         $properties = [];
 
@@ -76,8 +76,8 @@ final class ClassReflector
 
             if ($property->hasDefaultValue()) {
                 $defaultPropertyValue = new DefaultPropertyValue($property->getDefaultValue());
-            } elseif ($property->isPromoted() && ($parameters[$property->getName()] ?? null)?->isDefaultValueAvailable() === true) {
-                $defaultPropertyValue = new DefaultPropertyValue($parameters[$property->getName()]->getDefaultValue());
+            } elseif (isset($promotedDefaults[$property->getName()])) {
+                $defaultPropertyValue = $promotedDefaults[$property->getName()];
             } elseif ($property->getType()?->allowsNull() === true) {
                 $defaultPropertyValue = new DefaultPropertyValue(null);
             }
@@ -161,23 +161,26 @@ final class ClassReflector
     }
 
     /**
+     * The defaults of the promoted constructor parameters that have one, by name: a promoted property has no default
+     * of its own.
+     *
      * @template T of object
      * @param \ReflectionClass<T> $reflection
-     * @return array<non-empty-string, \ReflectionParameter>
+     * @return array<non-empty-string, DefaultPropertyValue>
      */
-    private function constructorParameters(\ReflectionClass $reflection): array
+    private function promotedDefaults(\ReflectionClass $reflection): array
     {
-        $parameters = [];
+        $defaults = [];
 
         if ($reflection->hasMethod('__construct')) {
-            $constructor = $reflection->getMethod('__construct');
-
-            foreach ($constructor->getParameters() as $parameter) {
-                $parameters[$parameter->getName()] = $parameter;
+            foreach ($reflection->getMethod('__construct')->getParameters() as $parameter) {
+                if ($parameter->isPromoted() && $parameter->isDefaultValueAvailable()) {
+                    $defaults[$parameter->getName()] = new DefaultPropertyValue($parameter->getDefaultValue());
+                }
             }
         }
 
-        return $parameters;
+        return $defaults;
     }
 
     private function createAttributesCollection(\ReflectionProperty $property): AttributeCollection

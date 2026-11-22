@@ -71,6 +71,16 @@ final class ExternalCacheTest extends TestCase
         yield 'plain' => [new ExternalCacheTestPlain('name', 7, [1, 2, 3])];
     }
 
+    public function testWithCacheLeavesTheBuilderUnchanged(): void
+    {
+        $cache = new ExternalCacheTestSerializingCache();
+        $encoder = new Encoder\Builder();
+        $decoder = new Decoder\Builder();
+
+        self::assertNotSame($encoder, $encoder->withCache($cache));
+        self::assertNotSame($decoder, $decoder->withCache($cache));
+    }
+
     public function testCacheRejectsReservedKeysAndClosures(): void
     {
         $cache = new ExternalCacheTestSerializingCache();

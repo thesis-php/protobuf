@@ -9,12 +9,14 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Thesis\Protobuf\Encoder\Internal\ReflectionEncoder;
 use Thesis\Protobuf\Exception\ValueOutOfRange;
+use Thesis\Protobuf\Internal\Serde\MapCodec;
 use Thesis\Protobuf\Internal\Serde\SerializeMessage;
 use Thesis\Protobuf\Reflection\Reflector;
 
 #[CoversClass(ValueOutOfRange::class)]
 #[CoversClass(Serializer::class)]
 #[CoversClass(SerializeMessage::class)]
+#[CoversClass(MapCodec::class)]
 #[CoversClass(ReflectionEncoder::class)]
 #[CoversClass(Reflector::class)]
 final class ValueOutOfRangeLocationTest extends TestCase
@@ -94,6 +96,17 @@ final class ValueOutOfRangeLocationTest extends TestCase
             [7],
             ["{$outer}::\$choice", LocationTestVariant::class . '::$count'],
         ];
+    }
+
+    public function testThePathStopsWhereItLeavesTheKnownClasses(): void
+    {
+        $outer = LocationTestOuter::class;
+        $reflector = Reflection\Reflector::build();
+
+        // A map key is not a message: the numbers after it are not looked up in any class.
+        self::assertSame(["{$outer}::\$byId[key]"], $reflector->propertyPath($outer, [6, 1, 3]));
+        // A number no property has.
+        self::assertSame(["{$outer}::\$inner"], $reflector->propertyPath($outer, [3, 9]));
     }
 }
 

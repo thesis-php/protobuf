@@ -14,5 +14,63 @@
     "minCoveredMsi": 99,
     "mutators": {
         "@default": true,
+        // Each pattern below is the whole source line of one mutant that no test can kill, for the reason given.
+        "AssignCoalesce": {
+            "ignoreSourceCodeByRegex": [
+                // MessageFields::plan() caches the plan of a type: built again, it is the same plan, only later.
+                "\\$plans = self::\\$plans \\?\\?= new \\\\WeakMap\\(\\);",
+                "return \\$plans\\[\\$type\\] \\?\\?= \\[",
+            ],
+        },
+        "GreaterThan": {
+            "ignoreSourceCodeByRegex": [
+                // SerdeBytes and SerdeString return '' for a length of 0 before, so only lengths other than 0 get here.
+                "(return|\\$value =) \\$buffer->read\\(\\$length > 0 \\? \\$length : PHP_INT_MAX\\);",
+            ],
+        },
+        "IncrementInteger": {
+            "ignoreSourceCodeByRegex": [
+                // SerdeSInt64: PHP shifts an int right by 64 or more as by 63, so the sign mask is the same.
+                "Wire\\\\writeVarint\\(\\$buffer, \\(\\$value << 1\\) \\^ \\(\\$value >> 63\\)\\);",
+                // IsValueEmpty: any positive number divided by 0.0 is INF, as 1 is, and by -0.0 is -INF.
+                "return \\$value === 0 \\|\\| \\(\\$value === 0\\.0 && fdiv\\(1, \\$value\\) === INF\\);",
+            ],
+        },
+        "TrueValue": {
+            "ignoreSourceCodeByRegex": [
+                // Message, MessageT and Reflector::type() only check these keys with isset(), which is true for false too.
+                "\\$seen\\[\\$field->num\\] = true;",
+                "\\$this->visited\\[\\$class\\] = true;",
+            ],
+        },
+        "NullSafeMethodCall": {
+            "ignoreSourceCodeByRegex": [
+                // ClassReflector: an untyped property always has a default value, null if none is written, so only
+                // a typed one gets here and getType() is not null.
+                "\\} elseif \\(\\$property->getType\\(\\)\\?->allowsNull\\(\\) === true\\) \\{",
+            ],
+        },
+        "ReturnRemoval": {
+            "ignoreSourceCodeByRegex": [
+                // Reflector caches what it builds once per class: built again, it is the same.
+                "return \\$this->decoders\\[\\$class\\];",
+                "return \\$this->fieldPaths\\[\\$class\\];",
+            ],
+        },
+        "PublicVisibility": {
+            "ignoreSourceCodeByRegex": [
+                // Type\Listed::list(): the mutant is never run. The constants of src/constructors.php load the trait
+                // when Composer's autoloader loads its files, before the bootstrap of Infection can put the mutated
+                // file in place. The method is public API, which BytesTypeTest calls through messageT(...)->list().
+                "public function list\\(array \\$values\\): Protobuf\\\\Value",
+            ],
+        },
+        "Break_": {
+            "ignore": [
+                // The only break in the method ends the search for the variant class of a oneof value: two variants
+                // the value is an instance of would declare the same field numbers, which the reflector rejects.
+                "Thesis\\Protobuf\\Reflection\\Reflector::doGetMessage",
+            ],
+        },
     },
 }

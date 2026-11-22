@@ -201,7 +201,8 @@ final class Reflector
         $path = [];
         $i = 0;
 
-        while (($num = $fields[$i] ?? null) !== null) {
+        while (isset($fields[$i])) {
+            $num = $fields[$i];
             $field = null;
 
             foreach ($this->classReflector->reflect($class)->properties as $property) {

@@ -42,8 +42,6 @@ final class FieldCodecs implements Visitor
     /** @var ?\WeakMap<Type<*, *, *, *>, FieldCodec> */
     private static ?\WeakMap $codecs = null;
 
-    private static ?self $visitor = null;
-
     private function __construct() {}
 
     /**
@@ -53,7 +51,7 @@ final class FieldCodecs implements Visitor
     {
         $codecs = self::$codecs ??= new \WeakMap();
 
-        return $codecs[$type] ??= $type->accept(self::$visitor ??= new self());
+        return $codecs[$type] ??= $type->accept(new self());
     }
 
     #[\Override]
@@ -168,8 +166,7 @@ final class FieldCodecs implements Visitor
             self::of($type->valueT),
             $type->keyT->accept($zero),
             $type->valueT->accept($zero),
-            // Bytes are not a valid map key, but `bytesT` used to be `stringT`: a map declared so keeps working.
-            $type->keyT instanceof StringT || $type->keyT instanceof BytesT,
+            $type->keyT instanceof StringT,
         );
     }
 

@@ -273,6 +273,7 @@ function listT(Type $element, ?bool $packed = null): Type\ListT
  * @param Type<V, *, *> $valueT
  * @param Map<K, V> $map
  * @return Value<Map<K, V>>
+ * @throws Exception\InvalidSchema if the key type is not an integer, bool or string, or the value type is a list or a map
  */
 function mapOf(
     Type $keyT,
@@ -293,6 +294,7 @@ function mapOf(
  * @param Type<K, *, 'indexed'> $keyT
  * @param Type<V, *, *, 'map-value'> $valueT
  * @return Type\MapT<K, V>
+ * @throws Exception\InvalidSchema if the key type is not an integer, bool or string, or the value type is a list or a map
  */
 function mapT(Type $keyT, Type $valueT): Type\MapT
 {

@@ -63,8 +63,11 @@ final class ScalarCardinalityTest extends TestCase
         if ($expected instanceof Number) {
             self::assertEquals($expected, $actual);
         } elseif (\is_float($expected)) {
-            /** @phpstan-ignore argument.type */
-            self::assertSame(round($expected, 2), round($actual, 2));
+            // The bits are compared, so -0.0 differs from 0.0 and NaN equals NaN. A float field holds a 32-bit value:
+            // the expected value is the one written in the file rounded to it, e.g. -10000.2 to -10000.2001953125.
+            self::assertIsFloat($actual);
+            $format = $type === floatT ? 'g' : 'e';
+            self::assertSame(bin2hex(pack($format, $expected)), bin2hex(pack($format, $actual)));
         } else {
             self::assertSame($expected, $actual);
         }
@@ -89,7 +92,7 @@ final class ScalarCardinalityTest extends TestCase
         fgetcsv($f, escape: '\\');
 
         while (!feof($f)) {
-            /** @var false|array{non-empty-string, non-empty-string, non-empty-string} $row */
+            /** @var false|array{non-empty-string, non-empty-string, string} $row */
             $row = fgetcsv($f, escape: '\\');
             if (!\is_array($row)) {
                 break;
@@ -101,10 +104,8 @@ final class ScalarCardinalityTest extends TestCase
                 new ScalarTestData(
                     match ($type) {
                         'bool' => Value::bool(filter_var($value, FILTER_VALIDATE_BOOLEAN)),
-                        /** @phpstan-ignore argument.type */
-                        'float' => Value::float(filter_var($value, FILTER_VALIDATE_FLOAT)),
-                        /** @phpstan-ignore argument.type */
-                        'double' => Value::double(filter_var($value, FILTER_VALIDATE_FLOAT)),
+                        'float' => Value::float(self::toFloat($value)),
+                        'double' => Value::double(self::toFloat($value)),
                         'string' => Value::string($value),
                         // The value of bytes is hex, as they need not be text.
                         'bytes' => Value::bytes((string) hex2bin($value)),
@@ -131,11 +132,38 @@ final class ScalarCardinalityTest extends TestCase
         }
 
         fclose($f);
+
+        // The lengths at which the varint length prefix takes one more byte: too long to be written in the file.
+        foreach (['7f' => 127, '8001' => 128, 'ff7f' => 16383, '808001' => 16384] as $prefix => $length) {
+            $value = str_repeat('x', $length);
+
+            yield [new ScalarTestData(Value::string($value), $prefix . bin2hex($value))];
+            yield [new ScalarTestData(Value::bytes($value), $prefix . bin2hex($value))];
+        }
+    }
+
+    public function testTheCodecOfATypeIsBuiltOnce(): void
+    {
+        $type = messageT(fieldT(1, listT(int32T)));
+
+        self::assertSame(FieldCodecs::of($type), FieldCodecs::of($type));
+        self::assertNotSame(FieldCodecs::of($type), FieldCodecs::of(messageT(fieldT(1, listT(int32T)))));
     }
 
     /**
-     * @param non-empty-string $value
+     * NaN and the infinities are written as NaN, +Inf and -Inf, any other value as PHP reads a float.
      */
+    private static function toFloat(string $value): float
+    {
+        return match ($value) {
+            'NaN' => NAN,
+            '+Inf' => INF,
+            '-Inf' => -INF,
+            default => filter_var($value, FILTER_VALIDATE_FLOAT, FILTER_NULL_ON_FAILURE)
+                ?? throw new \UnexpectedValueException("'{$value}' is not a float."),
+        };
+    }
+
     private static function toNumber(string $value): Number
     {
         \assert(is_numeric($value), "'{$value}' is not a numeric value");

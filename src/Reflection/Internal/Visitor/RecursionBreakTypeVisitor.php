@@ -49,7 +49,6 @@ final class RecursionBreakTypeVisitor extends DefaultTypeVisitor
     #[\Override]
     public function object(ObjectT $type): mixed
     {
-        /** @phpstan-ignore return.type */
         return isset($this->visited[$type->class])
             ? Protobuf\recursionT(fn() => $this->reflector->type($type->class))
             : $this->default($type);

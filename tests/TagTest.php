@@ -25,6 +25,23 @@ final class TagTest extends TestCase
         self::assertEquals($tag->number, Tag::from($tag->number)->number);
     }
 
+    public function testEqualTagsHaveTheSameNumberAndWireType(): void
+    {
+        $tag = new Tag(1, WireType::VARINT);
+
+        self::assertTrue($tag->equal(new Tag(1, WireType::VARINT)));
+        self::assertFalse($tag->equal(new Tag(1, WireType::BYTES)));
+        self::assertFalse($tag->equal(new Tag(2, WireType::VARINT)));
+    }
+
+    public function testTheMessageOfAnInvalidFieldNumberNamesTheRange(): void
+    {
+        self::assertSame(
+            'Invalid field number 0: it must be in [1, 536870911].',
+            new Exception\InvalidFieldNumber(0)->getMessage(),
+        );
+    }
+
     #[TestWith([0, 0])]
     #[TestWith([7, 0])]
     #[TestWith([4_294_967_296, 536_870_912])]

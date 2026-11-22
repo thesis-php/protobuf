@@ -73,6 +73,95 @@ $request = $decoder->decode(/** protobuf buffer here */, CreateUserRequest::clas
 echo $request->name;
 ```
 
+### Types
+
+Each protobuf type has a type in `Thesis\Protobuf\Reflection` for the attributes and a constant or a constructor
+function in `Thesis\Protobuf` for the low-level API (`Serializer`, `messageT()`, `fieldOf()`). The PHP type is the same
+for both: the encoder takes it and the decoder gives it.
+
+| protobuf | `Reflection` type | low-level type | PHP type |
+| --- | --- | --- | --- |
+| `bool` | `BoolT::T` | `boolT` | `bool` |
+| `int32`, `sint32`, `sfixed32` | `Int32T::T`, `SInt32T::T`, `SFixed32T::T` | `int32T`, `sint32T`, `sfixed32T` | `int` in [-2^31, 2^31-1] |
+| `uint32`, `fixed32` | `Uint32T::T`, `Fixed32T::T` | `uint32T`, `fixed32T` | `int` in [0, 2^32-1] |
+| `int64`, `sint64`, `sfixed64` | `Int64T::T`, `SInt64T::T`, `SFixed64T::T` | `int64T`, `sint64T`, `sfixed64T` | `int` |
+| `uint64`, `fixed64` | `Uint64T::T`, `Fixed64T::T` | `uint64T`, `fixed64T` | `BcMath\Number`, an integer in [0, 2^64-1] |
+| `float` | `FloatT::T` | `floatT` | `float`, written with 32-bit precision |
+| `double` | `DoubleT::T` | `doubleT` | `float` |
+| `string` | `StringT::T` | `stringT` | `string` of valid UTF-8 (see [Strings and bytes](#strings-and-bytes)) |
+| `bytes` | `BytesT::T` | `bytesT` | `string` |
+| an enum | `new EnumT(Color::class)` | `enumT(Color::class)` | a case of the int-backed enum `Color` |
+| a message | `new ObjectT(User::class)` | `messageT(...)` | a `User` object; a `Message` in the low-level API |
+| `repeated T` | `new ListT(T)` | `listT(T)` | a list (see [Repeated fields](#repeated-fields)) |
+| `map<K, V>` | `new MapT(K, V)` | `mapT(K, V)` | a `Map`, or an array in a property (see [Maps](#maps)) |
+
+A PHP int has 64 bits, so `int64`, `sint64` and `sfixed64` are native ints, while `uint64` and `fixed64`, whose values
+go up to 2^64-1, are `BcMath\Number` objects, decoded and encoded as such even when the value is small; a property of
+such a field must accept a `Number`. A value out of the range of its type fails to encode with
+`Thesis\Protobuf\Exception\ValueOutOfRange`. An enum number that the PHP enum has no case for is not decoded into
+the field: it is kept among the unknown fields of the message, as protobuf does for closed enums.
+
+```php
+use BcMath\Number;
+use Thesis\Protobuf;
+
+$type = Protobuf\messageT(
+    Protobuf\fieldT(1, Protobuf\uint64T),
+    Protobuf\fieldT(2, Protobuf\int64T),
+);
+
+$serializer = new Protobuf\Serializer();
+
+$bytes = $serializer->serialize(Protobuf\message(
+    Protobuf\fieldOf(1, Protobuf\uint64Of(new Number('18446744073709551615'))),
+    Protobuf\fieldOf(2, Protobuf\int64Of(-1)),
+));
+
+$message = $serializer->deserialize($type, $bytes);
+
+echo $message->fields[1]->value->value; // 18446744073709551615, a Number
+echo $message->fields[2]->value->value; // -1, an int
+```
+
+### Repeated fields
+
+A repeated field is declared with `Reflection\ListT` (`listT()` in the low-level API), and the property holds
+the elements as a list. A list without elements is not written at all.
+
+Elements of scalar numeric types, `bool` and enums are packed by default, as in proto3: all of them are written as one
+length-delimited record. To write a record per element instead, as proto2 does unless a field is declared
+`[packed = true]`, pass `packed: false`; `packed: true` packs them explicitly. Strings, bytes and messages are never
+packed, and declaring such a list `packed: true` throws `Thesis\Protobuf\Exception\InvalidSchema`, as does a list
+of lists or of maps, which protobuf has no such fields for:
+
+```php
+use Thesis\Protobuf\Reflection;
+
+final readonly class Samples
+{
+    /**
+     * @param list<int> $packed
+     * @param list<int> $unpacked
+     * @param list<string> $names
+     */
+    public function __construct(
+        #[Reflection\Field(1, new Reflection\ListT(Reflection\Int32T::T))]
+        public array $packed = [],
+        #[Reflection\Field(2, new Reflection\ListT(Reflection\Int32T::T, packed: false))]
+        public array $unpacked = [],
+        #[Reflection\Field(3, new Reflection\ListT(Reflection\StringT::T))]
+        public array $names = [],
+    ) {}
+}
+
+$encoder->encode(new Samples([1, 2], [1, 2], ['a', 'b']));
+// 0a020102 10011002 1a0161 1a0162: field 1 packed, field 2 a record per element, field 3 a record per string
+```
+
+The decoder accepts both forms whatever the declaration, as protobuf requires: a packable field written packed is
+read into a field declared `packed: false`, and the other way round. Every occurrence of the field adds its elements
+to those read before.
+
 ### Maps
 
 A map field is declared with `Reflection\MapT`, and the property may hold the map either as a `Thesis\Protobuf\Map`
@@ -105,6 +194,72 @@ and `fixed64` can be held as an array; a `bool`, `uint64` or `fixed64` key needs
 such a map fails with `Reflection\Exception\InvalidProperty`. As in any PHP array, a string key that is a decimal
 integer becomes an int: `['1' => 5]` is encoded with the key `"1"` and decoded as `[1 => 5]`, which is the same array,
 while keys such as `"01"` or `"1.5"` stay strings.
+
+As in protobuf, a key is of an integer type, `bool` or `string`, and a value is not a list or a map: any other key
+type, such as `float`, `bytes`, an enum or a message, and a list or a map as the value, throw
+`Thesis\Protobuf\Exception\InvalidSchema` when the map type is created.
+
+### Oneofs
+
+A oneof is a property with `Reflection\OneOf`, which lists the classes of its variants. Each variant class declares
+its field with `Reflection\Field`, and the property holds the variant set, or `null` if none is:
+
+```proto
+message User {
+  int32 id = 1;
+  oneof contact {
+    string email = 2;
+    string phone = 3;
+  }
+}
+```
+
+```php
+use Thesis\Protobuf\Reflection;
+
+interface Contact {}
+
+final readonly class Email implements Contact
+{
+    public function __construct(
+        #[Reflection\Field(2, Reflection\StringT::T)]
+        public string $email = '',
+    ) {}
+}
+
+final readonly class Phone implements Contact
+{
+    public function __construct(
+        #[Reflection\Field(3, Reflection\StringT::T)]
+        public string $phone = '',
+    ) {}
+}
+
+final readonly class User
+{
+    public function __construct(
+        #[Reflection\Field(1, Reflection\Int32T::T)]
+        public int $id = 0,
+        #[Reflection\OneOf([Email::class, Phone::class])]
+        public ?Contact $contact = null,
+    ) {}
+}
+```
+
+The fields of the variants are fields of the message that holds the oneof, not of a nested message: `new User(1,
+new Email('a@b.c'))` is encoded as `id = 1, email = "a@b.c"`. The fields of the variant set are written even if they
+hold default values, since they tell which variant is set: `new User(1, new Email())` is written with an empty
+`email`. A variant whose value is a message is a class with an `ObjectT` field.
+
+When decoding, the last variant in the input wins, as in other protobuf implementations: the fields of a variant read
+before another one are dropped, so `email = "a", phone = "b"` is decoded as `new Phone('b')`. Occurrences of
+a message variant are merged as long as no other variant is read in between.
+
+Since the fields of the variants become fields of the message, their numbers must differ from those of the other
+fields of the message and of the other variants, nested oneofs included; and a variant cannot hold its own oneof
+again, directly or through other variants, as the message would have endless fields. Both mistakes fail with
+`Thesis\Protobuf\Reflection\Exception\InvalidProperty`, which names the properties involved, when the class is first
+encoded, decoded or reflected.
 
 ### Strings and bytes
 

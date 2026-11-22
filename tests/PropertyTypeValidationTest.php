@@ -27,6 +27,7 @@ final class PropertyTypeValidationTest extends TestCase
     public function testMismatchedPropertyTypeIsRejected(string $class, string $reason): void
     {
         $this->expectExceptionObject(new InvalidProperty($class, 'value', $reason));
+        $this->expectExceptionMessage(\sprintf('The property "%s::$value" %s.', $class, $reason));
 
         new ClassReflector()->reflect($class);
     }
@@ -54,6 +55,29 @@ final class PropertyTypeValidationTest extends TestCase
         yield 'int for bool' => [
             PropertyTypeValidationTestIntForBool::class,
             'of type ?int cannot hold the values of the protobuf field 1: expected bool',
+        ];
+
+        yield 'object for int32' => [
+            PropertyTypeValidationTestObjectForInt::class,
+            'of type ?object cannot hold the values of the protobuf field 1: expected int',
+        ];
+
+        yield 'union without a member for string' => [
+            PropertyTypeValidationTestUnionForString::class,
+            // PHP reports the members of a union in an order of its own.
+            \sprintf(
+                'of type %s cannot hold the values of the protobuf field 1: expected string',
+                (string) new \ReflectionProperty(PropertyTypeValidationTestUnionForString::class, 'value')->getType(),
+            ),
+        ];
+
+        yield 'intersection the class is not of' => [
+            PropertyTypeValidationTestIntersectionForObject::class,
+            \sprintf(
+                'of type %s cannot hold the values of the protobuf field 1: expected %s',
+                (string) new \ReflectionProperty(PropertyTypeValidationTestIntersectionForObject::class, 'value')->getType(),
+                PropertyTypeValidationTestInner::class,
+            ),
         ];
 
         yield 'string for list' => [
@@ -101,6 +125,8 @@ final class PropertyTypeValidationTest extends TestCase
             object: new PropertyTypeValidationTestInner(6),
             self: new PropertyTypeValidationTestCompatible(),
             variant: new PropertyTypeValidationTestVariantB(7),
+            text: 'z',
+            counts: ['b' => 8],
         );
 
         $bytes = Encoder\Builder::buildDefault()->encode($object);
@@ -109,6 +135,8 @@ final class PropertyTypeValidationTest extends TestCase
         self::assertSame($bytes, Encoder\Builder::buildDefault()->encode($decoded));
         self::assertSame(2.0, $decoded->float);
         self::assertEquals(new PropertyTypeValidationTestVariantB(7), $decoded->variant);
+        self::assertSame('z', $decoded->text);
+        self::assertSame(['b' => 8], $decoded->counts);
     }
 }
 
@@ -189,6 +217,30 @@ final readonly class PropertyTypeValidationTestIntForBool
     ) {}
 }
 
+final readonly class PropertyTypeValidationTestObjectForInt
+{
+    public function __construct(
+        #[Reflection\Field(1, Reflection\Int32T::T)]
+        public ?object $value = null,
+    ) {}
+}
+
+final readonly class PropertyTypeValidationTestUnionForString
+{
+    public function __construct(
+        #[Reflection\Field(1, Reflection\StringT::T)]
+        public int|bool $value = 0,
+    ) {}
+}
+
+final readonly class PropertyTypeValidationTestIntersectionForObject
+{
+    public function __construct(
+        #[Reflection\Field(1, new Reflection\ObjectT(PropertyTypeValidationTestInner::class))]
+        public null|(\Countable&\Stringable) $value = null,
+    ) {}
+}
+
 final readonly class PropertyTypeValidationTestStringForList
 {
     public function __construct(
@@ -235,6 +287,7 @@ final class PropertyTypeValidationTestCompatible
      * @param string $untyped
      * @param iterable<int> $list
      * @param \Countable&\Traversable<string, int> $map
+     * @param array<string, int> $counts
      */
     public function __construct(
         #[Reflection\Field(1, Reflection\Int64T::T)]
@@ -259,5 +312,9 @@ final class PropertyTypeValidationTestCompatible
         public ?self $self = null,
         #[Reflection\OneOf([PropertyTypeValidationTestVariantA::class, PropertyTypeValidationTestVariantB::class])]
         public ?PropertyTypeValidationTestVariant $variant = null,
+        #[Reflection\Field(13, Reflection\StringT::T)]
+        public string $text = '',
+        #[Reflection\Field(14, new Reflection\MapT(Reflection\StringT::T, Reflection\Int32T::T))]
+        public array $counts = [],
     ) {}
 }
