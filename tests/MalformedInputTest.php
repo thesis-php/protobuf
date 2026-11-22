@@ -12,11 +12,13 @@ use Random\Engine\Mt19937;
 use Random\Randomizer;
 use Thesis\Protobuf\Decoder\Internal\ReflectionDecoder;
 use Thesis\Protobuf\Exception\BufferUnderflow;
+use Thesis\Protobuf\Exception\InvalidFieldNumber;
 use Thesis\Protobuf\Exception\MalformedMessage;
 use Thesis\Protobuf\Exception\MalformedVarint;
 use Thesis\Protobuf\Exception\UnsupportedWireType;
 
 #[CoversClass(MalformedMessage::class)]
+#[CoversClass(InvalidFieldNumber::class)]
 #[CoversClass(MalformedVarint::class)]
 #[CoversClass(UnsupportedWireType::class)]
 #[CoversClass(Tag::class)]
@@ -56,6 +58,20 @@ final class MalformedInputTest extends TestCase
         yield 'wire type 6' => ['0e', UnsupportedWireType::class, 'wire type 6'];
         yield 'wire type 7' => ['0f', UnsupportedWireType::class, 'wire type 7'];
         yield 'unknown field with wire type 7' => ['1f', UnsupportedWireType::class, 'wire type 7'];
+        yield 'field number 0' => ['0001', InvalidFieldNumber::class, 'Invalid field number 0:'];
+        yield 'field number 0 after a field' => ['080112016100', InvalidFieldNumber::class, 'Invalid field number 0:'];
+        yield 'field number 2^29' => ['808080801001', InvalidFieldNumber::class, 'Invalid field number 536870912:'];
+        yield 'tag of 2^63 and above' => ['ffffffffffffffffff0101', InvalidFieldNumber::class, 'Invalid field number 2305843009213693951:'];
+        yield 'field number 0 inside a group' => ['1b00011c', InvalidFieldNumber::class, 'Invalid field number 0:'];
+    }
+
+    public function testTheLargestFieldNumberIsAccepted(): void
+    {
+        $message = new Serializer()->deserialize(messageT(fieldT(1, int64T)), (string) hex2bin('f8ffffff0f05'));
+
+        self::assertCount(1, $message->unknowns);
+        self::assertTrue($message->unknowns[0]->tag->equal(new Tag(536_870_911, WireType::VARINT)));
+        self::assertSame('5', (string) $message->unknowns[0]->value);
     }
 
     public function testTruncatedTagAfterRepeatedElementIsReported(): void
