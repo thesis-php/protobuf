@@ -4,14 +4,10 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Internal\Serde;
 
-use Thesis\Protobuf\FieldDescriptor;
 use Thesis\Protobuf\Internal\Buffer;
 use Thesis\Protobuf\Internal\Buffer\ReadBuffer;
-use Thesis\Protobuf\Internal\Wire;
 use Thesis\Protobuf\Message;
 use Thesis\Protobuf\Type\MessageT;
-use Thesis\Protobuf\Type\Visitor\TypeDeserializerVisitor;
-use Thesis\Protobuf\Value;
 
 /**
  * @internal
@@ -27,46 +23,9 @@ final readonly class DeserializeMessage implements DeserializeValue
     public function deserialize(ReadBuffer $buffer): Message
     {
         $limit = Buffer\enterRecord($buffer);
-
-        /** @var list<FieldDescriptor<*>> $descriptors */
-        $descriptors = [];
-
-        $unknowns = [];
-
-        while (\count($buffer) > 0) {
-            $tag = Wire\readTag($buffer);
-
-            $field = $this->messageT->fields[$tag->num] ?? null;
-            if ($field === null) {
-                $unknowns[] = Wire\discardUnknown($buffer, $tag);
-
-                continue;
-            }
-
-            $value = $field->type
-                ->accept(new TypeDeserializerVisitor($tag))
-                ->deserialize($buffer);
-
-            [$value, $unknownEnums] = UnknownEnumValue::extract($value, $field->num);
-            if ($unknownEnums !== []) {
-                $unknowns = [...$unknowns, ...$unknownEnums];
-
-                if ($value === null) {
-                    continue;
-                }
-            }
-
-            $descriptors[] = new FieldDescriptor(
-                $field->num,
-                new Value(
-                    $value,
-                    $field->type,
-                ),
-            );
-        }
-
+        $message = MessageFields::deserialize($buffer, $this->messageT);
         $buffer->popLimit($limit);
 
-        return new Message($descriptors, $unknowns);
+        return $message;
     }
 }

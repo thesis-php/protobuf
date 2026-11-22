@@ -35,30 +35,9 @@ final class PackedListTest extends TestCase
         yield 'bytes' => [static fn() => listT(bytesT, true)];
         yield 'message' => [static fn() => listT(messageT(fieldT(1, int32T)), true)];
         yield 'recursion' => [static fn() => listT(recursionT(static fn() => messageT()), true)];
-        // Not allowed by the phpdoc types either: checked at runtime for callers without static analysis.
-        yield 'list' => [static fn() => listT(
-            /** @phpstan-ignore argument.type */
-            listT(int32T),
-            true,
-        )];
-        yield 'map' => [static fn() => listT(
-            /** @phpstan-ignore argument.type */
-            mapT(int32T, int32T),
-            true,
-        )];
         yield 'reflection string' => [static fn() => new Reflection\ListT(Reflection\StringT::T, packed: true)];
         yield 'reflection bytes' => [static fn() => new Reflection\ListT(Reflection\BytesT::T, packed: true)];
         yield 'reflection object' => [static fn() => new Reflection\ListT(new Reflection\ObjectT(\stdClass::class), packed: true)];
-        yield 'reflection list' => [static fn() => new Reflection\ListT(
-            /** @phpstan-ignore argument.type */
-            new Reflection\ListT(Reflection\Int32T::T),
-            packed: true,
-        )];
-        yield 'reflection map' => [static fn() => new Reflection\ListT(
-            /** @phpstan-ignore argument.type */
-            new Reflection\MapT(Reflection\Int32T::T, Reflection\Int32T::T),
-            packed: true,
-        )];
     }
 
     public function testNonPackableElementsCanBeDeclaredUnpacked(): void

@@ -23,7 +23,6 @@ use Thesis\Protobuf\Exception\UnsupportedWireType;
 #[CoversClass(ReflectionDecoder::class)]
 #[CoversFunction('Thesis\Protobuf\Internal\Wire\readVarint')]
 #[CoversFunction('Thesis\Protobuf\Internal\Wire\decodeVarint')]
-#[CoversFunction('Thesis\Protobuf\Internal\Wire\peekTag')]
 final class MalformedInputTest extends TestCase
 {
     /**
@@ -61,7 +60,7 @@ final class MalformedInputTest extends TestCase
 
     public function testTruncatedTagAfterRepeatedElementIsReported(): void
     {
-        // After an unpacked element the parser peeks at the next tag to see whether the field repeats.
+        // The tag after an unpacked element is cut off.
         $type = messageT(fieldT(1, listT(int64T, false)));
 
         $this->expectException(BufferUnderflow::class);

@@ -7,12 +7,8 @@ namespace Thesis\Protobuf;
 use Thesis\Protobuf\Exception\MalformedMessage;
 use Thesis\Protobuf\Internal\Buffer\ByteBuffer;
 use Thesis\Protobuf\Internal\Buffer\Reader;
-use Thesis\Protobuf\Internal\Serde\UnknownEnumValue;
-use Thesis\Protobuf\Internal\Wire;
+use Thesis\Protobuf\Internal\Serde\MessageFields;
 use Thesis\Protobuf\Type\MessageT;
-use Thesis\Protobuf\Type\Visitor\DetermineWireType;
-use Thesis\Protobuf\Type\Visitor\TypeDeserializerVisitor;
-use Thesis\Protobuf\Type\Visitor\TypeSerializerVisitor;
 
 /**
  * @api
@@ -25,70 +21,19 @@ final readonly class Serializer
     public function serialize(Message $message): string
     {
         $buffer = new ByteBuffer();
-
-        foreach ($message->fields as $field) {
-            $type = $field->value->type;
-
-            try {
-                $type
-                    ->accept(
-                        new TypeSerializerVisitor(
-                            new Tag($field->num, $type->accept(DetermineWireType::Visitor)),
-                        ),
-                    )
-                    ->serialize($buffer, $field->value->value);
-            } catch (Exception\ValueOutOfRange $e) {
-                throw $e->inField($field->num);
-            }
-        }
+        MessageFields::serialize($buffer, $message);
 
         return $buffer->flush();
     }
 
     /**
+     * Occurrences of a repeated or map field are merged wherever they are in the input, packed or not; for any
+     * other field the last occurrence wins.
+     *
      * @throws MalformedMessage if the bytes are not a valid protobuf encoding
      */
     public function deserialize(MessageT $type, string $bytes): Message
     {
-        $buffer = new Reader($bytes);
-
-        /** @var list<FieldDescriptor<*>> $descriptors */
-        $descriptors = [];
-
-        $unknowns = [];
-
-        while (\count($buffer) > 0) {
-            $tag = Wire\readTag($buffer);
-
-            $field = $type->fields[$tag->num] ?? null;
-            if ($field === null) {
-                $unknowns[] = Wire\discardUnknown($buffer, $tag);
-
-                continue;
-            }
-
-            $value = $field->type
-                ->accept(new TypeDeserializerVisitor($tag))
-                ->deserialize($buffer);
-
-            [$value, $unknownEnums] = UnknownEnumValue::extract($value, $field->num);
-            if ($unknownEnums !== []) {
-                $unknowns = [...$unknowns, ...$unknownEnums];
-
-                if ($value === null) {
-                    continue;
-                }
-            }
-
-            $descriptors[] = new FieldDescriptor(
-                $field->num,
-                new Value(
-                    $value,
-                    $field->type,
-                ),
-            );
-        }
-
-        return new Message($descriptors, $unknowns);
+        return MessageFields::deserialize(new Reader($bytes), $type);
     }
 }

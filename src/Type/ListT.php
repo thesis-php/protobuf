@@ -16,12 +16,16 @@ final readonly class ListT implements Type
 {
     /**
      * @param Type<T, 'repeatable', *, *> $element
-     * @throws InvalidSchema if a non-packable element type is declared packed
+     * @throws InvalidSchema if the element type is a list or a map, or a non-packable one is declared packed
      */
     public function __construct(
         public Type $element,
         public ?bool $packed = null,
     ) {
+        if ($element instanceof self || $element instanceof MapT) {
+            throw new InvalidSchema('Repeated fields cannot hold lists or maps: protobuf has no such fields.');
+        }
+
         // A recursive message is not resolved here: the type it refers to may still be under construction.
         if ($packed === true && ($element instanceof RecursionT || !$element->accept(new IsPackable()))) {
             throw new InvalidSchema(\sprintf(

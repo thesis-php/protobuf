@@ -14,11 +14,9 @@ use Thesis\Protobuf\Internal\Buffer\Reader;
 #[CoversClass(ByteBuffer::class)]
 final class BufferTest extends TestCase
 {
-    public function testReadMovesTheCursorAndPeekDoesNot(): void
+    public function testReadVarintMovesTheCursor(): void
     {
         $buffer = new Reader("\x96\x01\x05");
-        self::assertCount(3, $buffer);
-        self::assertSame(150, $buffer->peekVarint());
         self::assertCount(3, $buffer);
         self::assertSame(150, $buffer->readVarint());
         self::assertCount(1, $buffer);

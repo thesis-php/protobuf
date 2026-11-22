@@ -38,14 +38,6 @@ final class Reader implements ReadBuffer
     }
 
     #[\Override]
-    public function peekVarint(): int
-    {
-        $offset = $this->offset;
-
-        return $this->decodeVarint($offset);
-    }
-
-    #[\Override]
     public function read(int $n): string
     {
         $available = $this->limit - $this->offset;

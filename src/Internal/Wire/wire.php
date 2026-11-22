@@ -6,6 +6,7 @@ namespace Thesis\Protobuf\Internal\Wire;
 
 use BcMath\Number;
 use Thesis\Protobuf\Exception\MalformedMessage;
+use Thesis\Protobuf\Internal\Buffer\ByteBuffer;
 use Thesis\Protobuf\Internal\Buffer\ReadBuffer;
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
 use Thesis\Protobuf\Tag;
@@ -95,20 +96,28 @@ function fromUnsigned(Number $value): int
 }
 
 /**
+ * The encoded tag of a field: computed once per field number and wire type.
+ *
  * @internal
+ * @param positive-int $num
+ * @return non-empty-string
  */
-function writeTag(WriteBuffer $buffer, Tag $tag): void
+function tagBytes(int $num, WireType $type): string
 {
-    writeVarint($buffer, $tag->num << 3 | $tag->type->value);
-}
+    /** @var array<int, non-empty-string> $tags */
+    static $tags = [];
 
-/**
- * @internal
- * @throws MalformedMessage
- */
-function peekTag(ReadBuffer $buffer): Tag
-{
-    return Tag::fromVarint($buffer->peekVarint());
+    $key = $num << 3 | $type->value;
+
+    if (!isset($tags[$key])) {
+        $buffer = new ByteBuffer();
+        writeVarint($buffer, $key);
+        /** @var non-empty-string $tag */
+        $tag = $buffer->flush();
+        $tags[$key] = $tag;
+    }
+
+    return $tags[$key];
 }
 
 /**

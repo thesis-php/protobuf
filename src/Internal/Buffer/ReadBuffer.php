@@ -22,14 +22,6 @@ interface ReadBuffer extends \Countable
     public function readVarint(): int;
 
     /**
-     * Like readVarint(), but leaves the cursor where it is.
-     *
-     * @throws BufferUnderflow
-     * @throws MalformedVarint
-     */
-    public function peekVarint(): int;
-
-    /**
      * Read must remove `n` bytes of data from the buffer and return a `non-empty-string`, or throw an exception
      * if the buffer is empty or its length is less than the required `n` bytes.
      *

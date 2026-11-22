@@ -7,11 +7,11 @@ namespace Thesis\Protobuf;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Thesis\Protobuf\Internal\Serde\ListCodec;
 use Thesis\Protobuf\Reflection\Internal\Visitor\ToProtobufValueTypeVisitor;
-use Thesis\Protobuf\Type\Visitor\TypeDeserializerVisitor;
 
 #[CoversClass(ToProtobufValueTypeVisitor::class)]
-#[CoversClass(TypeDeserializerVisitor::class)]
+#[CoversClass(ListCodec::class)]
 final class RepeatedPackingTest extends TestCase
 {
     public function testDeclaredPackingIsHonouredWhenEncoding(): void
