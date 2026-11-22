@@ -118,3 +118,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An int key of a map with `string` keys is written as its decimal string. PHP turns a numeric string array key
   into an int, so `Map::fromArray(['1' => 1])` used to fail encoding with `\TypeError`. Such a key is decoded as
   the string `'1'`.
+- Of several variants of a oneof in the input, the last one is decoded, as protobuf requires; the first variant
+  declared used to be chosen. A variant is set by any of its fields, and reading a field of another variant of the
+  same oneof drops the fields read so far of the variant set before: `x: 1, text: "a", y: 2` decodes to a variant
+  with `y: 2` only, and a message variant read again after another variant does not merge with its earlier
+  occurrence. An enum number that has no case in the PHP enum does not replace the variant. The message that
+  `Serializer::deserialize()` reads with a type from `Reflector::type()` holds only the fields of the decoded
+  variant; a type built with `messageT()` knows no oneofs and keeps every field, as before.
+- The unknown fields handler is called once for the object that has a oneof, not a second time for the variant
+  object with the same unknown fields. A message inside a variant still gets its own unknown fields.
