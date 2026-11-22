@@ -1,0 +1,11 @@
+{
+    "$schema": "../../vendor/phpbench/phpbench/phpbench.schema.json",
+    "runner.bootstrap": "bootstrap.php",
+    "runner.path": ".",
+    "runner.file_pattern": "*Comparison.php",
+    "runner.php_config": {
+        "zend.assertions": -1,
+        "opcache.enable_cli": 1
+    },
+    "storage.xml_storage_path": "../../var/phpbench"
+}
