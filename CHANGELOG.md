@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Library errors are `ProtobufException`s already; anything else, such as a `\TypeError` from a property whose
   PHP type does not match its protobuf type, is a bug in the schema or the code and now propagates as is.
   `Decoder::decode()` still reports a class that cannot be reflected as `DecodingError`.
+- A repeated field whose elements are lists or maps (`listT(listT(...))`, `listT(mapT(...))`, and the same with
+  `Reflection\ListT`) throws `Exception\InvalidSchema` when the type is created: protobuf has no such fields.
 
 ### Deprecated
 
@@ -39,3 +41,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Negative enum numbers are encoded as 10-byte sign-extended varints, as protobuf requires. They used to be
   written as a truncated varint that no parser, including this one, could read.
+- Every occurrence of a repeated or map field is decoded, wherever it is in the input: interleaved with other
+  fields, split into several packed records, or packed and unpacked records mixed. Only the last run of adjacent
+  occurrences used to be kept, so elements and map entries written by other protobuf implementations were lost.

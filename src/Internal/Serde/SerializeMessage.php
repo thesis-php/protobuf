@@ -4,15 +4,10 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Internal\Serde;
 
-use Thesis\Protobuf\Exception\ValueOutOfRange;
-use Thesis\Protobuf\FieldDescriptor;
 use Thesis\Protobuf\Internal\Buffer;
 use Thesis\Protobuf\Internal\Buffer\ByteBuffer;
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
 use Thesis\Protobuf\Message;
-use Thesis\Protobuf\Tag;
-use Thesis\Protobuf\Type\Visitor\DetermineWireType;
-use Thesis\Protobuf\Type\Visitor\TypeSerializerVisitor;
 
 /**
  * @internal
@@ -25,24 +20,8 @@ enum SerializeMessage implements SerializeValue
     #[\Override]
     public function serialize(WriteBuffer $buffer, mixed $value): void
     {
-        $tmp = new ByteBuffer();
-
-        /** @var FieldDescriptor<*> $field */
-        foreach ($value->fields as $field) {
-            $type = $field->value->type;
-
-            $tag = new Tag(
-                $field->num,
-                $type->accept(DetermineWireType::Visitor),
-            );
-
-            try {
-                $type->accept(new TypeSerializerVisitor($tag))->serialize($tmp, $field->value->value);
-            } catch (ValueOutOfRange $e) {
-                throw $e->inField($field->num);
-            }
-        }
-
-        Buffer\copy($tmp, $buffer);
+        $body = new ByteBuffer();
+        MessageFields::serialize($body, $value);
+        Buffer\copy($body, $buffer);
     }
 }

@@ -24,40 +24,9 @@ final readonly class UnknownEnumValue
     ) {}
 
     /**
-     * Separates unknown enum numbers from a deserialized field value.
-     *
-     * @param positive-int $num
-     * @return array{mixed, list<UnknownField>} the value without unknown enum numbers
-     *         (null for a singular unknown one) and those numbers as unknown fields
-     */
-    public static function extract(mixed $value, int $num): array
-    {
-        if ($value instanceof self) {
-            return [null, [$value->toUnknownField($num)]];
-        }
-
-        if (!\is_array($value) || !array_any($value, static fn(mixed $item): bool => $item instanceof self)) {
-            return [$value, []];
-        }
-
-        $known = [];
-        $unknowns = [];
-
-        foreach ($value as $item) {
-            if ($item instanceof self) {
-                $unknowns[] = $item->toUnknownField($num);
-            } else {
-                $known[] = $item;
-            }
-        }
-
-        return [$known, $unknowns];
-    }
-
-    /**
      * @param positive-int $num
      */
-    private function toUnknownField(int $num): UnknownField
+    public function toUnknownField(int $num): UnknownField
     {
         return new UnknownField(new Tag($num, WireType::VARINT), $this->raw);
     }

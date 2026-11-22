@@ -151,7 +151,7 @@ final readonly class Value
      * @param Type<E, 'repeatable', *, *> $type
      * @param list<E> $values
      * @return self<list<E>>
-     * @throws Exception\InvalidSchema if a non-packable element type is declared packed
+     * @throws Exception\InvalidSchema if the element type is a list or a map, or a non-packable one is declared packed
      */
     public static function listOf(
         Type $type,

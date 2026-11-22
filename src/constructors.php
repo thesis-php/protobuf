@@ -243,7 +243,7 @@ function recursionT(\Closure $continuation): Type\RecursionT
  * @param Type<E, 'repeatable', *> $type
  * @param list<E> $values
  * @return Value<list<E>>
- * @throws Exception\InvalidSchema if a non-packable element type is declared packed
+ * @throws Exception\InvalidSchema if the element type is a list or a map, or a non-packable one is declared packed
  */
 function listOf(
     Type $type,
@@ -258,7 +258,7 @@ function listOf(
  * @template T
  * @param Type<T, 'repeatable', *, *> $element
  * @return Type\ListT<T>
- * @throws Exception\InvalidSchema if a non-packable element type is declared packed
+ * @throws Exception\InvalidSchema if the element type is a list or a map, or a non-packable one is declared packed
  */
 function listT(Type $element, ?bool $packed = null): Type\ListT
 {

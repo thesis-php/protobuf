@@ -16,12 +16,16 @@ final readonly class ListT implements Type
 {
     /**
      * @param Type<T, 'repeatable', *, *> $element
-     * @throws InvalidSchema if a non-packable element type is declared packed
+     * @throws InvalidSchema if the element type is a list or a map, or a non-packable one is declared packed
      */
     public function __construct(
         public Type $element,
         public ?bool $packed = null,
     ) {
+        if ($element instanceof self || $element instanceof MapT) {
+            throw new InvalidSchema('Repeated fields cannot hold lists or maps: protobuf has no such fields.');
+        }
+
         if ($packed === true && !$element->accept(new IsPackable())) {
             throw new InvalidSchema(\sprintf(
                 'Repeated fields of type "%s" cannot be packed: only scalar numeric, bool and enum elements can.',
