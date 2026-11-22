@@ -44,3 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Every occurrence of a repeated or map field is decoded, wherever it is in the input: interleaved with other
   fields, split into several packed records, or packed and unpacked records mixed. Only the last run of adjacent
   occurrences used to be kept, so elements and map entries written by other protobuf implementations were lost.
+- An occurrence of a field whose wire type does not match the declared type (e.g. an `int32` field written as
+  bytes, or a `string` field written as a varint) is skipped as an unknown field, as other protobuf parsers do.
+  It used to be read as the declared type, which either failed with a misleading `BufferUnderflow` or silently
+  produced a wrong value and swallowed the fields after it. A repeated field of a packable type still accepts
+  both packed and unpacked elements, whichever form it is declared in.

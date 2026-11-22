@@ -10,6 +10,7 @@ use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
 use Thesis\Protobuf\ProtobufException;
 use Thesis\Protobuf\Tag;
 use Thesis\Protobuf\UnknownFields\UnknownField;
+use Thesis\Protobuf\WireType;
 
 /**
  * Writes and reads a field of one type, tags included. Built once per type, see FieldCodecs::of().
@@ -27,9 +28,16 @@ interface FieldCodec
     public function encode(WriteBuffer $buffer, int $num, mixed $value): void;
 
     /**
-     * Reads one occurrence of the field, whose tag is already read, and merges it into `slot`, the value of the
-     * field read so far (null before the first occurrence): a repeated field appends its elements, a map adds its
-     * entry, any other field replaces the value. A field may occur any number of times, anywhere in the message.
+     * Whether an occurrence of the field with this wire type can be read. An occurrence with any other wire type
+     * is not the field as declared and is skipped as an unknown field, as other protobuf parsers do.
+     */
+    public function accepts(WireType $type): bool;
+
+    /**
+     * Reads one occurrence of the field, whose tag is already read and accepted, and merges it into `slot`, the
+     * value of the field read so far (null before the first occurrence): a repeated field appends its elements, a
+     * map adds its entry, any other field replaces the value. A field may occur any number of times, anywhere in
+     * the message.
      *
      * @param list<UnknownField> $unknowns enum numbers the PHP enum has no case for are appended here
      * @throws ProtobufException

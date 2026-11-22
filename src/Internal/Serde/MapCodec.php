@@ -55,6 +55,12 @@ final readonly class MapCodec implements FieldCodec
     }
 
     #[\Override]
+    public function accepts(WireType $type): bool
+    {
+        return $type === WireType::BYTES;
+    }
+
+    #[\Override]
     public function decode(ReadBuffer $buffer, Tag $tag, mixed &$slot, array &$unknowns): void
     {
         $slot ??= new Map();
@@ -69,9 +75,9 @@ final readonly class MapCodec implements FieldCodec
         while (\count($buffer) > 0) {
             $entryTag = Wire\readTag($buffer);
 
-            if ($entryTag->num === self::KEY) {
+            if ($entryTag->num === self::KEY && $this->key->accepts($entryTag->type)) {
                 $this->key->decode($buffer, $entryTag, $key, $ignored);
-            } elseif ($entryTag->num === self::VALUE) {
+            } elseif ($entryTag->num === self::VALUE && $this->value->accepts($entryTag->type)) {
                 $this->value->decode($buffer, $entryTag, $value, $ignored);
             } else {
                 Wire\discardUnknown($buffer, $entryTag);

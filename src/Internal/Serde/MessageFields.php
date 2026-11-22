@@ -56,7 +56,7 @@ final class MessageFields
             $tag = Wire\readTag($buffer);
 
             $codec = $codecs[$tag->num] ?? null;
-            if ($codec === null) {
+            if ($codec === null || !$codec->accepts($tag->type)) {
                 $unknowns[] = Wire\discardUnknown($buffer, $tag);
 
                 continue;
