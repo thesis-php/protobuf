@@ -5,16 +5,12 @@ declare(strict_types=1);
 namespace Thesis\Protobuf\Internal\Wire;
 
 use BcMath\Number;
-use Thesis\Protobuf\Exception\BufferUnderflow;
 use Thesis\Protobuf\Exception\MalformedMessage;
-use Thesis\Protobuf\Exception\MalformedVarint;
 use Thesis\Protobuf\Internal\Buffer\ReadBuffer;
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
-use Thesis\Protobuf\Internal\Serde\SerdeVarint;
 use Thesis\Protobuf\Tag;
 use Thesis\Protobuf\UnknownFields\UnknownField;
 use Thesis\Protobuf\WireType;
-use Thesis\Varint;
 
 /**
  * Return bytes from the buffer corresponding to the size of each type:
@@ -31,11 +27,12 @@ function discardUnknown(ReadBuffer $buffer, Tag $tag): UnknownField
     return new UnknownField($tag, match ($tag->type) {
         WireType::FIXED32 => $buffer->read(4),
         WireType::FIXED64 => $buffer->read(8),
-        WireType::VARINT => readVarint($buffer),
+        WireType::VARINT => toUnsigned($buffer->readVarint()),
         WireType::BYTES => (static function () use ($buffer): string {
-            $length = (int) readVarint($buffer)->value;
-            if ($length > 0) {
-                return $buffer->read($length);
+            $length = $buffer->readVarint();
+            if ($length !== 0) {
+                // A negative length is a varint of 2^63 or above: far more than any input holds.
+                return $buffer->read($length > 0 ? $length : PHP_INT_MAX);
             }
 
             return '';
@@ -44,32 +41,57 @@ function discardUnknown(ReadBuffer $buffer, Tag $tag): UnknownField
 }
 
 /**
+ * Writes the 64 bits of `value` as a varint: a negative int takes 10 bytes, as an int64 must.
+ *
  * @internal
- * @throws MalformedMessage
  */
-function readVarint(ReadBuffer $buffer): Number
+function writeVarint(WriteBuffer $buffer, int $value): void
 {
-    $number = decodeVarint($buffer->peek(10));
-    $buffer->read($number->size);
+    if ($value >= 0 && $value < 0x80) {
+        $buffer->write(\chr($value));
 
-    return $number->value;
+        return;
+    }
+
+    $bytes = '';
+
+    while (($value & ~0x7F) !== 0) {
+        $bytes .= \chr(($value & 0x7F) | 0x80);
+        // A logical shift: the sign bit of a negative int must not be copied into the high bits.
+        $value = ($value >> 7) & 0x01FF_FFFF_FFFF_FFFF;
+    }
+
+    $buffer->write($bytes . \chr($value & 0x7F));
 }
 
 /**
+ * The value of 64 bits read as unsigned.
+ *
  * @internal
- * @param non-empty-string $bytes up to 10 bytes from the start of a varint
- * @throws MalformedMessage
  */
-function decodeVarint(string $bytes): Varint\Sized
+function toUnsigned(int $value): Number
 {
-    try {
-        return Varint\BcMath::Codec->decodeVarintSized($bytes);
-    } catch (Varint\MalformedVarintNumber) {
-        // No terminating byte among the bytes given: either the input ends or the varint is too long.
-        throw \strlen($bytes) < 10
-            ? new BufferUnderflow('Unexpected end of input: truncated varint.')
-            : new MalformedVarint('Malformed varint: longer than 10 bytes.');
+    /** @var ?Number $p64 */
+    static $p64;
+
+    return $value >= 0 ? new Number($value) : new Number($value) + ($p64 ??= new Number('18446744073709551616'));
+}
+
+/**
+ * The 64 bits of an unsigned value in [0, 2^64-1]: values of 2^63 and above become negative ints.
+ *
+ * @internal
+ */
+function fromUnsigned(Number $value): int
+{
+    /** @var ?Number $p64 */
+    static $p64;
+
+    if ($value->compare(PHP_INT_MAX) > 0) {
+        $value -= ($p64 ??= new Number('18446744073709551616'));
     }
+
+    return (int) $value->value;
 }
 
 /**
@@ -77,7 +99,7 @@ function decodeVarint(string $bytes): Varint\Sized
  */
 function writeTag(WriteBuffer $buffer, Tag $tag): void
 {
-    SerdeVarint::T->serialize($buffer, $tag->number);
+    writeVarint($buffer, $tag->num << 3 | $tag->type->value);
 }
 
 /**
@@ -86,7 +108,7 @@ function writeTag(WriteBuffer $buffer, Tag $tag): void
  */
 function peekTag(ReadBuffer $buffer): Tag
 {
-    return Tag::from(decodeVarint($buffer->peek(10))->value);
+    return Tag::fromVarint($buffer->peekVarint());
 }
 
 /**
@@ -95,5 +117,5 @@ function peekTag(ReadBuffer $buffer): Tag
  */
 function readTag(ReadBuffer $buffer): Tag
 {
-    return Tag::from(readVarint($buffer));
+    return Tag::fromVarint($buffer->readVarint());
 }

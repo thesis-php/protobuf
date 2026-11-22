@@ -14,25 +14,16 @@ use Thesis\Protobuf\Internal\Buffer\Reader;
 #[CoversClass(ByteBuffer::class)]
 final class BufferTest extends TestCase
 {
-    public function testPeekDoesNotMoveTheCursor(): void
+    public function testReadMovesTheCursorAndPeekDoesNot(): void
     {
-        $buffer = new Reader('test');
-        self::assertCount(4, $buffer);
-        self::assertSame('te', $buffer->peek(2));
-        self::assertCount(4, $buffer);
-        self::assertSame('test', $buffer->peek(5));
-        self::assertCount(4, $buffer);
-        self::assertSame('test', $buffer->read(4));
+        $buffer = new Reader("\x96\x01\x05");
+        self::assertCount(3, $buffer);
+        self::assertSame(150, $buffer->peekVarint());
+        self::assertCount(3, $buffer);
+        self::assertSame(150, $buffer->readVarint());
+        self::assertCount(1, $buffer);
+        self::assertSame(5, $buffer->readVarint());
         self::assertCount(0, $buffer);
-    }
-
-    public function testPeekAtTheEndFails(): void
-    {
-        $buffer = new Reader('t');
-        $buffer->read(1);
-
-        $this->expectExceptionObject(new BufferUnderflow('Buffer is empty.'));
-        $buffer->peek(1);
     }
 
     public function testReadMovesTheCursor(): void
@@ -52,7 +43,6 @@ final class BufferTest extends TestCase
 
         $limit = $buffer->pushLimit(3);
         self::assertCount(3, $buffer);
-        self::assertSame('bcd', $buffer->peek(10), 'peek stops at the limit');
         self::assertSame('bc', $buffer->read(2));
 
         $inner = $buffer->pushLimit(1);

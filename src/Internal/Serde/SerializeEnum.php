@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Thesis\Protobuf\Internal\Serde;
 
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
+use Thesis\Protobuf\Internal\Wire;
 
 /**
  * @internal
@@ -22,6 +23,6 @@ enum SerializeEnum implements SerializeValue
         $case = $value->value;
 
         // Enum numbers are int32: a negative one is sign-extended to 64 bits.
-        SerdeInt64::T->serialize($buffer, Range::int32($case, 'enum'));
+        Wire\writeVarint($buffer, Range::int32($case, 'enum'));
     }
 }

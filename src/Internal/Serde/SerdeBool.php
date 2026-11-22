@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Internal\Serde;
 
-use BcMath\Number;
 use Thesis\Protobuf\Internal\Buffer\ReadBuffer;
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
+use Thesis\Protobuf\Internal\Wire;
 
 /**
  * @internal
@@ -22,14 +22,12 @@ enum SerdeBool implements
     #[\Override]
     public function serialize(WriteBuffer $buffer, mixed $value): void
     {
-        SerdeVarint::T->serialize($buffer, new Number((int) $value));
+        Wire\writeVarint($buffer, $value ? 1 : 0);
     }
 
     #[\Override]
     public function deserialize(ReadBuffer $buffer): bool
     {
-        $num = SerdeVarint::T->deserialize($buffer);
-
-        return (int) $num->value !== 0;
+        return $buffer->readVarint() !== 0;
     }
 }

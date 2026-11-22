@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Internal\Serde;
 
-use BcMath\Number;
-use Thesis\Endian;
 use Thesis\Protobuf\Internal\Buffer\ReadBuffer;
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
 
@@ -23,12 +21,17 @@ enum SerdeSFixed64 implements
     #[\Override]
     public function serialize(WriteBuffer $buffer, mixed $value): void
     {
-        $buffer->write(Endian\Order::Little->packInt64(new Number($value)));
+        /** @var non-empty-string $bytes */
+        $bytes = pack('P', $value);
+        $buffer->write($bytes);
     }
 
     #[\Override]
     public function deserialize(ReadBuffer $buffer): int
     {
-        return (int) Endian\Order::Little->unpackInt64($buffer->read(8))->value;
+        /** @var array{1: int} $value */
+        $value = unpack('P', $buffer->read(8));
+
+        return $value[1];
     }
 }

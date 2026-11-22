@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Internal\Serde;
 
-use BcMath\Number;
 use Thesis\Protobuf\Internal\Buffer\ReadBuffer;
 use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
 
@@ -29,20 +28,9 @@ enum SerdeSInt32 implements
     #[\Override]
     public function deserialize(ReadBuffer $buffer): int
     {
-        /** @var ?Number $p31 */
-        static $p31;
-        $p31 ??= new Number(2)->pow(31);
+        // A sint32 is ZigZag-32 of the low 32 bits of the varint.
+        $value = $buffer->readVarint() & 0xFFFF_FFFF;
 
-        /** @var ?Number $p32 */
-        static $p32;
-        $p32 ??= new Number(2)->pow(32);
-
-        $num = new Number(SerdeSInt64::T->deserialize($buffer))->mod($p32);
-
-        if ($num->compare($p31) >= 0) {
-            $num -= $p32;
-        }
-
-        return (int) $num->value;
+        return ($value >> 1) ^ -($value & 1);
     }
 }
