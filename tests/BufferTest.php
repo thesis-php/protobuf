@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Thesis\Protobuf;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Thesis\Protobuf\Exception\BufferUnderflow;
 use Thesis\Protobuf\Exception\RecursionLimitExceeded;
@@ -23,6 +24,40 @@ final class BufferTest extends TestCase
         self::assertCount(1, $buffer);
         self::assertSame(5, $buffer->readVarint());
         self::assertCount(0, $buffer);
+    }
+
+    public function testReadTagMovesTheCursor(): void
+    {
+        $buffer = new Reader("\x08\x96\x01");
+        self::assertSame(8, $buffer->readTag());
+        self::assertCount(2, $buffer);
+        self::assertSame(150, $buffer->readTag());
+        self::assertCount(0, $buffer);
+    }
+
+    /**
+     * @param non-empty-string $bytes
+     */
+    #[DataProvider('provideAVarintAtTheLimitIsTruncatedCases')]
+    public function testAVarintAtTheLimitIsTruncated(string $bytes, bool $tag): void
+    {
+        $buffer = new Reader($bytes);
+        $buffer->pushLimit(0);
+
+        $this->expectExceptionObject(new BufferUnderflow('Unexpected end of input: truncated varint.'));
+
+        $tag ? $buffer->readTag() : $buffer->readVarint();
+    }
+
+    /**
+     * @return iterable<string, array{non-empty-string, bool}>
+     */
+    public static function provideAVarintAtTheLimitIsTruncatedCases(): iterable
+    {
+        yield 'a tag of one byte past the limit' => ["\x08", true];
+        yield 'a tag of two bytes past the limit' => ["\x96\x01", true];
+        yield 'a varint of one byte past the limit' => ["\x08", false];
+        yield 'a varint of two bytes past the limit' => ["\x96\x01", false];
     }
 
     public function testStringsMustBeValidUtf8UnlessToldOtherwise(): void

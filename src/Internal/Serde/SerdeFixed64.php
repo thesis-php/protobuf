@@ -13,10 +13,12 @@ use Thesis\Protobuf\Internal\Wire;
  * @internal
  * @template-implements SerializeValue<Number>
  * @template-implements DeserializeValue<Number>
+ * @template-implements SerdePacked<Number>
  */
 enum SerdeFixed64 implements
     SerializeValue,
-    DeserializeValue
+    DeserializeValue,
+    SerdePacked
 {
     case T;
 
@@ -35,5 +37,32 @@ enum SerdeFixed64 implements
         $value = unpack('P', $buffer->read(8));
 
         return Wire\toUnsigned($value[1]);
+    }
+
+    #[\Override]
+    public function serializePacked(array $values): string
+    {
+        $bits = [];
+
+        foreach ($values as $value) {
+            /** @var Number $value */
+            $bits[] = Wire\fromUnsigned(Range::uint64($value, 'fixed64'));
+        }
+
+        return pack('P*', ...$bits);
+    }
+
+    #[\Override]
+    public function deserializePacked(string $bytes): array
+    {
+        /** @var array<positive-int, int> $bits */
+        $bits = unpack('P*', $bytes);
+        $values = [];
+
+        foreach ($bits as $value) {
+            $values[] = Wire\toUnsigned($value);
+        }
+
+        return $values;
     }
 }

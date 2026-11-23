@@ -11,10 +11,12 @@ use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
  * @internal
  * @template-implements SerializeValue<int>
  * @template-implements DeserializeValue<int>
+ * @template-implements SerdePacked<int>
  */
 enum SerdeSFixed64 implements
     SerializeValue,
-    DeserializeValue
+    DeserializeValue,
+    SerdePacked
 {
     case T;
 
@@ -33,5 +35,18 @@ enum SerdeSFixed64 implements
         $value = unpack('P', $buffer->read(8));
 
         return $value[1];
+    }
+
+    #[\Override]
+    public function serializePacked(array $values): string
+    {
+        return pack('P*', ...$values);
+    }
+
+    #[\Override]
+    public function deserializePacked(string $bytes): array
+    {
+        /** @var array<positive-int, int> */
+        return unpack('P*', $bytes);
     }
 }

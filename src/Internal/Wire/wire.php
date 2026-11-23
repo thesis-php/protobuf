@@ -193,5 +193,24 @@ function tagBytes(int $num, WireType $type): string
  */
 function readTag(ReadBuffer $buffer): Tag
 {
-    return Tag::fromVarint($buffer->readTag());
+    return tag($buffer->readTag());
+}
+
+/**
+ * The tag of a varint read by ReadBuffer::readTag(). A tag of one or two bytes, those of field numbers up to 2047,
+ * is made once and shared: a tag is read for every field.
+ *
+ * @internal
+ * @throws MalformedMessage
+ */
+function tag(int $varint): Tag
+{
+    /** @var array<int, Tag> $tags */
+    static $tags = [];
+
+    if ($varint >= 0x4000) {
+        return Tag::fromVarint($varint);
+    }
+
+    return $tags[$varint] ??= Tag::fromVarint($varint);
 }

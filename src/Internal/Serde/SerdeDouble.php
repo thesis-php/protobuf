@@ -12,10 +12,12 @@ use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
  * @internal
  * @template-implements SerializeValue<float>
  * @template-implements DeserializeValue<float>
+ * @template-implements SerdePacked<float>
  */
 enum SerdeDouble implements
     SerializeValue,
-    DeserializeValue
+    DeserializeValue,
+    SerdePacked
 {
     case T;
 
@@ -29,5 +31,24 @@ enum SerdeDouble implements
     public function deserialize(ReadBuffer $buffer): float
     {
         return Endian\Order::Little->unpackDouble($buffer->read(8));
+    }
+
+    #[\Override]
+    public function serializePacked(array $values): ?string
+    {
+        foreach ($values as $value) {
+            if (!\is_float($value)) {
+                return null;
+            }
+        }
+
+        return pack('e*', ...$values);
+    }
+
+    #[\Override]
+    public function deserializePacked(string $bytes): array
+    {
+        /** @var array<positive-int, float> */
+        return unpack('e*', $bytes);
     }
 }

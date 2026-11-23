@@ -12,10 +12,12 @@ use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
  * @internal
  * @template-implements SerializeValue<int>
  * @template-implements DeserializeValue<int>
+ * @template-implements SerdePacked<int>
  */
 enum SerdeFixed32 implements
     SerializeValue,
-    DeserializeValue
+    DeserializeValue,
+    SerdePacked
 {
     case T;
 
@@ -29,5 +31,23 @@ enum SerdeFixed32 implements
     public function deserialize(ReadBuffer $buffer): int
     {
         return Endian\Order::Little->unpackUint32($buffer->read(4));
+    }
+
+    #[\Override]
+    public function serializePacked(array $values): string
+    {
+        foreach ($values as $value) {
+            /** @var int $value */
+            Range::uint32($value, 'fixed32');
+        }
+
+        return pack('V*', ...$values);
+    }
+
+    #[\Override]
+    public function deserializePacked(string $bytes): array
+    {
+        /** @var array<positive-int, int> */
+        return unpack('V*', $bytes);
     }
 }

@@ -128,6 +128,21 @@ final class WireTypeMismatchTest extends TestCase
         self::assertSame([], $message->unknowns);
     }
 
+    public function testAnUnknownFieldOfAMapEntryIsSkipped(): void
+    {
+        // The entry holds field 3 as varint 10, whose byte is the tag of the key, then key "a" and value 5.
+        $message = new Serializer()->deserialize(
+            messageT(fieldT(1, mapT(stringT, int32T))),
+            (string) hex2bin('0a07180a0a01611005'),
+        );
+
+        $map = ($message->fields[1] ?? null)?->value->value;
+
+        self::assertInstanceOf(Map::class, $map);
+        self::assertSame(['a' => 5], iterator_to_array($map));
+        self::assertSame([], $message->unknowns);
+    }
+
     public function testDecoderSkipsAFieldWithAnUnexpectedWireType(): void
     {
         $decoded = Decoder\Builder::buildDefault()->decode(

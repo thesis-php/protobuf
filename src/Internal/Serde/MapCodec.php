@@ -32,18 +32,33 @@ final readonly class MapCodec implements FieldCodec
     private const int KEY = 1;
     private const int VALUE = 2;
 
+    /** The tag of the key as read, to be compared without making a Tag. */
+    private int $keyTag;
+
+    /** The tag of the value as read, to be compared without making a Tag. */
+    private int $valueTag;
+
+    /** The tag the value is read with: an enum number without a case is kept as an unknown field of it. */
+    private Tag $valueTagObject;
+
     /**
+     * @param SingularCodec<mixed> $key
+     * @param SingularCodec<mixed> $value
      * @param mixed $zeroKey the key of an entry that has none
      * @param mixed $zeroValue the value of an entry that has none, null if the type has no zero value
      * @param bool $stringKey whether the key is a string, so that an int key is written as its decimal string
      */
     public function __construct(
-        private FieldCodec $key,
-        private FieldCodec $value,
+        private SingularCodec $key,
+        private SingularCodec $value,
         private mixed $zeroKey,
         private mixed $zeroValue,
         private bool $stringKey,
-    ) {}
+    ) {
+        $this->keyTag = self::KEY << 3 | $key->wireType->value;
+        $this->valueTag = self::VALUE << 3 | $value->wireType->value;
+        $this->valueTagObject = new Tag(self::VALUE, $value->wireType);
+    }
 
     #[\Override]
     public function encode(WriteBuffer $buffer, int $num, mixed $value): void
@@ -94,18 +109,19 @@ final readonly class MapCodec implements FieldCodec
         // Whether the PHP enum has no case for the number of the last value: the last value wins.
         $unknownValue = false;
 
-        while (\count($buffer) > 0) {
-            $entryTag = Wire\readTag($buffer);
+        while ($buffer->count() > 0) {
+            $entryTag = $buffer->readTag();
 
-            if ($entryTag->num === self::KEY && $this->key->accepts($entryTag->type)) {
+            if ($entryTag === $this->keyTag) {
+                // A key is a scalar: it is neither an enum nor a message, the last one wins.
                 try {
-                    $this->key->decode($buffer, $entryTag, $key, $unknownValues);
+                    $key = $this->key->deserializer->deserialize($buffer);
                 } catch (MalformedUtf8 $e) {
                     throw $e->inField(self::KEY);
                 }
-            } elseif ($entryTag->num === self::VALUE && $this->value->accepts($entryTag->type)) {
+            } elseif ($entryTag === $this->valueTag) {
                 try {
-                    $this->value->decode($buffer, $entryTag, $value, $unknownValues);
+                    $this->value->decode($buffer, $this->valueTagObject, $value, $unknownValues);
                 } catch (MalformedUtf8 $e) {
                     throw $e->inField(self::VALUE);
                 }
@@ -113,7 +129,7 @@ final readonly class MapCodec implements FieldCodec
                 $unknownValue = $unknownValues !== [];
                 $unknownValues = [];
             } else {
-                Wire\discardUnknown($buffer, $entryTag);
+                Wire\discardUnknown($buffer, Tag::fromVarint($entryTag));
             }
         }
 

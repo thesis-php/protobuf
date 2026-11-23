@@ -26,6 +26,11 @@ message PackedInts {
   repeated int64 values = 1;
 }
 
+message PackedFixed {
+  repeated fixed64 ids = 1;
+  repeated double values = 2;
+}
+
 message StringMap {
   map<string, int32> values = 1;
 }

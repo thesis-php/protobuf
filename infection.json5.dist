@@ -19,7 +19,6 @@
             "ignoreSourceCodeByRegex": [
                 // MessageFields::plan() caches the plan of a type: built again, it is the same plan, only later.
                 "\\$plans = self::\\$plans \\?\\?= new \\\\WeakMap\\(\\);",
-                "return \\$plans\\[\\$type\\] \\?\\?= \\[",
             ],
         },
         "GreaterThan": {
@@ -55,6 +54,10 @@
                 // Reflector caches what it builds once per class: built again, it is the same.
                 "return \\$this->decoders\\[\\$class\\];",
                 "return \\$this->fieldPaths\\[\\$class\\];",
+                // MessageFields::plan() caches the plan of a type: built again, it is the same plan, only later.
+                "return \\$plans\\[\\$type\\];",
+                // Reader: without the early return a varint of one byte is read by the loop below, which gives the same.
+                "return \\$byte;",
             ],
         },
         "PublicVisibility": {
@@ -65,17 +68,26 @@
                 "public function list\\(array \\$values\\): Protobuf\\\\Value",
             ],
         },
-        "UnwrapArrayValues": {
+        "InstanceOf_": {
             "ignoreSourceCodeByRegex": [
-                // Map::fromArray(): array_map() with two arrays walks them by position and ignores their keys.
-                "array_values\\(\\$values\\),",
+                // ListCodec: packed elements of constant width written or read one by one are the same, only slower.
+                "if \\(\\$serializer instanceof SerdePacked && \\(\\$bytes = \\$serializer->serializePacked\\(array_values\\(\\$value\\)\\)\\) !== null\\) \\{",
+                "if \\(\\$deserializer instanceof SerdePacked\\) \\{",
+            ],
+        },
+        "FunctionCall": {
+            "ignoreSourceCodeByRegex": [
+                // SerdeFloat, SerdeDouble: elements for which null is returned are written one by one, which gives
+                // the same bytes.
+                "return pack\\('[ge]\\*', \\.\\.\\.\\$values\\);",
             ],
         },
         "Concat": {
             "ignoreSourceCodeByRegex": [
-                // Map::hash(): the hash of a string is as unique with the marker after it as before it, since no other
-                // hash has the marker and PHP turns neither into an int array key.
-                "return self::STRING \\. \\$value;",
+                // Map::hash(): an escaped string is as unique with the escape character after it as before it: it
+                // starts with a digit, '-' or the escape character, and ends with the escape character, as no other
+                // slot does both.
+                "return \\(\\$first >= 0x30 && \\$first <= 0x39\\) \\|\\| \\$first === 0x2D \\|\\| \\$first === 0x60 \\? self::ESCAPE \\. \\$value : \\$value;",
             ],
         },
         "MatchArmRemoval": {
