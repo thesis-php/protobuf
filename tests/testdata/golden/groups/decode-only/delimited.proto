@@ -1,0 +1,25 @@
+// The schema of ../../../reflection/groups.proto in edition 2023, where a group is a message field with
+// features.message_encoding = DELIMITED: one message type is written as a group in some fields and as a message in
+// others. It has no PHP class: the golden files written with it are decoded into the classes of groups.proto.
+edition = "2023";
+
+package test.v1;
+
+message GroupLeaf {
+  int32 id = 1;
+  string name = 2;
+  GroupLeaf inner = 3 [features.message_encoding = DELIMITED];
+}
+
+message GroupTree {
+  int32 depth = 1;
+  Groups holder = 2;
+}
+
+message Groups {
+  GroupLeaf single = 1 [features.message_encoding = DELIMITED];
+  repeated GroupLeaf item = 2 [features.message_encoding = DELIMITED];
+  GroupLeaf plain = 3;
+  GroupTree tree = 200 [features.message_encoding = DELIMITED];
+  int32 after = 201;
+}

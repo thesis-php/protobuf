@@ -1,0 +1,7 @@
+# proto-file: reflection/groups.proto
+# proto-message: test.v1.Groups
+
+Single {
+  id: 1
+  Inner { id: 2 name: "inner" }
+}

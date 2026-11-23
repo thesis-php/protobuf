@@ -1,0 +1,5 @@
+# proto-file: reflection/groups.proto
+# proto-message: test.v1.Groups
+
+Single { id: 5 name: "five" }
+after: 7

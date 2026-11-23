@@ -1,0 +1,14 @@
+# proto-file: golden/groups/decode-only/delimited.proto
+# proto-message: test.v1.Groups
+# The input of ../group_and_message.txtpb written by an editions schema with DELIMITED fields.
+
+single {
+  id: 9
+  name: "same"
+  inner { id: 10 }
+}
+plain {
+  id: 9
+  name: "same"
+  inner { id: 10 }
+}

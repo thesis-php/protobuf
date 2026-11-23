@@ -1,0 +1,18 @@
+# proto-file: golden/groups/decode-only/delimited.proto
+# proto-message: test.v1.Groups
+# The input of ../tree.txtpb written by an editions schema with DELIMITED fields.
+
+tree {
+  depth: 1
+  holder {
+    single { id: 2 }
+    tree {
+      depth: 2
+      holder {
+        item { name: "leaf" }
+        after: -3
+      }
+    }
+  }
+}
+after: 4

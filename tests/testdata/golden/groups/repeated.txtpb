@@ -1,0 +1,10 @@
+# proto-file: reflection/groups.proto
+# proto-message: test.v1.Groups
+
+Item { id: 1 }
+Item { name: "two" }
+Item {
+  id: 3
+  name: "три"
+  Inner { id: -1 }
+}

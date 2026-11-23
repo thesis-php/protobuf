@@ -1,0 +1,44 @@
+syntax = "proto2";
+
+package test.v1;
+
+// A message with the fields of the groups below: the same object is written as a group or as a message.
+message GroupLeaf {
+  optional int32 id = 1;
+  optional string name = 2;
+  optional group Inner = 3 {
+    optional int32 id = 1;
+    optional string name = 2;
+  }
+}
+
+message GroupTree {
+  optional int32 depth = 1;
+  optional Groups holder = 2;
+}
+
+message Groups {
+  optional group Single = 1 {
+    optional int32 id = 1;
+    optional string name = 2;
+    optional group Inner = 3 {
+      optional int32 id = 1;
+      optional string name = 2;
+    }
+  }
+  repeated group Item = 2 {
+    optional int32 id = 1;
+    optional string name = 2;
+    optional group Inner = 3 {
+      optional int32 id = 1;
+      optional string name = 2;
+    }
+  }
+  optional GroupLeaf plain = 3;
+  // A group of a field number whose tag takes two bytes, with a message that holds groups in turn.
+  optional group Tree = 200 {
+    optional int32 depth = 1;
+    optional Groups holder = 2;
+  }
+  optional int32 after = 201;
+}

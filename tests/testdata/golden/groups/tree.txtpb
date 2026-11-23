@@ -1,0 +1,17 @@
+# proto-file: reflection/groups.proto
+# proto-message: test.v1.Groups
+
+Tree {
+  depth: 1
+  holder {
+    Single { id: 2 }
+    Tree {
+      depth: 2
+      holder {
+        Item { name: "leaf" }
+        after: -3
+      }
+    }
+  }
+}
+after: 4
