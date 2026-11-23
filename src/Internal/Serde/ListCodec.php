@@ -44,10 +44,24 @@ final readonly class ListCodec implements FieldCodec
             return;
         }
 
+        $serializer = $this->element->serializer;
+
+        // A list property may hold an array with any keys, which cannot be spread into the arguments of pack().
+        /** @phpstan-ignore arrayValues.list */
+        if ($serializer instanceof SerdePacked && ($bytes = $serializer->serializePacked(array_values($value))) !== null) {
+            if ($bytes !== '') {
+                $buffer->write(Wire\tagBytes($num, WireType::BYTES));
+                Wire\writeVarint($buffer, \strlen($bytes));
+                $buffer->write($bytes);
+            }
+
+            return;
+        }
+
         $packed = new ByteBuffer();
 
         foreach ($value as $it) {
-            $this->element->serializer->serialize($packed, $it);
+            $serializer->serialize($packed, $it);
         }
 
         if (\count($packed) > 0) {
@@ -87,8 +101,30 @@ final readonly class ListCodec implements FieldCodec
 
         $limit = Buffer\enterRecord($buffer);
 
-        // The same as above, inlined: a call per element costs a lot on long packed records.
-        while (\count($buffer) > 0) {
+        if ($deserializer instanceof SerdePacked) {
+            $width = $this->element->wireType === WireType::FIXED32 ? 4 : 8;
+            $length = $buffer->count();
+            $cut = $length % $width;
+
+            if ($length !== $cut) {
+                /** @var positive-int $whole */
+                $whole = $length - $cut;
+                // Appended in place: copying the list for every record would cost the square of their number.
+                array_push($slot, ...$deserializer->deserializePacked($buffer->read($whole)));
+            }
+
+            // An element cut short fails as it does when read alone.
+            if ($cut !== 0) {
+                $buffer->read($width);
+            }
+
+            $buffer->popLimit($limit);
+
+            return;
+        }
+
+        // The same as for a single element, inlined: a call per element costs a lot on long packed records.
+        while ($buffer->count() > 0) {
             $value = $deserializer->deserialize($buffer);
 
             if ($value instanceof UnknownEnumValue) {

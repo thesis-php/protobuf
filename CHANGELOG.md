@@ -45,6 +45,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   as the value type: protobuf has no such fields. They used to be rejected only by PHPStan; a map with `bytesT` keys,
   which used to be written and read as one with `stringT` keys, must be declared with `stringT` keys. For
   `Reflection\MapT` the exception is thrown when the class that declares the field is reflected.
+- Decoding is faster: a tag of a field numbered up to 2047 is made once and shared, a field is looked up by its tag
+  as read, varints and tags of one byte are read without a loop, a map entry is read without making a tag for its key
+  and value, and a packed record of fixed32, sfixed32, fixed64, sfixed64, float or double elements is written and read
+  with one call to `pack()` and `unpack()`. Without the JIT, a small message is decoded about 20% faster, 1000 nested
+  messages and 100 000 packed int64 about 30%, a map of 10 000 entries about 45%, and 100 000 packed fixed64 and as
+  many doubles about 3 times as fast, and encoded twice as fast. The bytes written and read are the same.
+- `Map` keeps its keys and values in two arrays instead of a `KVPair` object per entry, and an int key or a string key
+  that does not start with a digit, `-` or `` ` `` is its own array key: setting an entry is about 20% faster and
+  a map of 10 000 entries takes about 15% less memory. Its API, the order of its entries and which keys address the
+  same entry do not change.
 
 ### Fixed
 

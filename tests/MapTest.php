@@ -192,6 +192,23 @@ final class MapTest extends TestCase
         );
     }
 
+    public function testIterationGoesOverTheEntriesAsTheyWereWhenItStarted(): void
+    {
+        /** @var Map<string, int> $map */
+        $map = new Map(new KVPair('a', 1), new KVPair('b', 2), new KVPair('c', 3));
+        $entries = [];
+
+        foreach ($map as $key => $value) {
+            unset($map['b']);
+            $map['c'] = 30;
+            $map['d'] = 4;
+            $entries[] = [$key, $value];
+        }
+
+        self::assertSame([['a', 1], ['b', 2], ['c', 3]], $entries);
+        self::assertSame([['a', 1], ['c', 30], ['d', 4]], self::entries($map));
+    }
+
     public function testAnEmptyMapHasNoEntries(): void
     {
         $map = new Map();
@@ -418,6 +435,16 @@ final class MapTest extends TestCase
             false,
         ];
 
+        yield '"9" and 9' => ['9', 9, false];
+        yield '"-1" and -1' => ['-1', -1, false];
+        yield '"-1" and a Number of -1' => ['-1', new Number(-1), false];
+        yield '"`1" and 1' => ['`1', 1, false];
+        yield '"`1" and "1"' => ['`1', '1', false];
+        yield '"`t" and true' => ['`t', true, false];
+        yield '"`f" and false' => ['`f', false, false];
+        yield '"``t" and "`t"' => ['``t', '`t', false];
+        yield '"-" and "`-"' => ['-', '`-', false];
+        yield '"1.5" and a Number of "1.5"' => ['1.5', new Number('1.5'), false];
         yield '"`" and "``"' => ['`', '``', false];
         yield '"`" and "\`"' => ['`', '\`', false];
         yield '"a`" and "a\`"' => ['a`', 'a\`', false];

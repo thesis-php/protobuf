@@ -15,7 +15,7 @@ use Thesis\Protobuf\Internal\Buffer\WriteBuffer;
 use Thesis\Protobuf\Internal\Wire;
 use Thesis\Protobuf\Message;
 use Thesis\Protobuf\ProtobufException;
-use Thesis\Protobuf\Type\Field;
+use Thesis\Protobuf\Tag;
 use Thesis\Protobuf\Type\MessageT;
 use Thesis\Protobuf\UnknownFields;
 use Thesis\Protobuf\Value;
@@ -28,7 +28,7 @@ use Thesis\Protobuf\WireType;
  */
 final class MessageFields
 {
-    /** @var ?\WeakMap<MessageT, array{array<positive-int, FieldCodec>, ?OneOfs}> */
+    /** @var ?\WeakMap<MessageT, array{array<int, FieldCodec>, array<int, Tag>, ?OneOfs}> */
     private static ?\WeakMap $plans = null;
 
     /** @var ?\WeakMap<MessageT, OneOfs> */
@@ -82,7 +82,7 @@ final class MessageFields
      */
     public static function deserialize(ReadBuffer $buffer, MessageT $type, ?Message $into = null): Message
     {
-        [$codecs, $oneofs] = self::plan($type);
+        [$codecs, $tags, $oneofs] = self::plan($type);
 
         /** @var array<positive-int, mixed> $values */
         $values = [];
@@ -97,15 +97,19 @@ final class MessageFields
         }
 
         if ($oneofs === null) {
-            while (\count($buffer) > 0) {
-                $tag = Wire\readTag($buffer);
+            while ($buffer->count() > 0) {
+                $varint = $buffer->readTag();
 
-                $codec = $codecs[$tag->num] ?? null;
-                if ($codec === null || !$codec->accepts($tag->type)) {
-                    $unknowns[] = Wire\discardUnknown($buffer, $tag);
+                $codec = $codecs[$varint] ?? null;
+                if ($codec === null) {
+                    $unknowns[] = Wire\discardUnknown($buffer, Wire\tag($varint));
 
                     continue;
                 }
+
+                // The plan has the tag of every codec.
+                /** @phpstan-ignore offsetAccess.notFound */
+                $tag = $tags[$varint];
 
                 // A try costs nothing in PHP until something is thrown.
                 try {
@@ -115,7 +119,7 @@ final class MessageFields
                 }
             }
         } else {
-            self::readWithOneOfs($buffer, $codecs, $oneofs, $values, $unknowns);
+            self::readWithOneOfs($buffer, $codecs, $tags, $oneofs, $values, $unknowns);
         }
 
         $fields = [];
@@ -135,7 +139,8 @@ final class MessageFields
     /**
      * The same as the loop of deserialize(), but a field of a oneof variant other than the one set replaces it.
      *
-     * @param array<positive-int, FieldCodec> $codecs
+     * @param array<int, FieldCodec> $codecs
+     * @param array<int, Tag> $tags
      * @param array<positive-int, mixed> $values
      * @param list<UnknownFields\UnknownField> $unknowns
      * @throws ProtobufException
@@ -143,6 +148,7 @@ final class MessageFields
     private static function readWithOneOfs(
         ReadBuffer $buffer,
         array $codecs,
+        array $tags,
         OneOfs $oneofs,
         array &$values,
         array &$unknowns,
@@ -159,15 +165,18 @@ final class MessageFields
             }
         }
 
-        while (\count($buffer) > 0) {
-            $tag = Wire\readTag($buffer);
+        while ($buffer->count() > 0) {
+            $varint = $buffer->readTag();
 
-            $codec = $codecs[$tag->num] ?? null;
-            if ($codec === null || !$codec->accepts($tag->type)) {
-                $unknowns[] = Wire\discardUnknown($buffer, $tag);
+            $codec = $codecs[$varint] ?? null;
+            if ($codec === null) {
+                $unknowns[] = Wire\discardUnknown($buffer, Wire\tag($varint));
 
                 continue;
             }
+
+            /** @phpstan-ignore offsetAccess.notFound */
+            $tag = $tags[$varint];
 
             $variant = $oneofs->variantOf[$tag->num] ?? null;
             $previous = $variant === null ? null : $set[$variant->oneof] ?? null;
@@ -280,18 +289,34 @@ final class MessageFields
     }
 
     /**
-     * @return array{array<positive-int, FieldCodec>, ?OneOfs}
+     * The codec and the tag of each field by every tag it can be read with, as ReadBuffer::readTag() returns it:
+     * a tag with a wire type the codec does not accept is not there, and the field is read as an unknown one.
+     *
+     * @return array{array<int, FieldCodec>, array<int, Tag>, ?OneOfs}
      */
     private static function plan(MessageT $type): array
     {
         $plans = self::$plans ??= new \WeakMap();
 
-        return $plans[$type] ??= [
-            array_map(
-                static fn(Field $field): FieldCodec => FieldCodecs::of($field->type),
-                $type->fields,
-            ),
-            self::$oneofs[$type] ?? null,
-        ];
+        if (isset($plans[$type])) {
+            return $plans[$type];
+        }
+
+        $codecs = [];
+        $tags = [];
+
+        foreach ($type->fields as $num => $field) {
+            $codec = FieldCodecs::of($field->type);
+
+            foreach (WireType::cases() as $wireType) {
+                if ($codec->accepts($wireType)) {
+                    $varint = $num << 3 | $wireType->value;
+                    $codecs[$varint] = $codec;
+                    $tags[$varint] = Wire\tag($varint);
+                }
+            }
+        }
+
+        return $plans[$type] = [$codecs, $tags, self::$oneofs[$type] ?? null];
     }
 }

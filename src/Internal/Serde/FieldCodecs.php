@@ -161,9 +161,15 @@ final class FieldCodecs implements Visitor
     {
         $zero = new ZeroValue();
 
+        // MapT rejects lists and maps as keys and values, so both are scalars, enums or messages.
+        /** @var SingularCodec<mixed> $key */
+        $key = self::of($type->keyT);
+        /** @var SingularCodec<mixed> $value */
+        $value = self::of($type->valueT);
+
         return new MapCodec(
-            self::of($type->keyT),
-            self::of($type->valueT),
+            $key,
+            $value,
             $type->keyT->accept($zero),
             $type->valueT->accept($zero),
             $type->keyT instanceof StringT,

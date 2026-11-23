@@ -14,6 +14,7 @@ const MESSAGES = [
     'SmallComparison' => 'A string, an int32 and a bool',
     'NestedComparison' => '1000 nested messages',
     'PackedComparison' => '100 000 packed int64',
+    'PackedFixedComparison' => '100 000 packed fixed64 and 100 000 packed double',
     'MapComparison' => 'A map<string, int32> of 10 000 entries',
     'TextComparison' => 'A string of 1 MB',
 ];

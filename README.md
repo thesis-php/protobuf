@@ -527,48 +527,55 @@ Without the JIT:
 
 | Message | Operation | thesis/protobuf | google/protobuf, PHP | google/protobuf, extension |
 |---|---|---|---|---|
-| A string, an int32 and a bool | encode | 2.06 μs | 4.56 μs (2.2× slower) | 0.1 μs (19.6× faster) |
-| A string, an int32 and a bool | decode | 2.69 μs | 3 μs (1.1× slower) | 0.29 μs (9.3× faster) |
-| A string, an int32 and a bool | decode and read | 2.88 μs | 3.12 μs (1.1× slower) | 0.53 μs (5.5× faster) |
-| 1000 nested messages | encode | 2.58 ms | 10.2 ms (4× slower) | 81.5 μs (31.6× faster) |
-| 1000 nested messages | decode | 3.7 ms | 6.66 ms (1.8× slower) | 97.7 μs (37.9× faster) |
-| 1000 nested messages | decode and read | 3.75 ms | 6.93 ms (1.8× slower) | 635.9 μs (5.9× faster) |
-| 100 000 packed int64 | encode | 15.5 ms | 72.2 ms (4.7× slower) | 1.03 ms (15× faster) |
-| 100 000 packed int64 | decode | 18.4 ms | 50.7 ms (2.8× slower) | 1.13 ms (16.3× faster) |
-| 100 000 packed int64 | decode and read | 18.7 ms | 54.3 ms (2.9× slower) | 5.05 ms (3.7× faster) |
-| A map<string, int32> of 10 000 entries | encode | 7.06 ms | 48 ms (6.8× slower) | 334 μs (21.2× faster) |
-| A map<string, int32> of 10 000 entries | decode | 15.1 ms | 32.3 ms (2.1× slower) | 1.4 ms (10.8× faster) |
-| A map<string, int32> of 10 000 entries | decode and read | 15.2 ms | 34.2 ms (2.3× slower) | 2.21 ms (6.9× faster) |
-| A string of 1 MB | encode | 46.8 μs | 17.9 ms (382.9× slower) | 253.8 μs (5.4× slower) |
-| A string of 1 MB | decode | 398 μs | 386.7 μs (the same) | 595.2 μs (1.5× slower) |
-| A string of 1 MB | decode and read | 397.1 μs | 380.1 μs (the same) | 635.1 μs (1.6× slower) |
+| A string, an int32 and a bool | encode | 1.94 μs | 4.33 μs (2.2× slower) | 0.1 μs (19.1× faster) |
+| A string, an int32 and a bool | decode | 2.03 μs | 2.81 μs (1.4× slower) | 0.29 μs (7× faster) |
+| A string, an int32 and a bool | decode and read | 2.06 μs | 2.91 μs (1.4× slower) | 0.52 μs (4× faster) |
+| 1000 nested messages | encode | 2.53 ms | 9.81 ms (3.9× slower) | 84 μs (30.1× faster) |
+| 1000 nested messages | decode | 2.57 ms | 6.24 ms (2.4× slower) | 99 μs (26× faster) |
+| 1000 nested messages | decode and read | 2.63 ms | 6.58 ms (2.5× slower) | 627.3 μs (4.2× faster) |
+| 100 000 packed int64 | encode | 14.8 ms | 67.9 ms (4.6× slower) | 1.06 ms (13.9× faster) |
+| 100 000 packed int64 | decode | 13.4 ms | 49.2 ms (3.7× slower) | 1.1 ms (12.2× faster) |
+| 100 000 packed int64 | decode and read | 13 ms | 54.4 ms (4.2× slower) | 5.06 ms (2.6× faster) |
+| 100 000 packed fixed64 and 100 000 packed double | encode | 19.4 ms | 108.8 ms (5.6× slower) | 850.5 μs (22.8× faster) |
+| 100 000 packed fixed64 and 100 000 packed double | decode | 13.4 ms | 86.3 ms (6.4× slower) | 326.5 μs (41× faster) |
+| 100 000 packed fixed64 and 100 000 packed double | decode and read | 16.7 ms | 99.4 ms (6× slower) | 8.26 ms (2× faster) |
+| A map<string, int32> of 10 000 entries | encode | 7.03 ms | 47.1 ms (6.7× slower) | 358 μs (19.6× faster) |
+| A map<string, int32> of 10 000 entries | decode | 7.47 ms | 33.2 ms (4.4× slower) | 1.41 ms (5.3× faster) |
+| A map<string, int32> of 10 000 entries | decode and read | 7.85 ms | 34.3 ms (4.4× slower) | 2.19 ms (3.6× faster) |
+| A string of 1 MB | encode | 45.6 μs | 17.7 ms (387.2× slower) | 241.4 μs (5.3× slower) |
+| A string of 1 MB | decode | 371.3 μs | 367.6 μs (the same) | 623 μs (1.7× slower) |
+| A string of 1 MB | decode and read | 373.9 μs | 371.7 μs (the same) | 657.1 μs (1.8× slower) |
 
 With the tracing JIT (`opcache.jit=tracing`):
 
 | Message | Operation | thesis/protobuf | google/protobuf, PHP | google/protobuf, extension |
 |---|---|---|---|---|
-| A string, an int32 and a bool | encode | 1.75 μs | 3.33 μs (1.9× slower) | 0.11 μs (16.1× faster) |
-| A string, an int32 and a bool | decode | 2.3 μs | 1.7 μs (1.4× faster) | 0.3 μs (7.6× faster) |
-| A string, an int32 and a bool | decode and read | 2.29 μs | 1.77 μs (1.3× faster) | 0.55 μs (4.2× faster) |
-| 1000 nested messages | encode | 1.85 ms | 5.65 ms (3.1× slower) | 85.4 μs (21.7× faster) |
-| 1000 nested messages | decode | 2.41 ms | 2.85 ms (1.2× slower) | 101 μs (23.9× faster) |
-| 1000 nested messages | decode and read | 2.43 ms | 3.17 ms (1.3× slower) | 626.8 μs (3.9× faster) |
-| 100 000 packed int64 | encode | 8.75 ms | 31.3 ms (3.6× slower) | 1.07 ms (8.2× faster) |
-| 100 000 packed int64 | decode | 8.86 ms | 15.8 ms (1.8× slower) | 1.19 ms (7.4× faster) |
-| 100 000 packed int64 | decode and read | 9.05 ms | 20.3 ms (2.2× slower) | 5.37 ms (1.7× faster) |
-| A map<string, int32> of 10 000 entries | encode | 4.95 ms | 26.4 ms (5.3× slower) | 355 μs (13.9× faster) |
-| A map<string, int32> of 10 000 entries | decode | 9.8 ms | 14.8 ms (1.5× slower) | 1.43 ms (6.9× faster) |
-| A map<string, int32> of 10 000 entries | decode and read | 10.1 ms | 16.4 ms (1.6× slower) | 2.19 ms (4.6× faster) |
-| A string of 1 MB | encode | 69.1 μs | 5.42 ms (78.5× slower) | 243.7 μs (3.5× slower) |
-| A string of 1 MB | decode | 413.7 μs | 401.3 μs (the same) | 601.9 μs (1.5× slower) |
-| A string of 1 MB | decode and read | 408 μs | 407.9 μs (the same) | 664.9 μs (1.6× slower) |
+| A string, an int32 and a bool | encode | 1.89 μs | 3.25 μs (1.7× slower) | 0.11 μs (17.7× faster) |
+| A string, an int32 and a bool | decode | 1.82 μs | 1.8 μs (the same) | 0.29 μs (6.2× faster) |
+| A string, an int32 and a bool | decode and read | 1.84 μs | 1.82 μs (the same) | 0.53 μs (3.5× faster) |
+| 1000 nested messages | encode | 1.86 ms | 5.68 ms (3.1× slower) | 82.9 μs (22.4× faster) |
+| 1000 nested messages | decode | 1.51 ms | 2.95 ms (1.9× slower) | 99.7 μs (15.2× faster) |
+| 1000 nested messages | decode and read | 1.55 ms | 3.26 ms (2.1× slower) | 586.4 μs (2.6× faster) |
+| 100 000 packed int64 | encode | 8.72 ms | 31.4 ms (3.6× slower) | 1.05 ms (8.3× faster) |
+| 100 000 packed int64 | decode | 4.71 ms | 16.2 ms (3.4× slower) | 1.13 ms (4.2× faster) |
+| 100 000 packed int64 | decode and read | 4.84 ms | 20.7 ms (4.3× slower) | 4.98 ms (the same) |
+| 100 000 packed fixed64 and 100 000 packed double | encode | 17.1 ms | 56.7 ms (3.3× slower) | 526 μs (32.4× faster) |
+| 100 000 packed fixed64 and 100 000 packed double | decode | 12.4 ms | 48.2 ms (3.9× slower) | 338.5 μs (36.8× faster) |
+| 100 000 packed fixed64 and 100 000 packed double | decode and read | 14.9 ms | 58.5 ms (3.9× slower) | 7.96 ms (1.9× faster) |
+| A map<string, int32> of 10 000 entries | encode | 4.96 ms | 25.9 ms (5.2× slower) | 328.5 μs (15.1× faster) |
+| A map<string, int32> of 10 000 entries | decode | 4.4 ms | 15.2 ms (3.5× slower) | 1.41 ms (3.1× faster) |
+| A map<string, int32> of 10 000 entries | decode and read | 4.57 ms | 16.3 ms (3.6× slower) | 2.14 ms (2.1× faster) |
+| A string of 1 MB | encode | 66.6 μs | 5.36 ms (80.5× slower) | 241.4 μs (3.6× slower) |
+| A string of 1 MB | decode | 399 μs | 393.6 μs (the same) | 583.3 μs (1.5× slower) |
+| A string of 1 MB | decode and read | 403.4 μs | 398.9 μs (the same) | 623.6 μs (1.5× slower) |
 
-- The JIT makes the library 1.2 to 2 times faster on everything but a large string, which it does not help, and the
-  PHP runtime of google/protobuf even more, so turn it on where the speed of protobuf matters.
-- Against the PHP runtime of google/protobuf the library is 1.1 to 7 times faster without the JIT. With the JIT it is
-  1.2 to 5 times faster on everything but a small message, which the runtime of google/protobuf then decodes 1.3 to 1.4
-  times faster. A large string takes both the same time to decode.
-- The C extension is 4 to 40 times faster than the library without the JIT, and 2 to 24 times with it, on everything
+- The JIT makes the library up to 2.8 times faster when decoding and up to 1.7 times when encoding, on everything but
+  a large string, which it does not help, and the PHP runtime of google/protobuf even more, so turn it on where the
+  speed of protobuf matters.
+- Against the PHP runtime of google/protobuf the library is 1.4 to 7 times faster without the JIT. With the JIT it is
+  1.7 to 5 times faster on everything but decoding a small message, which takes both about the same time. A large
+  string takes both the same time to decode.
+- The C extension is 2 to 41 times faster than the library without the JIT, and up to 37 times with it, on everything
   but a large string. Decoding alone flatters it: the extension keeps the decoded message in its own memory and makes a
   PHP value of a field only when it is read, while the library makes them all at once. "Decode and read" also reads
   every value of the message, and is the fairer number of the two.

@@ -43,16 +43,47 @@ final class Reader implements ReadBuffer
     public function readVarint(): int
     {
         $offset = $this->offset;
-        $value = $this->decodeVarint($offset);
-        $this->offset = $offset;
 
-        return $value;
+        // Most varints are one byte: small numbers, bools, lengths of short strings.
+        if ($offset < $this->limit && ($byte = \ord($this->bytes[$offset])) < 0x80) {
+            $this->offset = $offset + 1;
+
+            return $byte;
+        }
+
+        $value = 0;
+
+        // Shifting a PHP int left drops the bits above the 64th, so the 10th byte contributes only its low bit.
+        for ($shift = 0; $shift < 70; $shift += 7) {
+            if ($offset >= $this->limit) {
+                throw new BufferUnderflow('Unexpected end of input: truncated varint.');
+            }
+
+            $byte = \ord($this->bytes[$offset++]);
+            $value |= ($byte & 0x7F) << $shift;
+
+            if ($byte < 0x80) {
+                $this->offset = $offset;
+
+                return $value;
+            }
+        }
+
+        throw new MalformedVarint('Malformed varint: longer than 10 bytes.');
     }
 
     #[\Override]
     public function readTag(): int
     {
         $offset = $this->offset;
+
+        // The tag of a field numbered up to 15 is one byte.
+        if ($offset < $this->limit && ($byte = \ord($this->bytes[$offset])) < 0x80) {
+            $this->offset = $offset + 1;
+
+            return $byte;
+        }
+
         $end = $offset + 5;
         $value = 0;
         $shift = 0;
@@ -142,32 +173,6 @@ final class Reader implements ReadBuffer
         \assert($position <= $this->offset, 'The position must be taken before the bytes are read.');
 
         return substr($this->bytes, $position, $this->offset - $position);
-    }
-
-    /**
-     * @param non-negative-int $offset where the varint starts; on return, where it ends
-     * @throws BufferUnderflow
-     * @throws MalformedVarint
-     */
-    private function decodeVarint(int &$offset): int
-    {
-        $value = 0;
-
-        // Shifting a PHP int left drops the bits above the 64th, so the 10th byte contributes only its low bit.
-        for ($shift = 0; $shift < 70; $shift += 7) {
-            if ($offset >= $this->limit) {
-                throw new BufferUnderflow('Unexpected end of input: truncated varint.');
-            }
-
-            $byte = \ord($this->bytes[$offset++]);
-            $value |= ($byte & 0x7F) << $shift;
-
-            if ($byte < 0x80) {
-                return $value;
-            }
-        }
-
-        throw new MalformedVarint('Malformed varint: longer than 10 bytes.');
     }
 
     #[\Override]
