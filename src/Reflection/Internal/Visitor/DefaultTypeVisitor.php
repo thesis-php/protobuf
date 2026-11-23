@@ -11,6 +11,7 @@ use Thesis\Protobuf\Reflection\EnumT;
 use Thesis\Protobuf\Reflection\Fixed32T;
 use Thesis\Protobuf\Reflection\Fixed64T;
 use Thesis\Protobuf\Reflection\FloatT;
+use Thesis\Protobuf\Reflection\GroupT;
 use Thesis\Protobuf\Reflection\Int32T;
 use Thesis\Protobuf\Reflection\Int64T;
 use Thesis\Protobuf\Reflection\ListT;
@@ -143,6 +144,12 @@ abstract class DefaultTypeVisitor implements Visitor
 
     #[\Override]
     public function object(ObjectT $type): mixed
+    {
+        return $this->default($type);
+    }
+
+    #[\Override]
+    public function group(GroupT $type): mixed
     {
         return $this->default($type);
     }

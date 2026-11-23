@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Thesis\Protobuf\Reflection\Internal\Visitor;
 
 use Thesis\Protobuf;
+use Thesis\Protobuf\Reflection\GroupT;
 use Thesis\Protobuf\Reflection\ListT;
 use Thesis\Protobuf\Reflection\MapT;
 use Thesis\Protobuf\Reflection\ObjectT;
@@ -51,6 +52,14 @@ final class RecursionBreakTypeVisitor extends DefaultTypeVisitor
     {
         return isset($this->visited[$type->class])
             ? Protobuf\recursionT(fn() => $this->reflector->type($type->class))
+            : $this->default($type);
+    }
+
+    #[\Override]
+    public function group(GroupT $type): mixed
+    {
+        return isset($this->visited[$type->class])
+            ? new Protobuf\Type\GroupT(Protobuf\recursionT(fn() => $this->reflector->type($type->class)))
             : $this->default($type);
     }
 

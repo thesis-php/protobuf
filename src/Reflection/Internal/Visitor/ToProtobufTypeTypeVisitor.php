@@ -12,6 +12,7 @@ use Thesis\Protobuf\Reflection\EnumT;
 use Thesis\Protobuf\Reflection\Fixed32T;
 use Thesis\Protobuf\Reflection\Fixed64T;
 use Thesis\Protobuf\Reflection\FloatT;
+use Thesis\Protobuf\Reflection\GroupT;
 use Thesis\Protobuf\Reflection\Int32T;
 use Thesis\Protobuf\Reflection\Int64T;
 use Thesis\Protobuf\Reflection\ListT;
@@ -162,5 +163,11 @@ final readonly class ToProtobufTypeTypeVisitor implements Visitor
     public function object(ObjectT $type): Type
     {
         return $this->reflector->type($type->class);
+    }
+
+    #[\Override]
+    public function group(GroupT $type): Type
+    {
+        return new Type\GroupT($this->reflector->type($type->class));
     }
 }

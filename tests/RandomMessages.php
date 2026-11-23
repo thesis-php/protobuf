@@ -12,8 +12,8 @@ use Random\Randomizer;
  * Random message types of the low-level API and random valid messages of them, for the property-based and fuzz
  * tests. The same seed gives the same types and messages: Mt19937 with getInt() and getBytes() is reproducible.
  *
- * A type has scalar fields of every type, enum fields, nested messages down to a bounded depth, lists, packed and
- * not, of scalars, enums and messages, and maps with every valid key type. A value is any valid value of its type:
+ * A type has scalar fields of every type, enum fields, nested messages and groups down to a bounded depth, lists,
+ * packed and not, of scalars, enums, messages and groups, and maps with every valid key type. A value is any valid value of its type:
  * the limits of the integer types, -0.0, NaN, the infinities and subnormals among others.
  *
  * @internal
@@ -96,9 +96,10 @@ final readonly class RandomMessages
      */
     private function fieldType(int $depth): Type
     {
-        return match ($this->random->getInt(0, 9)) {
+        return match ($this->random->getInt(0, 10)) {
             0, 1, 2, 3, 4, 5, 6 => $this->elementType($depth),
             7 => $this->listType($depth),
+            8 => $this->groupOrElementType($depth),
             default => mapT($this->pick(self::KEYS), $this->elementType($depth)),
         };
     }
@@ -119,12 +120,23 @@ final readonly class RandomMessages
     }
 
     /**
+     * A group, which can be a field and a list element but not a map value, while the depth allows one.
+     *
+     * @param non-negative-int $depth
+     * @return Type<mixed, 'repeatable', *, *>
+     */
+    private function groupOrElementType(int $depth): Type
+    {
+        return $depth > 0 ? new Type\GroupT($this->messageType($depth - 1)) : $this->elementType($depth);
+    }
+
+    /**
      * @param non-negative-int $depth
      * @return Type\ListT<mixed>
      */
     private function listType(int $depth): Type\ListT
     {
-        $element = $this->elementType($depth);
+        $element = $this->random->getInt(0, 4) === 0 ? $this->groupOrElementType($depth) : $this->elementType($depth);
 
         $packable = $element->accept(new Type\Visitor\IsPackable());
 
@@ -149,6 +161,7 @@ final readonly class RandomMessages
             $type === bytesT => $this->random->getInt(0, 3) === 0 ? '' : $this->bytes(1, 300),
             $type instanceof Type\EnumT => $this->pick(RandomMessagesColor::cases()),
             $type instanceof Type\MessageT => $this->message($type),
+            $type instanceof Type\GroupT && $type->message instanceof Type\MessageT => $this->message($type->message),
             $type instanceof Type\ListT => $this->list($type),
             $type instanceof Type\MapT => $this->map($type),
             default => throw new \LogicException(\sprintf('No values of %s are generated.', $type::class)),

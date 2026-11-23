@@ -155,6 +155,19 @@ final readonly class Value
     }
 
     /**
+     * A message written as a group, see {@see Type\GroupT}.
+     *
+     * @return self<Message>
+     */
+    public static function group(Message $message): self
+    {
+        return new self(
+            $message,
+            new Type\GroupT($message->type()),
+        );
+    }
+
+    /**
      * @template E
      * @param Type<E, 'repeatable', *, *> $type
      * @param list<E> $values
@@ -179,7 +192,7 @@ final readonly class Value
      * @param Type<V, *, *, 'map-value'> $valueT
      * @param Map<K, V> $map
      * @return self<Map<K, V>>
-     * @throws Exception\InvalidSchema if the key type is not an integer, bool or string, or the value type is a list or a map
+     * @throws Exception\InvalidSchema if the key type is not an integer, bool or string, or the value type is a list, a map or a group
      */
     public static function mapOf(
         Type $keyT,

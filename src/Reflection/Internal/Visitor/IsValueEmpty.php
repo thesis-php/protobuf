@@ -10,6 +10,7 @@ use Thesis\Protobuf\Reflection\BytesT;
 use Thesis\Protobuf\Reflection\DoubleT;
 use Thesis\Protobuf\Reflection\EnumT;
 use Thesis\Protobuf\Reflection\FloatT;
+use Thesis\Protobuf\Reflection\GroupT;
 use Thesis\Protobuf\Reflection\ListT;
 use Thesis\Protobuf\Reflection\MapT;
 use Thesis\Protobuf\Reflection\ObjectT;
@@ -75,6 +76,14 @@ final class IsValueEmpty extends DefaultTypeVisitor
 
     #[\Override]
     public function object(ObjectT $type): \Closure
+    {
+        $class = $type->class;
+
+        return static fn(mixed $value): bool => !$value instanceof $class;
+    }
+
+    #[\Override]
+    public function group(GroupT $type): \Closure
     {
         $class = $type->class;
 

@@ -229,6 +229,35 @@ function messageT(Type\Field ...$fields): Type\MessageT
 }
 
 /**
+ * A message written as a group, see {@see Type\GroupT}.
+ *
+ * @api
+ * @no-named-arguments
+ * @param FieldDescriptor<*> ...$fields
+ * @return Value<Message>
+ */
+function groupOf(FieldDescriptor ...$fields): Value
+{
+    return Value::group(
+        new Message($fields),
+    );
+}
+
+/**
+ * The type of a message field written as a group, see {@see Type\GroupT}. A group of a recursive message type is
+ * `new Type\GroupT(recursionT(...))`.
+ *
+ * @api
+ * @no-named-arguments
+ * @param Type\Field<*> ...$fields
+ * @throws Exception\InvalidSchema if two of the fields have the same number
+ */
+function groupT(Type\Field ...$fields): Type\GroupT
+{
+    return new Type\GroupT(new Type\MessageT(...$fields));
+}
+
+/**
  * @api
  * @param \Closure(): Type\MessageT $continuation
  */
@@ -273,7 +302,7 @@ function listT(Type $element, ?bool $packed = null): Type\ListT
  * @param Type<V, *, *> $valueT
  * @param Map<K, V> $map
  * @return Value<Map<K, V>>
- * @throws Exception\InvalidSchema if the key type is not an integer, bool or string, or the value type is a list or a map
+ * @throws Exception\InvalidSchema if the key type is not an integer, bool or string, or the value type is a list, a map or a group
  */
 function mapOf(
     Type $keyT,
@@ -294,7 +323,7 @@ function mapOf(
  * @param Type<K, *, 'indexed'> $keyT
  * @param Type<V, *, *, 'map-value'> $valueT
  * @return Type\MapT<K, V>
- * @throws Exception\InvalidSchema if the key type is not an integer, bool or string, or the value type is a list or a map
+ * @throws Exception\InvalidSchema if the key type is not an integer, bool or string, or the value type is a list, a map or a group
  */
 function mapT(Type $keyT, Type $valueT): Type\MapT
 {

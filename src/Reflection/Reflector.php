@@ -277,7 +277,7 @@ final class Reflector
 
             $path[] = $segment;
 
-            if (!$type instanceof ObjectT) {
+            if (!$type instanceof ObjectT && !$type instanceof GroupT) {
                 break;
             }
 

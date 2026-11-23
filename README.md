@@ -92,6 +92,7 @@ for both: the encoder takes it and the decoder gives it.
 | `bytes` | `BytesT::T` | `bytesT` | `string` |
 | an enum | `new EnumT(Color::class)` | `enumT(Color::class)` | a case of the int-backed enum `Color` |
 | a message | `new ObjectT(User::class)` | `messageT(...)` | a `User` object; a `Message` in the low-level API |
+| a group | `new GroupT(User::class)` | `groupT(...)` | the same as for a message (see [Groups](#groups)) |
 | `repeated T` | `new ListT(T)` | `listT(T)` | a list (see [Repeated fields](#repeated-fields)) |
 | `map<K, V>` | `new MapT(K, V)` | `mapT(K, V)` | a `Map`, or an array in a property (see [Maps](#maps)) |
 
@@ -161,6 +162,36 @@ $encoder->encode(new Samples([1, 2], [1, 2], ['a', 'b']));
 The decoder accepts both forms whatever the declaration, as protobuf requires: a packable field written packed is
 read into a field declared `packed: false`, and the other way round. Every occurrence of the field adds its elements
 to those read before.
+
+### Groups
+
+A group is a message field written between a start group tag and an end group tag instead of after its length:
+a `group` field of proto2, and a field with `features.message_encoding = DELIMITED` of editions. The encoding belongs
+to the field, not to the message, so the class of a group is an ordinary message class, and another field may hold an
+object of the same class as a message:
+
+```php
+use Thesis\Protobuf\Reflection;
+
+final readonly class SearchResponse
+{
+    /**
+     * @param list<Result> $results
+     */
+    public function __construct(
+        #[Reflection\Field(1, new Reflection\ListT(new Reflection\GroupT(Result::class)))]
+        public array $results = [],
+        #[Reflection\Field(2, new Reflection\ObjectT(Result::class))]
+        public ?Result $best = null,
+    ) {}
+}
+```
+
+In the low-level API the type is `groupT(...)`, which takes the fields as `messageT(...)` does, the value is
+`groupOf(...)`, and both hold a `Message`; a group of a recursive message type is `new Type\GroupT(recursionT(...))`.
+A group can be an element of a repeated field, but not a map value. A group field written as a message, or a message
+field written as a group, is not the field as declared and is kept among the unknown fields. A group counts against
+the [recursion limit](#recursion-limit) as a nested message does.
 
 ### Maps
 

@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Thesis\Protobuf\Internal\Serde;
 
 use BcMath\Number;
+use Thesis\Protobuf\Exception\BufferUnderflow;
 use Thesis\Protobuf\Exception\InvalidSchema;
 use Thesis\Protobuf\Exception\InvalidUtf8;
+use Thesis\Protobuf\Exception\MalformedGroup;
 use Thesis\Protobuf\Exception\MalformedUtf8;
 use Thesis\Protobuf\Exception\ValueOutOfRange;
 use Thesis\Protobuf\FieldDescriptor;
@@ -78,9 +80,12 @@ final class MessageFields
      * Of the variants of a oneof declared with declareOneOfs(), only the last one read is kept, and an occurrence of
      * a variant does not merge into the fields of that variant read before another variant was.
      *
+     * Given `end`, the end group tag of a group as ReadBuffer::readTag() returns it, the fields are those of the group:
+     * they are read up to that tag, which is read too.
+     *
      * @throws ProtobufException
      */
-    public static function deserialize(ReadBuffer $buffer, MessageT $type, ?Message $into = null): Message
+    public static function deserialize(ReadBuffer $buffer, MessageT $type, ?Message $into = null, ?int $end = null): Message
     {
         [$codecs, $tags, $oneofs] = self::plan($type);
 
@@ -102,7 +107,15 @@ final class MessageFields
 
                 $codec = $codecs[$varint] ?? null;
                 if ($codec === null) {
-                    $unknowns[] = Wire\discardUnknown($buffer, Wire\tag($varint));
+                    $tag = Wire\tag($varint);
+
+                    if ($end !== null && self::endsGroup($tag, $varint, $end)) {
+                        $end = null;
+
+                        break;
+                    }
+
+                    $unknowns[] = Wire\discardUnknown($buffer, $tag);
 
                     continue;
                 }
@@ -119,7 +132,11 @@ final class MessageFields
                 }
             }
         } else {
-            self::readWithOneOfs($buffer, $codecs, $tags, $oneofs, $values, $unknowns);
+            self::readWithOneOfs($buffer, $codecs, $tags, $oneofs, $values, $unknowns, $end);
+        }
+
+        if ($end !== null) {
+            throw new BufferUnderflow(\sprintf('Unexpected end of input: the group of field %d is not closed.', $end >> 3));
         }
 
         $fields = [];
@@ -143,6 +160,7 @@ final class MessageFields
      * @param array<int, Tag> $tags
      * @param array<positive-int, mixed> $values
      * @param list<UnknownFields\UnknownField> $unknowns
+     * @param ?int $end the end group tag to read up to, null once it is read
      * @throws ProtobufException
      */
     private static function readWithOneOfs(
@@ -152,6 +170,7 @@ final class MessageFields
         OneOfs $oneofs,
         array &$values,
         array &$unknowns,
+        ?int &$end,
     ): void {
         /** @var array<non-negative-int, OneOfVariant> $set the variant set of each oneof */
         $set = [];
@@ -170,7 +189,15 @@ final class MessageFields
 
             $codec = $codecs[$varint] ?? null;
             if ($codec === null) {
-                $unknowns[] = Wire\discardUnknown($buffer, Wire\tag($varint));
+                $tag = Wire\tag($varint);
+
+                if ($end !== null && self::endsGroup($tag, $varint, $end)) {
+                    $end = null;
+
+                    break;
+                }
+
+                $unknowns[] = Wire\discardUnknown($buffer, $tag);
 
                 continue;
             }
@@ -209,6 +236,27 @@ final class MessageFields
             $set[$variant->oneof] = $variant;
             $values[$tag->num] = $value;
         }
+    }
+
+    /**
+     * Whether the tag ends the group being read. No codec accepts an end group tag, so it is looked for only among
+     * the tags of unknown fields.
+     *
+     * @throws MalformedGroup if the tag ends a group of another field
+     */
+    private static function endsGroup(Tag $tag, int $varint, int $end): bool
+    {
+        if ($tag->type !== WireType::EGROUP) {
+            return false;
+        }
+
+        if ($varint !== $end) {
+            throw new MalformedGroup(
+                \sprintf('Unexpected end group tag of field %d: the group of field %d is open.', $tag->num, $end >> 3),
+            );
+        }
+
+        return true;
     }
 
     /**

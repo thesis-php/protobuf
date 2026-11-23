@@ -1,0 +1,8 @@
+# proto-file: reflection/groups.proto
+# proto-message: test.v1.Groups
+
+# A group without fields is written as its two tags.
+Single {}
+Item {}
+Item {}
+Tree {}

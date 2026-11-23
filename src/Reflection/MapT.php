@@ -23,7 +23,7 @@ final readonly class MapT implements Type
     /**
      * @param Type<K, *, 'indexed', *> $keyT
      * @param Type<V, *, *, 'map-value'> $valueT
-     * @throws InvalidSchema if the key type is not an integer, bool or string, or the value type is a list or a map
+     * @throws InvalidSchema if the key type is not an integer, bool or string, or the value type is a list, a map or a group
      */
     public function __construct(
         public Type $keyT,
@@ -50,6 +50,10 @@ final readonly class MapT implements Type
 
         if ($valueT instanceof ListT || $valueT instanceof self) {
             throw new InvalidSchema('Map values cannot be lists or maps: protobuf has no such fields.');
+        }
+
+        if ($valueT instanceof GroupT) {
+            throw new InvalidSchema('Map values cannot be groups: a map entry holds its value as a message after its length.');
         }
     }
 

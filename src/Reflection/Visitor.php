@@ -113,4 +113,11 @@ interface Visitor
      * @return TResult
      */
     public function object(ObjectT $type): mixed;
+
+    /**
+     * @template T of object
+     * @param GroupT<T> $type
+     * @return TResult
+     */
+    public function group(GroupT $type): mixed;
 }

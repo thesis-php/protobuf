@@ -1,0 +1,14 @@
+# proto-file: reflection/groups.proto
+# proto-message: test.v1.Groups
+
+# The same fields written as a group and as a message.
+Single {
+  id: 9
+  name: "same"
+  Inner { id: 10 }
+}
+plain {
+  id: 9
+  name: "same"
+  Inner { id: 10 }
+}
