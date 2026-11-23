@@ -19,6 +19,12 @@ final class IsObjectType extends DefaultTypeVisitor
     }
 
     #[\Override]
+    public function group(Type $type): bool
+    {
+        return true;
+    }
+
+    #[\Override]
     protected function default(Type $type): bool
     {
         return false;

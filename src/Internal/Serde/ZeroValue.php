@@ -13,6 +13,7 @@ use Thesis\Protobuf\Type\EnumT;
 use Thesis\Protobuf\Type\Fixed32T;
 use Thesis\Protobuf\Type\Fixed64T;
 use Thesis\Protobuf\Type\FloatT;
+use Thesis\Protobuf\Type\GroupT;
 use Thesis\Protobuf\Type\Int32T;
 use Thesis\Protobuf\Type\Int64T;
 use Thesis\Protobuf\Type\ListT;
@@ -32,7 +33,7 @@ use Thesis\Protobuf\Type\Visitor;
  * zero, false, an empty string, an empty message. For an enum it is the case for 0 or, failing that, the first
  * case, as protobuf takes the first value of an enum; an enum without cases has no zero value, hence null.
  *
- * Only the key and the value of a map entry need it, so lists and maps, which can be neither, have none.
+ * Only the key and the value of a map entry need it, so lists, maps and groups, which can be neither, have none.
  *
  * @internal
  * @template-implements Visitor<mixed>
@@ -151,5 +152,11 @@ final class ZeroValue implements Visitor
     public function message(MessageT $type): Message
     {
         return new Message();
+    }
+
+    #[\Override]
+    public function group(GroupT $type): never
+    {
+        throw new \LogicException('A group is neither a map key nor a map value.');
     }
 }

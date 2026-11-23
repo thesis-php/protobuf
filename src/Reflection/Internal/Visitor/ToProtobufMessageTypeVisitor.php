@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Thesis\Protobuf\Reflection\Internal\Visitor;
 
 use Thesis\Protobuf;
+use Thesis\Protobuf\Reflection\GroupT;
 use Thesis\Protobuf\Reflection\ObjectT;
 use Thesis\Protobuf\Reflection\Reflector;
 use Thesis\Protobuf\Reflection\Type;
@@ -22,6 +23,13 @@ final class ToProtobufMessageTypeVisitor extends DefaultTypeVisitor
 
     #[\Override]
     public function object(ObjectT $type): \Closure
+    {
+        /** @phpstan-ignore return.type */
+        return $this->reflector->message(...);
+    }
+
+    #[\Override]
+    public function group(GroupT $type): \Closure
     {
         /** @phpstan-ignore return.type */
         return $this->reflector->message(...);

@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Groups: a message field written between a start group tag and an end group tag, i.e. a `group` field of proto2 and
+  a field with `features.message_encoding = DELIMITED` of editions, is declared with the new `Reflection\GroupT`
+  (`new GroupT(Item::class)`, where an `ObjectT` would be a message) and, in the low-level API, with the new
+  `Type\GroupT`, `groupT()`, `groupOf()` and `Value::group()`. The encoding belongs to the field: an object of the same
+  class may be a group in one field and a message in another. A group can be a list element, not a map value: `MapT`
+  throws `Exception\InvalidSchema` for one. A group the input ends inside throws `Exception\BufferUnderflow`, an end
+  group tag of another field `Exception\MalformedGroup`. Such fields used to be read as unknown fields only.
 - `Type\BytesT` is the type of bytes fields: `bytesT` and `bytesOf()` now refer to it, and `Value::bytes()` is new.
   It is written and read as a string is, but never checked for UTF-8; as protobuf requires, it is declared
   `'not-indexed'` for PHPStan, i.e. not a map key, and so is `Reflection\BytesT`, which the reflection now maps
@@ -45,6 +52,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   as the value type: protobuf has no such fields. They used to be rejected only by PHPStan; a map with `bytesT` keys,
   which used to be written and read as one with `stringT` keys, must be declared with `stringT` keys. For
   `Reflection\MapT` the exception is thrown when the class that declares the field is reflected.
+- `Type\Visitor` and `Reflection\Visitor` have a new method, `group()`, for the group types: a class that implements
+  either must implement it. `Type\Visitor\DefaultTypeVisitor` passes a group to `default()`.
 - Decoding is faster: a tag of a field numbered up to 2047 is made once and shared, a field is looked up by its tag
   as read, varints and tags of one byte are read without a loop, a map entry is read without making a tag for its key
   and value, and a packed record of fixed32, sfixed32, fixed64, sfixed64, float or double elements is written and read

@@ -12,6 +12,7 @@ use Thesis\Protobuf\Type\EnumT;
 use Thesis\Protobuf\Type\Fixed32T;
 use Thesis\Protobuf\Type\Fixed64T;
 use Thesis\Protobuf\Type\FloatT;
+use Thesis\Protobuf\Type\GroupT;
 use Thesis\Protobuf\Type\Int32T;
 use Thesis\Protobuf\Type\Int64T;
 use Thesis\Protobuf\Type\ListT;
@@ -147,10 +148,14 @@ final class FieldCodecs implements Visitor
     #[\Override]
     public function list(ListT $type): FieldCodec
     {
-        // ListT rejects lists and maps as elements, so the element is a scalar, an enum or a message.
-        /** @var SingularCodec<mixed> $element */
         $element = self::of($type->element);
 
+        if ($element instanceof GroupCodec) {
+            return new GroupListCodec($element);
+        }
+
+        // ListT rejects lists and maps as elements, so the element is a scalar, an enum or a message.
+        /** @var SingularCodec<mixed> $element */
         $packable = $type->element->accept(new IsPackable());
 
         return new ListCodec($element, $type->packed ?? $packable, $packable);
@@ -161,7 +166,7 @@ final class FieldCodecs implements Visitor
     {
         $zero = new ZeroValue();
 
-        // MapT rejects lists and maps as keys and values, so both are scalars, enums or messages.
+        // MapT rejects lists, maps and groups as keys and values, so both are scalars, enums or messages.
         /** @var SingularCodec<mixed> $key */
         $key = self::of($type->keyT);
         /** @var SingularCodec<mixed> $value */
@@ -186,5 +191,12 @@ final class FieldCodecs implements Visitor
     public function message(MessageT $type): FieldCodec
     {
         return new SingularCodec(SerializeMessage::T, new DeserializeMessage($type), WireType::BYTES);
+    }
+
+    #[\Override]
+    public function group(GroupT $type): FieldCodec
+    {
+        // A recursive message type gives its type only to a visitor.
+        return new GroupCodec($type->message->accept(new MessageTypeOf()));
     }
 }

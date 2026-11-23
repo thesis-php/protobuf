@@ -6,6 +6,7 @@ namespace Thesis\Protobuf\Reflection\Internal\Visitor;
 
 use Thesis\Protobuf\Map;
 use Thesis\Protobuf\Message;
+use Thesis\Protobuf\Reflection\GroupT;
 use Thesis\Protobuf\Reflection\ListT;
 use Thesis\Protobuf\Reflection\MapT;
 use Thesis\Protobuf\Reflection\ObjectT;
@@ -96,6 +97,18 @@ final class ToValueTypeVisitor extends DefaultTypeVisitor
 
     #[\Override]
     public function object(ObjectT $type): \Closure
+    {
+        $reflector = $this->reflector;
+        $class = $type->class;
+
+        return static function (mixed $message) use ($reflector, $class): object {
+            /** @var Message $message */
+            return $reflector->map($message, $class);
+        };
+    }
+
+    #[\Override]
+    public function group(GroupT $type): \Closure
     {
         $reflector = $this->reflector;
         $class = $type->class;

@@ -12,6 +12,7 @@ use Thesis\Protobuf\Reflection\EnumT;
 use Thesis\Protobuf\Reflection\Fixed32T;
 use Thesis\Protobuf\Reflection\Fixed64T;
 use Thesis\Protobuf\Reflection\FloatT;
+use Thesis\Protobuf\Reflection\GroupT;
 use Thesis\Protobuf\Reflection\Int32T;
 use Thesis\Protobuf\Reflection\Int64T;
 use Thesis\Protobuf\Reflection\ListT;
@@ -227,5 +228,15 @@ final readonly class ToProtobufValueTypeVisitor implements Visitor
 
         /** @phpstan-ignore return.type */
         return static fn(object $message): Protobuf\Value => new Protobuf\Value($reflector->message($message), $messageT);
+    }
+
+    #[\Override]
+    public function group(GroupT $type): \Closure
+    {
+        $reflector = $this->reflector;
+        $groupT = new Type\GroupT($reflector->type($type->class));
+
+        /** @phpstan-ignore return.type */
+        return static fn(object $message): Protobuf\Value => new Protobuf\Value($reflector->message($message), $groupT);
     }
 }

@@ -7,6 +7,7 @@ namespace Thesis\Protobuf\Reflection\Internal\Visitor;
 use Thesis\Protobuf;
 use Thesis\Protobuf\Internal\Serde\ZeroValue;
 use Thesis\Protobuf\Map;
+use Thesis\Protobuf\Reflection\GroupT;
 use Thesis\Protobuf\Reflection\ListT;
 use Thesis\Protobuf\Reflection\MapT;
 use Thesis\Protobuf\Reflection\ObjectT;
@@ -63,6 +64,12 @@ final class ToZeroValueTypeVisitor extends DefaultTypeVisitor
 
     #[\Override]
     public function object(ObjectT $type): null
+    {
+        return null;
+    }
+
+    #[\Override]
+    public function group(GroupT $type): null
     {
         return null;
     }

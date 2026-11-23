@@ -108,4 +108,9 @@ interface Visitor
      * @return TResult
      */
     public function message(MessageT $type): mixed;
+
+    /**
+     * @return TResult
+     */
+    public function group(GroupT $type): mixed;
 }

@@ -12,6 +12,7 @@ use Thesis\Protobuf\Reflection\DoubleT;
 use Thesis\Protobuf\Reflection\EnumT;
 use Thesis\Protobuf\Reflection\Fixed64T;
 use Thesis\Protobuf\Reflection\FloatT;
+use Thesis\Protobuf\Reflection\GroupT;
 use Thesis\Protobuf\Reflection\Internal\Api\ExpectedPhpType;
 use Thesis\Protobuf\Reflection\ListT;
 use Thesis\Protobuf\Reflection\MapT;
@@ -91,6 +92,12 @@ final class ToExpectedPhpType extends DefaultTypeVisitor
 
     #[\Override]
     public function object(ObjectT $type): ExpectedPhpType
+    {
+        return new ExpectedPhpType(class: $type->class);
+    }
+
+    #[\Override]
+    public function group(GroupT $type): ExpectedPhpType
     {
         return new ExpectedPhpType(class: $type->class);
     }

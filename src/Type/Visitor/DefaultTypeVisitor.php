@@ -12,6 +12,7 @@ use Thesis\Protobuf\Type\EnumT;
 use Thesis\Protobuf\Type\Fixed32T;
 use Thesis\Protobuf\Type\Fixed64T;
 use Thesis\Protobuf\Type\FloatT;
+use Thesis\Protobuf\Type\GroupT;
 use Thesis\Protobuf\Type\Int32T;
 use Thesis\Protobuf\Type\Int64T;
 use Thesis\Protobuf\Type\ListT;
@@ -142,6 +143,12 @@ abstract class DefaultTypeVisitor implements Visitor
 
     #[\Override]
     public function message(MessageT $type): mixed
+    {
+        return $this->default($type);
+    }
+
+    #[\Override]
+    public function group(GroupT $type): mixed
     {
         return $this->default($type);
     }
