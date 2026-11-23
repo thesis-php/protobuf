@@ -143,7 +143,8 @@ final class Map implements
         }
 
         if (\is_string($value)) {
-            $first = \ord($value);
+            // The first byte; an empty string has none and is its own slot.
+            $first = \ord($value[0] ?? "\0");
 
             // 0x30-0x39 are the digits, 0x2D is '-', 0x60 is the escape character.
             return ($first >= 0x30 && $first <= 0x39) || $first === 0x2D || $first === 0x60 ? self::ESCAPE . $value : $value;
