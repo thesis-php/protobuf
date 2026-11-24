@@ -12,29 +12,30 @@ use Thesis\Protobuf\Reflection\Reflector;
 use Thesis\Protobuf\UnknownFields\UnknownField;
 
 #[CoversClass(Encoder\Builder::class)]
+#[CoversClass(Decoder\Builder::class)]
 #[CoversClass(ReflectionEncoder::class)]
 #[CoversClass(Reflector::class)]
 #[CoversClass(UnknownFields::class)]
 final class UnknownFieldsEncodeTest extends TestCase
 {
-    public function testADecodedObjectIsEncodedBackByteForByteWithTheDecoderHandler(): void
+    public function testADecodedObjectIsEncodedBackByteForByteByDefault(): void
     {
         $bytes = Encoder\Builder::buildDefault()->encode(self::full());
 
-        $decoded = new Decoder\Builder()
-            ->withUnknownHandler(UnknownFields::handler())
-            ->build()
-            ->decode($bytes, UnknownFieldsEncodeTestPartial::class);
+        $decoded = Decoder\Builder::buildDefault()->decode($bytes, UnknownFieldsEncodeTestPartial::class);
 
+        self::assertNotSame([], UnknownFields::of($decoded));
         self::assertSame(bin2hex($bytes), bin2hex(Encoder\Builder::buildDefault()->encode($decoded)));
     }
 
     public function testADecodedObjectIsEncodedWithoutUnknownFieldsWithoutTheDecoderHandler(): void
     {
-        $decoded = Decoder\Builder::buildDefault()->decode(
-            Encoder\Builder::buildDefault()->encode(self::full()),
-            UnknownFieldsEncodeTestPartial::class,
-        );
+        $decoded = new Decoder\Builder()
+            ->withUnknownHandler(null)
+            ->build()
+            ->decode(Encoder\Builder::buildDefault()->encode(self::full()), UnknownFieldsEncodeTestPartial::class);
+
+        self::assertSame([], UnknownFields::of($decoded));
 
         self::assertSame(
             bin2hex(Encoder\Builder::buildDefault()->encode(self::partial())),
@@ -54,6 +55,16 @@ final class UnknownFieldsEncodeTest extends TestCase
             bin2hex(Encoder\Builder::buildDefault()->encode(self::partial())),
             bin2hex(new Encoder\Builder()->withUnknownProvider(null)->build()->encode($decoded)),
         );
+    }
+
+    public function testAHandlerIsSetOnACopyOfTheDecoderBuilder(): void
+    {
+        $builder = new Decoder\Builder();
+        $bytes = Encoder\Builder::buildDefault()->encode(self::full());
+
+        $builder->withUnknownHandler(null);
+
+        self::assertNotSame([], UnknownFields::of($builder->build()->decode($bytes, UnknownFieldsEncodeTestPartial::class)));
     }
 
     public function testAProviderIsSetOnACopyOfTheBuilder(): void

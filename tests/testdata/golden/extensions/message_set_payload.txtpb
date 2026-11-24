@@ -1,0 +1,4 @@
+# proto-file: reflection/extensions.proto
+# proto-message: test.v1.Container
+
+[test.v1.Payload.payload] { text: "p" }

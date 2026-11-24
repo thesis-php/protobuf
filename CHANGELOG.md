@@ -9,6 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Extensions are read: `Decoder\Builder::buildExtensions()` builds `Extensions`, with the options of the builder,
+  whose `get($object, $extension)` decodes an extension of a proto2 or editions schema from the unknown fields of the
+  object when it is first asked for, and `has()` tells whether the object has it. The new `Reflection\Extension`
+  declares one with the class it extends, its number and its type, any type of a field but a map, for which it throws
+  `Exception\InvalidSchema`. The value is the one a property of the type would hold, read as a field is: a repeated
+  extension is concatenated, packed or not, a message or a group is merged, the last occurrence of any other wins, and
+  an occurrence of another wire type or with an enum number without a case is skipped. An absent extension is null,
+  a repeated one an empty list. The unknown fields are taken from the unknown handler of the builder, which must be
+  an `UnknownFields\Provider`, as the default one is, or the provider must be passed to `buildExtensions()`, which
+  otherwise throws `\LogicException`; the objects of the value get their own, so their extensions can be read in turn.
+  The value read is kept for as long as the object and the instance of the extension live, so every call gives the
+  same one; a read that fails is not kept. The UTF-8 check and the recursion limit apply when an extension is read,
+  not when the object is decoded, and `Exception\MalformedUtf8` names the properties from the class of the value.
+  The decoder does not change: extensions are not registered in it.
+- Extensions are written: `Extensions::set($object, $extension, $value)` writes the value as a field of its type in
+  place of the unknown fields of the extension, where the first of them was, or after the other unknown fields, and
+  `Extensions::clear()`, or `set()` with null or an empty list, removes them; the encoder then writes them after the
+  known fields. The value must be of the type of the extension (`\InvalidArgumentException`), fit its protobuf type
+  (`Exception\ValueOutOfRange`) and hold valid UTF-8 unless the builder turned the check off (`Exception\InvalidUtf8`);
+  the object keeps its extension if `set()` throws. The objects of the value are written with their unknown fields
+  and extensions. The fields are replaced in the new `UnknownFields\Store`, a `Provider` whose `replace()` sets the
+  unknown fields of an object, which `UnknownFields` implements; `set()` throws `\LogicException` for a provider that
+  is not one.
+- MessageSet: the extensions of a class marked with the new `Reflection\MessageSet` attribute, i.e. a message with
+  `option message_set_wire_format = true`, are read and written as the items of a MessageSet, a group of field 1 with
+  the number of the extension in field 2 and the bytes of the message in field 3. The fields of an item are read in
+  any order, other fields of it are skipped, the items of an extension, and the extension written as a field of its
+  number, are merged, and an item of another number is written back as it was. An extension of a MessageSet that is
+  not a message throws `Exception\InvalidSchema`.
+- `Decoder\Builder::withUnknownHandler()` accepts null, which drops the unknown fields (see Changed).
 - Groups: a message field written between a start group tag and an end group tag, i.e. a `group` field of proto2 and
   a field with `features.message_encoding = DELIMITED` of editions, is declared with the new `Reflection\GroupT`
   (`new GroupT(Item::class)`, where an `ObjectT` would be a message) and, in the low-level API, with the new
@@ -36,6 +66,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The decoder keeps unknown fields by default: `Decoder\Builder` uses `UnknownFields::handler()` unless
+  `withUnknownHandler()` sets another handler, or null. They used to be dropped. Since the encoder takes them from
+  `UnknownFields::handler()` by default, an object decoded and encoded again by default is now written with the fields
+  of the input its class does not declare, after its known ones, instead of without them: a message is forwarded
+  without losing them, and extensions can be read. The fields of an object are kept in a `WeakMap`, as their bytes,
+  for as long as the object lives: decoding an object without unknown fields costs nothing more, but one with many
+  keeps them in memory. To drop them as before, build the decoder `withUnknownHandler(null)`.
 - Strings are checked for valid UTF-8, as protobuf requires and its reference implementations do: decoding a string
   field, list element, map key or map value that is not valid UTF-8 throws `Exception\MalformedUtf8`, encoding one
   `Exception\InvalidUtf8`. Overlong encodings, surrogates and code points above U+10FFFF are invalid. Such strings

@@ -1,0 +1,17 @@
+// The schema of ../../../reflection/extensions.proto with the other encoding of its repeated int32 extensions:
+// packed_numbers is not packed and numbers is. It has no PHP class: the golden files written with it are read with
+// the classes and the extensions of extensions.proto.
+syntax = "proto2";
+
+package test.v1;
+
+message Extendable {
+  optional int32 id = 1;
+  extensions 100 to max;
+}
+
+extend Extendable {
+  repeated int32 packed_numbers = 104 [packed = false];
+  repeated int32 numbers = 105 [packed = true];
+  repeated string tags = 106;
+}

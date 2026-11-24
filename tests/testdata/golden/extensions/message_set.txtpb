@@ -1,0 +1,6 @@
+# proto-file: reflection/extensions.proto
+# proto-message: test.v1.Container
+# The extensions of a MessageSet, written as its items.
+
+[test.v1.Payload.payload] { text: "p" }
+[test.v1.Counter.counter] { value: 7 }

@@ -21,6 +21,20 @@ final readonly class ExpectedPhpType
     ) {}
 
     /**
+     * Whether the value is one of the types, as a property of the type would hold it: an int is a float too.
+     */
+    public function holds(mixed $value): bool
+    {
+        if ($this->class !== null && $value instanceof $this->class) {
+            return true;
+        }
+
+        $type = get_debug_type($value);
+
+        return \in_array($type, $this->builtins, true) || ($type === 'int' && \in_array('float', $this->builtins, true));
+    }
+
+    /**
      * @param class-string $self the class that declares the property, which "self" and "static" stand for
      */
     public function accepts(?\ReflectionType $type, string $self): bool

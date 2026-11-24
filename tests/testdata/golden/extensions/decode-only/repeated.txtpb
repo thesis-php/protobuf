@@ -1,0 +1,7 @@
+# proto-file: golden/extensions/decode-only/extensions.proto
+# proto-message: test.v1.Extendable
+# The input of ../repeated.txtpb written by a schema where the packed extension is not packed, and the other way round.
+
+[test.v1.packed_numbers]: [1, 2, 300]
+[test.v1.numbers]: [-1, 2]
+[test.v1.tags]: ["a", "б"]

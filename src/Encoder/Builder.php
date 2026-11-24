@@ -37,7 +37,7 @@ final class Builder
     /**
      * Sets where the unknown fields of each object encoded, nested ones included, are taken from: they are written
      * after its known fields. The default is `UnknownFields::handler()`, which holds the fields of the objects decoded
-     * by a decoder built `withUnknownHandler(UnknownFields::handler())`, and nothing for any other object.
+     * by a decoder built with its default unknown handler, the same one, and nothing for any other object.
      * Null writes no unknown fields and does not look them up.
      */
     public function withUnknownProvider(?UnknownFields\Provider $provider): self

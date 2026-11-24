@@ -412,21 +412,22 @@ $decoder = new Decoder\Builder()
 When a protobuf message is decoded, it may contain fields that are not defined in the target class.
 This happens when the sender uses a newer version of the schema, but the receiver has not been updated yet.
 
-By default, unknown fields are silently skipped during decoding. However, you can configure the `Decoder` to capture them,
-which is useful for logging, debugging, or forwarding messages without data loss.
+By default, the `Decoder` keeps them, so that the `Encoder` writes them back and a message is forwarded without data
+loss, and so that [extensions](#extensions), which are unknown fields too, can be read. A handler of your own, given
+with `withUnknownHandler()`, can log them instead, or anything else; `withUnknownHandler(null)` drops them.
 
 #### Storing unknown fields in memory
 
-The `UnknownFields` handler stores unknown fields in a `WeakMap` attached to the decoded object.
-Once the object is garbage collected, the unknown fields are automatically cleaned up.
+The default handler, `UnknownFields::handler()`, stores unknown fields in a `WeakMap` attached to the decoded object,
+for as long as the object lives: once the object is garbage collected, the unknown fields are cleaned up too. An object
+without unknown fields costs nothing, but one with many keeps their bytes in memory beside it; if that is not wanted,
+drop them with `withUnknownHandler(null)`.
 
 ```php
 use Thesis\Protobuf\Decoder;
 use Thesis\Protobuf\UnknownFields;
 
-$decoder = new Decoder\Builder()
-    ->withUnknownHandler(UnknownFields::handler())
-    ->build();
+$decoder = Decoder\Builder::buildDefault();
 
 $request = $decoder->decode($buffer, CreateUserRequest::class);
 
@@ -489,18 +490,15 @@ final readonly class MyHandler implements UnknownFields\Handler
 #### Writing unknown fields back
 
 The `Encoder` writes the unknown fields of every object it encodes, nested objects included, after its known fields.
-By default it takes them from `UnknownFields::handler()`, so an object decoded with that handler is encoded with
+By default it takes them from `UnknownFields::handler()`, so an object decoded by default is encoded with
 the fields it was read with, and a service on an older schema can forward a message without losing the fields
 of a newer one:
 
 ```php
 use Thesis\Protobuf\Decoder;
 use Thesis\Protobuf\Encoder;
-use Thesis\Protobuf\UnknownFields;
 
-$decoder = new Decoder\Builder()
-    ->withUnknownHandler(UnknownFields::handler())
-    ->build();
+$decoder = Decoder\Builder::buildDefault();
 $encoder = Encoder\Builder::buildDefault();
 
 $request = $decoder->decode($buffer, CreateUserRequest::class);
@@ -545,6 +543,165 @@ $encoder = new Encoder\Builder()
 
 The low-level `Serializer::serialize()` writes `Message::$unknowns` the same way, after the known fields of each
 message.
+
+### Extensions
+
+An extension is a field that a proto2 or editions schema declares with `extend`, outside the message it belongs to, under
+a number of the extension range of that message. On the wire it is a field like any other, but the class of the message
+does not declare it, so the decoder keeps it among the [unknown fields](#unknown-fields). `Extensions`, built by the
+same `Decoder\Builder` as the decoder, reads it from there when it is asked for, typed by a `Reflection\Extension`:
+the class it extends, its number and its type.
+
+```protobuf
+message Request {
+  optional int32 id = 1;
+  extensions 100 to max;
+}
+
+extend Request {
+  optional string trace_id = 100;
+  repeated int32 shards = 101;
+}
+```
+
+```php
+use Thesis\Protobuf\Decoder;
+use Thesis\Protobuf\Reflection;
+use Thesis\Protobuf\Reflection\Extension;
+
+final class RequestExtensions
+{
+    /**
+     * @return Extension<string>
+     */
+    public static function traceId(): Extension
+    {
+        /** @var Extension<string> $extension */
+        static $extension = new Extension(Request::class, 100, Reflection\StringT::T);
+
+        return $extension;
+    }
+
+    /**
+     * @return Extension<list<int>>
+     */
+    public static function shards(): Extension
+    {
+        /** @var Extension<list<int>> $extension */
+        static $extension = new Extension(Request::class, 101, new Reflection\ListT(Reflection\Int32T::T));
+
+        return $extension;
+    }
+}
+
+$builder = new Decoder\Builder();
+$decoder = $builder->build();
+$extensions = $builder->buildExtensions();
+
+$request = $decoder->decode($buffer, Request::class);
+
+$extensions->has($request, RequestExtensions::traceId()); // true
+$extensions->get($request, RequestExtensions::traceId()); // a string, or null if the request has none
+$extensions->get($request, RequestExtensions::shards());  // a list, empty if the request has none
+```
+
+PHP allows no `new` in a class constant, so an extension is declared by a static method that keeps it in a static
+variable and returns the same instance on every call. An extension can be of any type a field can, but a map, which
+protobuf does not allow: `Extension` throws `Exception\InvalidSchema` for one. Reading or writing an extension of
+an object of another class than the one it extends throws `\InvalidArgumentException`.
+
+The value is the one a property of the type would hold: an `ObjectT` or a `GroupT` extension is an object of its class,
+a `Uint64T` one a `BcMath\Number`, an enum one a case, a repeated one a list. It is read as a field is: the occurrences
+of a repeated extension are concatenated, packed or not, those of a message or a group are merged, and for any other
+the last one wins. An occurrence written with another wire type than the extension is declared with, or that holds an
+enum number without a case, is skipped. An extension the object does not have is `null`, a repeated one an empty list.
+The objects of the value get their own unknown fields, so their extensions can be read in turn.
+
+The decoder knows no extensions, so it does not check them: a malformed extension, a string in it that is not valid
+UTF-8 or messages in it nested deeper than the recursion limit fail only when the extension is read, with
+`ProtobufException`, which names the field numbers from that of the extension and the properties from the class of its
+value. `buildExtensions()` gives `Extensions` the options of the builder, so that an extension is read as the decoder
+would read it as a field: the recursion limit, counting the messages and groups of the value as if the extension were
+a field of a top-level message, the UTF-8 check, the zero values of missing fields, and the unknown handler, which
+gets the unknown fields of the objects of the value.
+
+The unknown fields of an object are taken from the handler of the builder, which must therefore give them back, as the
+default `UnknownFields::handler()` does: a handler that is not an `UnknownFields\Provider`, such as
+`UnknownFieldsCallback`, or none, needs the provider of the fields to be passed, or `buildExtensions()` throws
+`\LogicException`:
+
+```php
+use Thesis\Protobuf\Decoder;
+
+$builder = new Decoder\Builder()->withUnknownHandler($myHandler);
+$extensions = $builder->buildExtensions($myProvider);
+```
+
+An extension is decoded once for an object, when it is first asked for: `has()` and `get()`, and every later call
+for the same object and the same instance of the extension, give the value read then, the same objects included, so
+a change made to them is seen by later calls. `Extensions` keeps the value in a `WeakMap` for as long as both the
+object and the instance of the extension live; a read that fails is not kept. The unknown fields that the provider
+gives for an object must therefore change only through `set()` and `clear()` of the same `Extensions`. Build it once:
+it also reflects the classes of the values once.
+
+#### Writing extensions
+
+`set()` sets an extension of an object, decoded or made with `new`, and `clear()` removes it; the encoder then writes
+the object with it:
+
+```php
+use Thesis\Protobuf\Decoder;
+use Thesis\Protobuf\Encoder;
+
+$extensions = new Decoder\Builder()->buildExtensions();
+$encoder = Encoder\Builder::buildDefault();
+
+$request = new Request(id: 1);
+$extensions->set($request, RequestExtensions::traceId(), 'abc');
+$extensions->set($request, RequestExtensions::shards(), [1, 2]); // a repeated extension is set to the whole list
+$extensions->clear($request, RequestExtensions::shards());        // as set() with null, or [] for a repeated one
+
+$bytes = $encoder->encode($request); // the id, then the trace_id
+```
+
+The value is written as a field of its type would be, when `set()` is called, and put among the unknown fields of
+the object in place of those the extension had, where the first of them was, or after the other unknown fields if it
+had none. The encoder writes the unknown fields after the known ones, so the extensions come after the fields of the
+object; in the order they are set otherwise, as protoc writes them if they are set in the order of their numbers.
+A change made to an object of the value afterwards is not written, and `get()` gives the value read back from what was
+written: an equal object, not the same one, and a `float` rounded to 32 bits. The unknown fields of the objects of the
+value, their own extensions included, are written with them.
+
+The value must be of the type of the extension, as a property of the type would be, or `set()` throws
+`\InvalidArgumentException`, and fit its protobuf type, or it throws `Exception\ValueOutOfRange`; a string must be
+valid UTF-8, unless the builder turned the check off, or it throws `Exception\InvalidUtf8`. Both name the field
+numbers from that of the extension and the properties from the class of its value. The object keeps the extension it
+had if `set()` throws. The value is checked with the options of the decoder because it is read back with them.
+
+The fields are replaced in an `UnknownFields\Store`, a provider that lets them be replaced, as the default
+`UnknownFields::handler()` does: `set()` with a provider that is not one throws `\LogicException`. The encoder must
+take the unknown fields from the same store, as it does by default; an encoder built `withUnknownProvider(null)` writes
+no extensions, and one with another provider those that provider gives.
+
+#### MessageSet
+
+A message with `option message_set_wire_format = true` is a MessageSet: its extensions, which can only be messages, are
+written as the items of a repeated group of field 1, each with the number of the extension in field 2 (`type_id`) and
+the bytes of the message in field 3. Its class is marked with `Reflection\MessageSet`, and its extensions are read and
+written through the same API:
+
+```php
+use Thesis\Protobuf\Reflection;
+
+#[Reflection\MessageSet]
+final readonly class Container {}
+```
+
+An item is read whatever the order of its fields, and its other fields are skipped; the items of an extension are
+merged, and so is the extension written as an ordinary field of its number, which parsers accept too, in the order of
+the input. An item of another number stays among the unknown fields and is written back as it was. `set()` writes
+the type_id, then the message. An extension of a MessageSet other than a message, a group or a list among them,
+throws `Exception\InvalidSchema` when it is read or written.
 
 ### Performance
 

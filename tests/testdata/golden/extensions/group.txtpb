@@ -1,0 +1,7 @@
+# proto-file: reflection/extensions.proto
+# proto-message: test.v1.Extendable
+
+[test.v1.block] {
+  id: 4
+  name: "block"
+}
