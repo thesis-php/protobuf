@@ -18,6 +18,9 @@ use Thesis\Protobuf\Reflection\Reflector;
  * protoc writes the entries of a map in the order of their keys (it runs with --deterministic_output), while
  * the library writes them in the order the map holds them: the expected objects hold them in the order of their keys,
  * so the bytes are the same.
+ *
+ * The extensions directory is checked by ExtensionsGoldenFilesTest: an object does not hold its extensions, so its
+ * expected.php gives more than the object of each case.
  */
 #[CoversClass(Reflector::class)]
 #[CoversClass(Serializer::class)]
@@ -42,6 +45,8 @@ final class GoldenFilesTest extends TestCase
         'oneof/email',
         'oneof/telegram',
     ];
+
+    private const string EXTENSIONS = 'extensions';
 
     /**
      * @param non-empty-string $case
@@ -120,6 +125,11 @@ final class GoldenFilesTest extends TestCase
 
             if ($file->getExtension() === 'txtpb') {
                 $case = substr($file->getPathname(), \strlen(self::DIR) + 1, -\strlen('.txtpb'));
+
+                if (str_starts_with($case, self::EXTENSIONS . '/')) {
+                    continue;
+                }
+
                 self::assertFileExists(self::DIR . "/{$case}.bin", 'Run `make golden` to write it.');
                 $inputs[] = $case;
             }
@@ -148,6 +158,11 @@ final class GoldenFilesTest extends TestCase
 
         foreach ($paths as $path) {
             $schema = basename(\dirname($path));
+
+            if ($schema === self::EXTENSIONS) {
+                continue;
+            }
+
             ReflectionFixture::load($schema);
 
             /** @var array<non-empty-string, object> $objects */
@@ -242,7 +257,7 @@ final class GoldenFilesTest extends TestCase
      * Turns a value into one that assertSame() compares exactly: a float by its bits, so that -0.0 differs from 0.0
      * and NAN equals itself, a Number by its digits and the entries of a map in their order.
      */
-    private static function dump(mixed $value): mixed
+    public static function dump(mixed $value): mixed
     {
         return match (true) {
             \is_float($value) => \sprintf('float(%s)', bin2hex(pack('E', $value))),

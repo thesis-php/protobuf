@@ -1,0 +1,9 @@
+# proto-file: reflection/extensions.proto
+# proto-message: test.v1.Extendable
+
+id: 1
+[test.v1.count]: -5
+[test.v1.label]: "привет"
+[test.v1.big]: 18446744073709551615
+[test.v1.tone]: TONE_HIGH
+[test.v1.far]: -7

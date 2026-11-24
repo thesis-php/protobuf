@@ -1,0 +1,73 @@
+syntax = "proto2";
+
+package test.v1;
+
+enum Tone {
+  TONE_LOW = 1;
+  TONE_HIGH = 2;
+}
+
+message Extendable {
+  optional int32 id = 1;
+  extensions 100 to max;
+}
+
+// A message an extension holds, with an extension of its own.
+message Note {
+  optional string text = 1;
+  extensions 100 to 199;
+}
+
+extend Note {
+  optional int32 priority = 100;
+}
+
+extend Extendable {
+  optional int32 count = 100;
+  optional string label = 101;
+  optional uint64 big = 102;
+  optional Tone tone = 103;
+  repeated int32 packed_numbers = 104 [packed = true];
+  repeated int32 numbers = 105;
+  repeated string tags = 106;
+  optional Note note = 107;
+  optional group Block = 108 {
+    optional int32 id = 1;
+    optional string name = 2;
+  }
+  // The largest field number: its tag takes five bytes.
+  optional sint32 far = 536870911;
+}
+
+// A message whose scope declares an extension of another message.
+message Scope {
+  extend Extendable {
+    optional Scope scoped = 200;
+  }
+
+  optional int32 depth = 1;
+}
+
+// A MessageSet: its extensions are written as items of a group of field 1.
+message Container {
+  option message_set_wire_format = true;
+
+  extensions 4 to max;
+}
+
+message Payload {
+  extend Container {
+    optional Payload payload = 100;
+  }
+
+  optional string text = 1;
+}
+
+message Counter {
+  extend Container {
+    // A number above the largest field number: a MessageSet writes it as a value, not in a tag.
+    optional Counter counter = 1000000000;
+  }
+
+  optional int32 value = 1;
+}

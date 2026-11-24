@@ -1,0 +1,5 @@
+# proto-file: golden/extensions/decode-only/message_set.proto
+# proto-message: test.v1.Container
+# The input of ../message_set_payload.txtpb written by a schema without message_set_wire_format: a parser of a MessageSet accepts its extensions written as fields.
+
+[test.v1.Payload.payload] { text: "p" }

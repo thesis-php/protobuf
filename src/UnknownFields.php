@@ -5,14 +5,15 @@ declare(strict_types=1);
 namespace Thesis\Protobuf;
 
 /**
- * Keeps the unknown fields of each decoded object in a `WeakMap`, as a `Handler` of the decoder, and gives them back
- * to the encoder, as its default `Provider`, so that a decoded object is encoded with the fields it was read with.
+ * Keeps the unknown fields of each decoded object in a `WeakMap`, as the default `Handler` of the decoder, and gives
+ * them back to the encoder, as its default `Provider`, so that a decoded object is encoded with the fields it was read
+ * with. As a `Store`, it lets `Extensions` replace them to set an extension.
  *
  * @api
  */
 final class UnknownFields implements
     UnknownFields\Handler,
-    UnknownFields\Provider
+    UnknownFields\Store
 {
     private static self $instance;
 
@@ -43,6 +44,16 @@ final class UnknownFields implements
     public function handle(object $message, array $unknowns): void
     {
         $this->map[$message] = $unknowns;
+    }
+
+    #[\Override]
+    public function replace(object $message, array $unknowns): void
+    {
+        if ($unknowns === []) {
+            unset($this->map[$message]);
+        } else {
+            $this->map[$message] = $unknowns;
+        }
     }
 
     #[\Override]

@@ -1,0 +1,2 @@
+# proto-file: reflection/extensions.proto
+# proto-message: test.v1.Extendable

@@ -1,0 +1,5 @@
+# proto-file: reflection/extensions.proto
+# proto-message: test.v1.Extendable
+# An extension declared in the scope of a message.
+
+[test.v1.Scope.scoped] { depth: 5 }

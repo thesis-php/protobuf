@@ -1,0 +1,9 @@
+# proto-file: reflection/extensions.proto
+# proto-message: test.v1.Extendable
+# The message the extension holds has an extension of its own.
+
+id: 2
+[test.v1.note] {
+  text: "note"
+  [test.v1.priority]: 3
+}

@@ -1,0 +1,6 @@
+# proto-file: reflection/extensions.proto
+# proto-message: test.v1.Extendable
+
+[test.v1.packed_numbers]: [1, 2, 300]
+[test.v1.numbers]: [-1, 2]
+[test.v1.tags]: ["a", "б"]

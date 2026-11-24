@@ -1,0 +1,18 @@
+// The MessageSet Container of ../../../reflection/extensions.proto without message_set_wire_format, so that its
+// extension is written as a field of its number. It has no PHP class: the golden files written with it are read with
+// the classes and the extensions of extensions.proto.
+syntax = "proto2";
+
+package test.v1;
+
+message Container {
+  extensions 4 to max;
+}
+
+message Payload {
+  extend Container {
+    optional Payload payload = 100;
+  }
+
+  optional string text = 1;
+}

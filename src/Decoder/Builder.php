@@ -7,6 +7,7 @@ namespace Thesis\Protobuf\Decoder;
 use Psr\SimpleCache\CacheInterface;
 use Thesis\Protobuf\Decoder;
 use Thesis\Protobuf\Decoder\Internal\ReflectionDecoder;
+use Thesis\Protobuf\Extensions;
 use Thesis\Protobuf\Reflection\Reflector;
 use Thesis\Protobuf\Serializer;
 use Thesis\Protobuf\UnknownFields;
@@ -16,7 +17,7 @@ use Thesis\Protobuf\UnknownFields;
  */
 final class Builder
 {
-    private ?UnknownFields\Handler $unknowns = null;
+    private ?UnknownFields\Handler $unknowns;
 
     /** @var non-negative-int */
     private int $recursionLimit = Serializer::DEFAULT_RECURSION_LIMIT;
@@ -24,6 +25,11 @@ final class Builder
     private bool $validateUtf8 = true;
 
     private bool $missingFieldsAsZeroValues = false;
+
+    public function __construct()
+    {
+        $this->unknowns = UnknownFields::handler();
+    }
 
     /**
      * @deprecated Does nothing: the reflection of the classes is kept in memory for as long as the built instance
@@ -34,7 +40,13 @@ final class Builder
         return clone $this;
     }
 
-    public function withUnknownHandler(UnknownFields\Handler $handler): self
+    /**
+     * Sets what gets the unknown fields of each object decoded that has any, nested ones included: the fields of
+     * the input that its class does not declare, extensions among them, or that are not written as declared.
+     * The default is `UnknownFields::handler()`, which keeps them for as long as the object lives, so that the encoder
+     * writes them back and buildExtensions() reads the extensions from them. Null drops them.
+     */
+    public function withUnknownHandler(?UnknownFields\Handler $handler): self
     {
         $builder = clone $this;
         $builder->unknowns = $handler;
@@ -103,9 +115,52 @@ final class Builder
 
     public function build(): Decoder
     {
-        return new ReflectionDecoder(
-            new Serializer($this->recursionLimit, $this->validateUtf8),
-            Reflector::build(unknowns: $this->unknowns, missingFieldsAsZeroValues: $this->missingFieldsAsZeroValues),
+        return new ReflectionDecoder($this->serializer(), $this->reflector());
+    }
+
+    /**
+     * Builds the reader and writer of the extensions of the objects that the decoders of the builder decode, with
+     * the same options: an extension is read from the unknown fields of the object as the decoder would read it as
+     * a field, and the objects of its value get their unknown fields from the handler of the builder. A value set is
+     * checked as it will be read: its strings for UTF-8 if the decoder checks them.
+     *
+     * @param ?UnknownFields\Provider $unknowns gives the unknown fields of an object; by default the handler of
+     *        the builder, which must then be a provider of the fields it gets, as `UnknownFields::handler()` is.
+     *        To set extensions, it must be an `UnknownFields\Store`, as `UnknownFields::handler()` is too, and the
+     *        encoder must take the unknown fields from it
+     * @throws \LogicException if no provider is given and the handler of the builder is not one, or is null
+     */
+    public function buildExtensions(?UnknownFields\Provider $unknowns = null): Extensions
+    {
+        if ($unknowns === null) {
+            if (!$this->unknowns instanceof UnknownFields\Provider) {
+                throw new \LogicException(\sprintf(
+                    'Extensions are read from the unknown fields of an object, but the unknown handler of the builder (%s) does not provide them: pass the provider of the fields it gets.',
+                    $this->unknowns === null ? 'null' : $this->unknowns::class,
+                ));
+            }
+
+            $unknowns = $this->unknowns;
+        }
+
+        return new Extensions(
+            $this->serializer(),
+            Reflector::build(
+                unknowns: $this->unknowns,
+                unknownProvider: $unknowns,
+                missingFieldsAsZeroValues: $this->missingFieldsAsZeroValues,
+            ),
+            $unknowns,
         );
+    }
+
+    private function serializer(): Serializer
+    {
+        return new Serializer($this->recursionLimit, $this->validateUtf8);
+    }
+
+    private function reflector(): Reflector
+    {
+        return Reflector::build(unknowns: $this->unknowns, missingFieldsAsZeroValues: $this->missingFieldsAsZeroValues);
     }
 }

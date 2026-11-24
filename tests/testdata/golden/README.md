@@ -18,6 +18,15 @@ of `../reflection/` with the same name, whose PHP file declares the classes of i
 
 `GoldenFilesTest` decodes each `.bin` file into the expected object and encodes the object back to the same bytes.
 
+`extensions/` is checked by `ExtensionsGoldenFilesTest` instead: an object does not hold its extensions, so its
+`expected.php` gives, for each case, the decoded object under `''` and the value of each extension it has under the
+path to it, the full names of the extensions from the object separated by `/`, such as
+`'test.v1.note/test.v1.priority'`. Any extension of those objects without a path must be absent. The library writes
+extensions as unknown fields after the known ones: the test encodes the decoded object back to the same bytes, and
+the expected object, with its extensions set in the order of their numbers, as protoc writes them, to the same bytes
+too, but for the cases of `decode-only/`. `message_set*` are cases of a MessageSet, whose extensions are written as
+its items.
+
 ## Regenerating
 
 After adding or changing a `.txtpb` file, and an entry in `expected.php` for it, run:
