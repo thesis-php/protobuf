@@ -12,8 +12,8 @@ protobuf_version=36.2
 protobuf_source_sha256=3d9642a662d10e68ebae5e53f14dcce5105684212d5078f8e0d47d1ab3ae6b64
 
 # protoc-gen-php: the phar of the thesis/protoc-plugin release, run by protoc in the php container.
-protoc_plugin_version=0.6.2
-protoc_plugin_sha256=09cd4e45cba2e9984c64da8823e855e5e7b3f6e876831fe72408fb0b14a6522a
+protoc_plugin_version=0.6.3
+protoc_plugin_sha256=5c9d7b0a0eaa6f7d1e65dd31ee1b1d21cda09b5d201b335f1c435ade79dd90e4
 
 # Downloads the static protoc of the release into var/tools once and sets $protoc to its path.
 install_protoc() {
