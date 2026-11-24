@@ -617,13 +617,13 @@ the last one wins. An occurrence written with another wire type than the extensi
 enum number without a case, is skipped. An extension the object does not have is `null`, a repeated one an empty list.
 The objects of the value get their own unknown fields, so their extensions can be read in turn.
 
-The decoder knows no extensions, so it does not check them: a malformed extension, a string in it that is not valid
-UTF-8 or messages in it nested deeper than the recursion limit fail only when the extension is read, with
-`ProtobufException`, which names the field numbers from that of the extension and the properties from the class of its
-value. `buildExtensions()` gives `Extensions` the options of the builder, so that an extension is read as the decoder
-would read it as a field: the recursion limit, counting the messages and groups of the value as if the extension were
-a field of a top-level message, the UTF-8 check, the zero values of missing fields, and the unknown handler, which
-gets the unknown fields of the objects of the value.
+Unless the extension is [registered in the decoder](#checking-extensions-when-decoding), the decoder does not check it:
+a malformed extension, a string in it that is not valid UTF-8 or messages in it nested deeper than the recursion limit
+fail only when the extension is read, with `ProtobufException`, which names the field numbers from that of the extension
+and the properties from the class of its value. `buildExtensions()` gives `Extensions` the options of the builder, so
+that an extension is read as the decoder would read it as a field: the recursion limit, counting the messages and groups
+of the value as if the extension were a field of a top-level message, the UTF-8 check, the zero values of missing
+fields, and the unknown handler, which gets the unknown fields of the objects of the value.
 
 The unknown fields of an object are taken from the handler of the builder, which must therefore give them back, as the
 default `UnknownFields::handler()` does: a handler that is not an `UnknownFields\Provider`, such as
@@ -702,6 +702,49 @@ merged, and so is the extension written as an ordinary field of its number, whic
 the input. An item of another number stays among the unknown fields and is written back as it was. `set()` writes
 the type_id, then the message. An extension of a MessageSet other than a message, a group or a list among them,
 throws `Exception\InvalidSchema` when it is read or written.
+
+#### Checking extensions when decoding
+
+Extensions registered in the builder with `withExtensions()` are checked by the decoder: when it decodes an object of
+the class an extension extends, nested objects and the objects of the values of extensions included, it reads
+the extension among the unknown fields of the object, if it is there, as `get()` reads it. A malformed extension, such
+as a string that is not valid UTF-8, then fails `decode()` with the exception `get()` would throw, the field numbers and
+the properties located from the object extended, as protobuf parsers do with the extensions they know:
+
+```php
+use Thesis\Protobuf\Decoder;
+
+$builder = new Decoder\Builder()->withExtensions(RequestExtensions::traceId(), RequestExtensions::shards());
+$decoder = $builder->build();
+$extensions = $builder->buildExtensions();
+
+$request = $decoder->decode($buffer, Request::class); // throws Exception\MalformedUtf8 for a trace_id that is not UTF-8
+$extensions->get($request, RequestExtensions::traceId()); // the value the decoder read, not decoded again
+```
+
+Nothing else changes: the extensions stay among the unknown fields, which the unknown handler gets, even when they are
+dropped with `withUnknownHandler(null)`; `Extensions` reads and writes them as without the registration, the encoder
+writes them back, and an occurrence that `get()` skips, such as one of another wire type, is not an error. The unknown
+fields of a oneof variant are those of the object that holds the oneof, so its extensions are read from them. Only the
+extensions the object has are read, in one pass over its unknown fields; of a MessageSet, every item is read to find its
+number, but the message of an item of an extension that is not registered is not, so it fails only when `get()` reads
+it, as without the registration. An extension extends a class as `Extensions` checks it, with `instanceof`. The messages
+and groups of the value count towards the recursion limit with the messages that hold the object, as if the extension
+were a field of the object, while `get()` counts them from the extension. An object without unknown fields, or of a
+class that no extension extends, costs nothing more to decode.
+
+`withExtensions()` adds to the extensions registered before, and an instance registered again is registered once. Two
+different instances that extend the same class with the same number throw `Exception\InvalidSchema`; two that extend
+a class and its parent, or an interface it implements, with the same number fail the decoding of an object of the
+class with it. An extension of a MessageSet that is not a message fails the decoding of an object with unknown fields.
+
+`Extensions` built by `buildExtensions()` of the same builder, without a provider, gets the values that the decoders of
+the builder read from then on, so `get()` does not decode them again; the values are kept in a `WeakMap` for as long as
+the object lives. A builder that a `with*()` method returns has values of its own, as its options may differ.
+
+The builder keeps the extensions in a `Reflection\ExtensionRegistry`, with the recursion limit and the UTF-8 check they
+are read with. Code that maps messages with `Reflector` itself gives one to `Reflector::build()`, as its `$extensions`
+argument, to have `Reflector::map()` check the extensions the same way.
 
 ### Performance
 

@@ -6,7 +6,3 @@
 # Not here: the tests of the JSON and the text format, which tests/conformance/testee.php skips: the library supports
 # neither format.
 
-# The library reads an extension only when it is asked for, with Extensions::get(): the decoder knows no extensions,
-# so it keeps an extension field among the unknown fields of its message as its bytes, and a string in it is not checked
-# for UTF-8 when the message is parsed.
-Recommended.Editions.ProtobufInput.RejectInvalidUtf8.String.Extension # Should have failed to parse, but didn't.

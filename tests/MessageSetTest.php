@@ -10,9 +10,11 @@ use Thesis\Protobuf\Exception\InvalidSchema;
 use Thesis\Protobuf\Exception\MalformedUtf8;
 use Thesis\Protobuf\Exception\RecursionLimitExceeded;
 use Thesis\Protobuf\Exception\ValueOutOfRange;
+use Thesis\Protobuf\Internal\Extension\ExtensionCodec;
 use Thesis\Protobuf\Reflection\Extension;
 
 #[CoversClass(Extensions::class)]
+#[CoversClass(ExtensionCodec::class)]
 #[CoversClass(Reflection\MessageSet::class)]
 final class MessageSetTest extends TestCase
 {

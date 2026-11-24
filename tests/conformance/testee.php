@@ -20,6 +20,7 @@ use ProtobufTestMessages\Proto3\TestAllTypesProto3;
 use Thesis\Protobuf\Decoder;
 use Thesis\Protobuf\Encoder;
 use Thesis\Protobuf\ProtobufException;
+use Thesis\Protobuf\Reflection;
 use Thesis\Protobuf\UnknownFields;
 
 // stdout is for the responses only.
@@ -115,8 +116,12 @@ function describe(\Throwable $e): string
     return $e::class . ': ' . $e->getMessage();
 }
 
+// The decoder checks the extensions of the test messages, which it keeps among the unknown fields as without them.
+/** @var list<Reflection\Extension<mixed>> $extensions */
+$extensions = require __DIR__ . '/extensions.php';
 $decoder = new Decoder\Builder()
     ->withUnknownHandler(UnknownFields::handler())
+    ->withExtensions(...$extensions)
     ->build();
 // The default encoder writes back the unknown fields the decoder keeps.
 $encoder = Encoder\Builder::buildDefault();

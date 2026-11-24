@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Decoder;
 
-use Psr\SimpleCache\CacheInterface;
 use Thesis\Protobuf\Decoder;
 use Thesis\Protobuf\Decoder\Internal\ReflectionDecoder;
+use Thesis\Protobuf\Exception\InvalidSchema;
 use Thesis\Protobuf\Extensions;
+use Thesis\Protobuf\Reflection\Extension;
+use Thesis\Protobuf\Reflection\ExtensionRegistry;
 use Thesis\Protobuf\Reflection\Reflector;
 use Thesis\Protobuf\Serializer;
 use Thesis\Protobuf\UnknownFields;
@@ -26,18 +28,24 @@ final class Builder
 
     private bool $missingFieldsAsZeroValues = false;
 
+    /** @var list<Extension<mixed>> */
+    private array $extensions = [];
+
+    /**
+     * The registry of the extensions with the options of the builder, which its decoders and its `Extensions` share,
+     * with the values of the extensions the decoders read: each builder has its own, since the values depend on
+     * the options.
+     */
+    private ?ExtensionRegistry $registry = null;
+
     public function __construct()
     {
         $this->unknowns = UnknownFields::handler();
     }
 
-    /**
-     * @deprecated Does nothing: the reflection of the classes is kept in memory for as long as the built instance
-     *             lives, and nothing is stored in the cache any more. Will be removed in the next minor version.
-     */
-    public function withCache(CacheInterface $cache): self
+    public function __clone()
     {
-        return clone $this;
+        $this->registry = null;
     }
 
     /**
@@ -108,6 +116,36 @@ final class Builder
         return $builder;
     }
 
+    /**
+     * Registers extensions in the decoder, in addition to those registered before: when it decodes an object of
+     * the class an extension extends, nested ones included, it reads the extension among the unknown fields of
+     * the object, if it is there, as `Extensions::get()` reads it, so that a malformed one, such as a string that is
+     * not valid UTF-8, fails the decoding with the exception get() would throw, the field numbers and the properties
+     * located from the object extended. The unknown fields of a oneof variant are those of the object that holds it.
+     * The messages and groups of the value count towards the recursion limit with the messages the object is nested
+     * in, as if the extension were a field of the object. The decoder reads no other extensions.
+     *
+     * The extensions stay among the unknown fields: the unknown handler gets them, `Extensions` reads and writes them
+     * as without the registration, and the encoder writes them back. `Extensions` built by buildExtensions() of
+     * the same builder without a provider gets the values that its decoders read from then on, instead of decoding
+     * them again; another builder, one a with*() method returns included, has values of its own.
+     *
+     * An object of a class that no extension extends, or without unknown fields, costs nothing more to decode. An
+     * extension extends a class as `Extensions` checks it, with `instanceof`.
+     *
+     * @param Extension<mixed> ...$extensions an instance registered again is registered once
+     * @throws InvalidSchema if two different instances extend the same class with the same number; two that extend
+     *         a class and its parent, or an interface it implements, with the same number fail the decoding of
+     *         an object of the class instead
+     */
+    public function withExtensions(Extension ...$extensions): self
+    {
+        $builder = clone $this;
+        $builder->extensions = new ExtensionRegistry([...$this->extensions, ...$extensions])->extensions;
+
+        return $builder;
+    }
+
     public static function buildDefault(): Decoder
     {
         return new self()->build();
@@ -127,11 +165,14 @@ final class Builder
      * @param ?UnknownFields\Provider $unknowns gives the unknown fields of an object; by default the handler of
      *        the builder, which must then be a provider of the fields it gets, as `UnknownFields::handler()` is.
      *        To set extensions, it must be an `UnknownFields\Store`, as `UnknownFields::handler()` is too, and the
-     *        encoder must take the unknown fields from it
+     *        encoder must take the unknown fields from it. If none is given, the values of the registered extensions
+     *        that the decoders of the builder read from then on are kept for it, see withExtensions()
      * @throws \LogicException if no provider is given and the handler of the builder is not one, or is null
      */
     public function buildExtensions(?UnknownFields\Provider $unknowns = null): Extensions
     {
+        $values = null;
+
         if ($unknowns === null) {
             if (!$this->unknowns instanceof UnknownFields\Provider) {
                 throw new \LogicException(\sprintf(
@@ -141,6 +182,9 @@ final class Builder
             }
 
             $unknowns = $this->unknowns;
+
+            // The values the decoders read are those get() would read from the fields the handler got.
+            $values = $this->registry()?->values();
         }
 
         return new Extensions(
@@ -151,6 +195,7 @@ final class Builder
                 missingFieldsAsZeroValues: $this->missingFieldsAsZeroValues,
             ),
             $unknowns,
+            $values,
         );
     }
 
@@ -161,6 +206,20 @@ final class Builder
 
     private function reflector(): Reflector
     {
-        return Reflector::build(unknowns: $this->unknowns, missingFieldsAsZeroValues: $this->missingFieldsAsZeroValues);
+        return Reflector::build(
+            unknowns: $this->unknowns,
+            missingFieldsAsZeroValues: $this->missingFieldsAsZeroValues,
+            extensions: $this->registry(),
+        );
+    }
+
+    /**
+     * Null if no extensions are registered: the decoders then read none.
+     */
+    private function registry(): ?ExtensionRegistry
+    {
+        return $this->extensions === []
+            ? null
+            : $this->registry ??= new ExtensionRegistry($this->extensions, $this->recursionLimit, $this->validateUtf8);
     }
 }

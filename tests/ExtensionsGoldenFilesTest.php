@@ -7,6 +7,7 @@ namespace Thesis\Protobuf;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Thesis\Protobuf\Internal\Extension\ExtensionCodec;
 use Thesis\Protobuf\Reflection\Extension;
 use Thesis\Protobuf\Reflection\Reflector;
 
@@ -17,6 +18,7 @@ use Thesis\Protobuf\Reflection\Reflector;
  * it has (see the comment in that file). The extensions are read from the bytes, and set and written to the same bytes.
  */
 #[CoversClass(Extensions::class)]
+#[CoversClass(ExtensionCodec::class)]
 #[CoversClass(Extension::class)]
 final class ExtensionsGoldenFilesTest extends TestCase
 {
