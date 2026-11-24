@@ -19,8 +19,10 @@
             "ignoreSourceCodeByRegex": [
                 // MessageFields::plan() caches the plan of a type: built again, it is the same plan, only later.
                 "\\$plans = self::\\$plans \\?\\?= new \\\\WeakMap\\(\\);",
-                // Extensions::plan() caches the types and the conversions of an extension: built again, they are the same.
+                // ExtensionCodec::plan() caches the types and the conversions of an extension: built again, they are the same.
                 "return \\$this->plans\\[\\$extension\\] \\?\\?= \\[",
+                // ExtensionChecker caches the extensions of a class: found again, they are the same.
+                "\\[\\$plain, \\$messageSet\\] = \\$this->classes\\[\\$object::class\\] \\?\\?= \\$this->extensionsOf\\(\\$object::class\\);",
             ],
         },
         "GreaterThan": {

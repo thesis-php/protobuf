@@ -10,11 +10,13 @@ use PHPUnit\Framework\TestCase;
 use Thesis\Protobuf\Exception\InvalidSchema;
 use Thesis\Protobuf\Exception\MalformedUtf8;
 use Thesis\Protobuf\Exception\RecursionLimitExceeded;
+use Thesis\Protobuf\Internal\Extension\ExtensionCodec;
 use Thesis\Protobuf\Reflection\Exception\InvalidProperty;
 use Thesis\Protobuf\Reflection\Exception\MappingError;
 use Thesis\Protobuf\Reflection\Extension;
 
 #[CoversClass(Extensions::class)]
+#[CoversClass(ExtensionCodec::class)]
 #[CoversClass(Extension::class)]
 final class ExtensionsTest extends TestCase
 {

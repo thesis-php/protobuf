@@ -23,15 +23,14 @@ final readonly class ReflectionDecoder implements Decoder
     public function decode(string $buffer, string $classType): object
     {
         try {
-            return $this->reflector->map(
-                $this->serializer->deserialize(
-                    $this->reflector->type($classType),
-                    $buffer,
-                ),
-                $classType,
-            );
-        } catch (MalformedUtf8 $e) {
-            throw $e->withProperties($this->reflector->propertyPath($classType, $e->fields));
+            try {
+                $message = $this->serializer->deserialize($this->reflector->type($classType), $buffer);
+            } catch (MalformedUtf8 $e) {
+                throw $e->withProperties($this->reflector->propertyPath($classType, $e->fields));
+            }
+
+            // A string of an extension is located from the object it extends, as Extensions::get() locates it.
+            return $this->reflector->map($message, $classType);
         } catch (\ReflectionException $e) {
             throw new Decoder\DecodingError($e->getMessage(), $e->getCode(), $e);
         }

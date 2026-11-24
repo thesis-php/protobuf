@@ -10,10 +10,12 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Thesis\Protobuf\Exception\InvalidUtf8;
 use Thesis\Protobuf\Exception\ValueOutOfRange;
+use Thesis\Protobuf\Internal\Extension\ExtensionCodec;
 use Thesis\Protobuf\Reflection\Extension;
 use Thesis\Protobuf\Reflection\Internal\Api\ExpectedPhpType;
 
 #[CoversClass(Extensions::class)]
+#[CoversClass(ExtensionCodec::class)]
 #[CoversClass(UnknownFields::class)]
 #[CoversClass(ExpectedPhpType::class)]
 final class ExtensionsWriteTest extends TestCase

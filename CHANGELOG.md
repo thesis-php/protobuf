@@ -21,8 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   otherwise throws `\LogicException`; the objects of the value get their own, so their extensions can be read in turn.
   The value read is kept for as long as the object and the instance of the extension live, so every call gives the
   same one; a read that fails is not kept. The UTF-8 check and the recursion limit apply when an extension is read,
-  not when the object is decoded, and `Exception\MalformedUtf8` names the properties from the class of the value.
-  The decoder does not change: extensions are not registered in it.
+  and when the object is decoded only if the extension is registered in the decoder (see below);
+  `Exception\MalformedUtf8` names the properties from the class of the value.
 - Extensions are written: `Extensions::set($object, $extension, $value)` writes the value as a field of its type in
   place of the unknown fields of the extension, where the first of them was, or after the other unknown fields, and
   `Extensions::clear()`, or `set()` with null or an empty list, removes them; the encoder then writes them after the
@@ -38,6 +38,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   any order, other fields of it are skipped, the items of an extension, and the extension written as a field of its
   number, are merged, and an item of another number is written back as it was. An extension of a MessageSet that is
   not a message throws `Exception\InvalidSchema`.
+- Extensions are checked when decoding: `Decoder\Builder::withExtensions(Extension ...$extensions)` registers extensions
+  in the decoder, in addition to those registered before. When it decodes an object of the class an extension extends
+  (with `instanceof`, as `Extensions` checks it), nested objects, the objects in oneof variants and the objects of the
+  values of extensions included, the decoder reads the extension among the unknown fields of the object as
+  `Extensions::get()` does, so a malformed one, such as a string that is not valid UTF-8, fails `decode()` with the
+  exception get() would throw, the field numbers and properties located from the object extended. The unknown fields of
+  a oneof variant are those of the object that holds it. Only the extensions the object has are read, in one pass over
+  its unknown fields; the message of a MessageSet item of an extension that is not registered is not read. The messages
+  and groups of the value count towards the recursion limit with the messages that hold the object. The extensions stay
+  among the unknown fields, the encoder writes them back, and an occurrence that get() skips, such as one of another
+  wire type, is not an error. `Extensions` built by `buildExtensions()` of the same builder without a provider gets the
+  values that its decoders read from then on instead of decoding them again. Two different instances that extend the
+  same class with the same number throw `Exception\InvalidSchema`; an instance registered again is registered once. An
+  object without unknown fields, or of a class no registered extension extends, costs nothing more to decode, and the
+  decoder of a builder without extensions does not change.
+- `Reflection\ExtensionRegistry` holds the extensions a decoder checks, with the recursion limit and the UTF-8 check
+  they are read with: `Decoder\Builder::withExtensions()` builds it, and the new `$extensions` argument of
+  `Reflector::build()` takes one, so that `Reflector::map()` checks the extensions of the objects it maps. It throws
+  `Exception\InvalidSchema` for two different instances that extend the same class with the same number.
 - `Decoder\Builder::withUnknownHandler()` accepts null, which drops the unknown fields (see Changed).
 - Groups: a message field written between a start group tag and an end group tag, i.e. a `group` field of proto2 and
   a field with `features.message_encoding = DELIMITED` of editions, is declared with the new `Reflection\GroupT`
@@ -101,6 +120,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   that does not start with a digit, `-` or `` ` `` is its own array key: setting an entry is about 20% faster and
   a map of 10 000 entries takes about 15% less memory. Its API, the order of its entries and which keys address the
   same entry do not change.
+
+### Removed
+
+- `Encoder\Builder::withCache()`, `Decoder\Builder::withCache()` and the `$cache` argument of `Reflector::build()`,
+  deprecated in 0.2.2, where they stopped doing anything: remove the calls, and pass the other arguments of
+  `Reflector::build()` by name or without the leading null. The library does not require `psr/simple-cache` any more.
 
 ### Fixed
 

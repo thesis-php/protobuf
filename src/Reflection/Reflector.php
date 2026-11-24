@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Thesis\Protobuf\Reflection;
 
-use Psr\SimpleCache\CacheInterface;
 use Thesis\Protobuf;
+use Thesis\Protobuf\Internal\Extension\ExtensionChecker;
 use Thesis\Protobuf\Internal\Serde\MessageFields;
 use Thesis\Protobuf\Internal\Serde\OneOfs;
 use Thesis\Protobuf\Message;
@@ -44,6 +44,17 @@ final class Reflector
     /** Null if missing fields are not zero values. */
     private readonly ?ToZeroValueTypeVisitor $toZeroValue;
 
+    /** Null if no extensions are registered. */
+    private readonly ?ExtensionChecker $extensions;
+
+    /**
+     * How many objects map() is mapping, one in another, while extensions are registered: the depth of the object
+     * mapped last, the top-level one being 1.
+     *
+     * @var non-negative-int
+     */
+    private int $depth = 0;
+
     /** @var array<class-string, list<FieldEncoder|OneOfEncoder>> */
     private array $encoders = [];
 
@@ -68,8 +79,6 @@ final class Reflector
     private array $expandedOneOfs = [];
 
     /**
-     * @param ?CacheInterface $cache deprecated and not used: the reflection of the classes, the types and how to encode
-     *        and decode them are kept in memory for as long as the reflector lives, and nothing is stored in the cache
      * @param ?UnknownFields\Handler $unknowns gets the unknown fields of each object map() builds that has any
      * @param ?UnknownFields\Provider $unknownProvider gives the unknown fields that message() puts into the message of
      *        each object, nested ones included; null puts none
@@ -78,20 +87,23 @@ final class Reflector
      *        instead of failing with Exception\PropertyRequired: 0, 0.0, false, '', an empty list or map, the enum
      *        case for 0 or, failing that, the first case. A message field and an enum without cases have no zero
      *        value: they stay required. A oneof with no variant in the message is null either way
+     * @param ?ExtensionRegistry $extensions the extensions that map() reads among the unknown fields of each object of
+     *        a class they extend, which fails if one is malformed, as `Decoder\Builder::withExtensions()` describes
      */
     public static function build(
-        ?CacheInterface $cache = null,
         ?UnknownFields\Handler $unknowns = null,
         ?UnknownFields\Provider $unknownProvider = null,
         bool $missingFieldsAsZeroValues = false,
+        ?ExtensionRegistry $extensions = null,
     ): self {
-        return new self($unknowns, $unknownProvider, $missingFieldsAsZeroValues);
+        return new self($unknowns, $unknownProvider, $missingFieldsAsZeroValues, $extensions);
     }
 
     private function __construct(
         private readonly ?UnknownFields\Handler $unknowns,
         private readonly ?UnknownFields\Provider $unknownProvider,
         bool $missingFieldsAsZeroValues,
+        ?ExtensionRegistry $extensions,
     ) {
         $this->typeVisitor = new ToProtobufTypeTypeVisitor($this);
         $this->valueVisitor = new ToProtobufValueTypeVisitor($this);
@@ -99,6 +111,7 @@ final class Reflector
         $this->isValueEmpty = new IsValueEmpty();
         $this->toValue = new ToValueTypeVisitor($this);
         $this->toZeroValue = $missingFieldsAsZeroValues ? new ToZeroValueTypeVisitor($this->typeVisitor) : null;
+        $this->extensions = $extensions?->checker($this);
     }
 
     /**
@@ -198,10 +211,14 @@ final class Reflector
      * @return T
      * @throws \ReflectionException
      * @throws ReflectionException
+     * @throws Protobuf\ProtobufException if an extension given to build() is malformed in the unknown fields of
+     *         an object
      */
     public function map(Message $message, string $class): object
     {
-        $object = $this->mapFields($message, $class);
+        $object = $this->extensions === null
+            ? $this->mapFields($message, $class)
+            : $this->mapWithExtensions($message, $class, $this->extensions);
 
         if ($message->unknowns !== []) {
             $this->unknowns?->handle($object, $message->unknowns);
@@ -285,6 +302,35 @@ final class Reflector
         }
 
         return $path;
+    }
+
+    /**
+     * Maps the fields of the message as mapFields() does and reads the registered extensions of the object among its
+     * unknown fields, those of the oneof variants it holds included: the unknown fields of a variant are those of
+     * the message of the object.
+     *
+     * @template T of object
+     * @param class-string<T> $class
+     * @return T
+     * @throws \ReflectionException
+     * @throws ReflectionException
+     * @throws Protobuf\ProtobufException if an extension is malformed
+     */
+    private function mapWithExtensions(Message $message, string $class, ExtensionChecker $extensions): object
+    {
+        ++$this->depth;
+
+        try {
+            $object = $this->mapFields($message, $class);
+
+            if ($message->unknowns !== []) {
+                $extensions->check($object, $message->unknowns, $this->depth);
+            }
+
+            return $object;
+        } finally {
+            --$this->depth;
+        }
     }
 
     /**
