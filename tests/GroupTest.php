@@ -360,6 +360,17 @@ final class GroupTest extends TestCase
         self::assertEquals($holder, Decoder\Builder::buildDefault()->decode($bytes, GroupTestHolder::class));
     }
 
+    public function testAClassHoldsItselfAsAGroupAndAsAMessage(): void
+    {
+        $holder = new GroupTestHolder(message: new GroupTestItem(1, new GroupTestItem(2), new GroupTestItem(3, sibling: new GroupTestItem(4))));
+
+        $bytes = Encoder\Builder::buildDefault()->encode($holder);
+
+        // The child is a group of field 2, the sibling a message of field 3.
+        self::assertSame('1a0e0801130802141a0608031a020804', bin2hex($bytes));
+        self::assertEquals($holder, Decoder\Builder::buildDefault()->decode($bytes, GroupTestHolder::class));
+    }
+
     public function testAGroupPropertyHasNoZeroValue(): void
     {
         $decoder = new Decoder\Builder()->withMissingFieldsAsZeroValues(true)->build();
@@ -456,6 +467,8 @@ final readonly class GroupTestItem
         public int $id = 0,
         #[Reflection\Field(2, new Reflection\GroupT(self::class))]
         public ?self $child = null,
+        #[Reflection\Field(3, new Reflection\ObjectT(self::class))]
+        public ?self $sibling = null,
     ) {}
 }
 

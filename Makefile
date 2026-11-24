@@ -153,8 +153,8 @@ conformance-generate: var ## Regenerate the classes of the conformance test mess
 .PHONY: conformance-generate
 
 conformance: var vendor $(CONFORMANCE_RUNNER) ## Run conformance_test_runner against the library: `make conformance ARGS='--test <name> --debug'`
-	$(RUN) $(CONFORMANCE_RUNNER) --enforce_recommended --failure_list tests/conformance/failure_list.txt \
-	  --output_dir var $(ARGS) /usr/bin/env php tests/conformance/testee.php
+	$(RUN) $(CONFORMANCE_RUNNER) --enforce_recommended --maximum_edition 2023 \
+	  --failure_list tests/conformance/failure_list.txt --output_dir var $(ARGS) /usr/bin/env php tests/conformance/testee.php
 .PHONY: conformance
 
 # google/protobuf is not a dependency of the library: its PHP runtime, the classes protoc generates for it and the image

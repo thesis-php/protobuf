@@ -30,4 +30,7 @@ mkdir -p "$out"
     --php-plugin_out="$out" \
     conformance/conformance.proto \
     google/protobuf/test_messages_proto3.proto \
-    google/protobuf/test_messages_proto2.proto
+    google/protobuf/test_messages_proto2.proto \
+    conformance/test_protos/test_messages_edition2023.proto \
+    editions/golden/test_messages_proto2_editions.proto \
+    editions/golden/test_messages_proto3_editions.proto

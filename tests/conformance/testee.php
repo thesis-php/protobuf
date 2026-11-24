@@ -14,6 +14,7 @@ use Conformance\ConformanceRequest;
 use Conformance\ConformanceResponse;
 use Conformance\FailureSet;
 use Conformance\WireFormat;
+use ProtobufTestMessages\Editions;
 use ProtobufTestMessages\Proto2\TestAllTypesProto2;
 use ProtobufTestMessages\Proto3\TestAllTypesProto3;
 use Thesis\Protobuf\Decoder;
@@ -27,11 +28,15 @@ ini_set('display_errors', 'stderr');
 require_once __DIR__ . '/../../vendor/autoload.php';
 
 /**
- * The messages the runner sends payloads of. Editions ones are not generated: their tests are skipped.
+ * The messages the runner sends payloads of: those of proto3 and proto2, the same two written in editions, and the one
+ * of edition 2023.
  */
 const MESSAGES = [
     'protobuf_test_messages.proto3.TestAllTypesProto3' => TestAllTypesProto3::class,
     'protobuf_test_messages.proto2.TestAllTypesProto2' => TestAllTypesProto2::class,
+    'protobuf_test_messages.editions.proto3.TestAllTypesProto3' => Editions\Proto3\TestAllTypesProto3::class,
+    'protobuf_test_messages.editions.proto2.TestAllTypesProto2' => Editions\Proto2\TestAllTypesProto2::class,
+    'protobuf_test_messages.editions.TestAllTypesEdition2023' => Editions\TestAllTypesEdition2023::class,
 ];
 
 /**
