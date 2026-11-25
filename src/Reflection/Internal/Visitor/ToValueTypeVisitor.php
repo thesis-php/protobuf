@@ -103,7 +103,7 @@ final class ToValueTypeVisitor extends DefaultTypeVisitor
 
         return static function (mixed $message) use ($reflector, $class): object {
             /** @var Message $message */
-            return $reflector->map($message, $class);
+            return $reflector->mapNested($message, $class);
         };
     }
 
@@ -115,7 +115,7 @@ final class ToValueTypeVisitor extends DefaultTypeVisitor
 
         return static function (mixed $message) use ($reflector, $class): object {
             /** @var Message $message */
-            return $reflector->map($message, $class);
+            return $reflector->mapNested($message, $class);
         };
     }
 

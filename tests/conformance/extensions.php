@@ -1,13 +1,11 @@
 <?php
 
 /**
- * The extensions that the .proto files of the test messages declare with `extend`, which testee.php registers in its
- * decoder, so that it checks them as the reference implementation does. thesis/protoc-plugin does not generate
- * extensions yet: they are written here by hand, and the code it generates for them is to replace this file.
- *
- * Not here: the extensions of `MessageSetCorrect`, a MessageSet, whose class the plugin does not mark with
- * `Reflection\MessageSet`, so that they would be read as fields of their numbers instead of as items; and those of
- * `TestAllRequiredTypesProto2`, which the runner sends no payloads of.
+ * Registers the extensions of the test messages, those of `TestMessagesExtensions.php`, in the global pool, as
+ * the autoload file that thesis/protoc-plugin generates is to register them: a call for each class extended, with
+ * a resolver that matches the number with the static method that returns the extension. The resolver loads no class
+ * until the decoder first asks it for a number of an extension, among the unknown fields of an object of the class
+ * extended, unlike `Class::method(...)`, which would load the class when the registration is made.
  */
 
 declare(strict_types=1);
@@ -16,25 +14,39 @@ namespace Thesis\Protobuf\Conformance;
 
 use ProtobufTestMessages\Editions;
 use ProtobufTestMessages\Proto2;
-use Thesis\Protobuf\Reflection;
 use Thesis\Protobuf\Reflection\Extension;
+use Thesis\Protobuf\Reflection\ExtensionPool;
 
-/** @var list<Extension<mixed>> */
-return [
-    // google/protobuf/test_messages_proto2.proto
-    new Extension(Proto2\TestAllTypesProto2::class, 120, Reflection\Int32T::T),
-    new Extension(Proto2\TestAllTypesProto2::class, 133, Reflection\StringT::T),
-    new Extension(Proto2\TestAllTypesProto2::class, 134, Reflection\BytesT::T),
-    new Extension(Proto2\TestAllTypesProto2::class, 121, new Reflection\GroupT(Proto2\GroupField::class)),
-    // editions/golden/test_messages_proto2_editions.proto
-    new Extension(Editions\Proto2\TestAllTypesProto2::class, 120, Reflection\Int32T::T),
-    new Extension(Editions\Proto2\TestAllTypesProto2::class, 133, Reflection\StringT::T),
-    new Extension(Editions\Proto2\TestAllTypesProto2::class, 134, Reflection\BytesT::T),
-    new Extension(Editions\Proto2\TestAllTypesProto2::class, 121, new Reflection\GroupT(Editions\Proto2\GroupField::class)),
-    // conformance/test_protos/test_messages_edition2023.proto, whose messages are delimited by default
-    new Extension(Editions\TestAllTypesEdition2023::class, 120, Reflection\Int32T::T),
-    new Extension(Editions\TestAllTypesEdition2023::class, 133, Reflection\StringT::T),
-    new Extension(Editions\TestAllTypesEdition2023::class, 134, Reflection\BytesT::T),
-    new Extension(Editions\TestAllTypesEdition2023::class, 121, new Reflection\GroupT(Editions\GroupLikeType::class)),
-    new Extension(Editions\TestAllTypesEdition2023::class, 122, new Reflection\GroupT(Editions\GroupLikeType::class)),
-];
+ExtensionPool::global()->register(
+    Proto2\TestAllTypesProto2::class,
+    static fn(int $number): ?Extension => match ($number) {
+        120 => TestMessagesProto2Extensions::extensionInt32(),
+        133 => TestMessagesProto2Extensions::extensionString(),
+        134 => TestMessagesProto2Extensions::extensionBytes(),
+        121 => TestMessagesProto2Extensions::groupfield(),
+        default => null,
+    },
+);
+
+ExtensionPool::global()->register(
+    Editions\Proto2\TestAllTypesProto2::class,
+    static fn(int $number): ?Extension => match ($number) {
+        120 => TestMessagesProto2EditionsExtensions::extensionInt32(),
+        133 => TestMessagesProto2EditionsExtensions::extensionString(),
+        134 => TestMessagesProto2EditionsExtensions::extensionBytes(),
+        121 => TestMessagesProto2EditionsExtensions::groupfield(),
+        default => null,
+    },
+);
+
+ExtensionPool::global()->register(
+    Editions\TestAllTypesEdition2023::class,
+    static fn(int $number): ?Extension => match ($number) {
+        120 => TestMessagesEdition2023Extensions::extensionInt32(),
+        133 => TestMessagesEdition2023Extensions::extensionString(),
+        134 => TestMessagesEdition2023Extensions::extensionBytes(),
+        121 => TestMessagesEdition2023Extensions::groupliketype(),
+        122 => TestMessagesEdition2023Extensions::delimitedExt(),
+        default => null,
+    },
+);

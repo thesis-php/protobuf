@@ -9,6 +9,7 @@ use Thesis\Protobuf\Decoder\Internal\ReflectionDecoder;
 use Thesis\Protobuf\Exception\InvalidSchema;
 use Thesis\Protobuf\Extensions;
 use Thesis\Protobuf\Reflection\Extension;
+use Thesis\Protobuf\Reflection\ExtensionPool;
 use Thesis\Protobuf\Reflection\ExtensionRegistry;
 use Thesis\Protobuf\Reflection\Reflector;
 use Thesis\Protobuf\Serializer;
@@ -31,6 +32,8 @@ final class Builder
     /** @var list<Extension<mixed>> */
     private array $extensions = [];
 
+    private ?ExtensionPool $pool;
+
     /**
      * The registry of the extensions with the options of the builder, which its decoders and its `Extensions` share,
      * with the values of the extensions the decoders read: each builder has its own, since the values depend on
@@ -41,6 +44,7 @@ final class Builder
     public function __construct()
     {
         $this->unknowns = UnknownFields::handler();
+        $this->pool = ExtensionPool::global();
     }
 
     public function __clone()
@@ -117,13 +121,30 @@ final class Builder
     }
 
     /**
-     * Registers extensions in the decoder, in addition to those registered before: when it decodes an object of
-     * the class an extension extends, nested ones included, it reads the extension among the unknown fields of
-     * the object, if it is there, as `Extensions::get()` reads it, so that a malformed one, such as a string that is
-     * not valid UTF-8, fails the decoding with the exception get() would throw, the field numbers and the properties
-     * located from the object extended. The unknown fields of a oneof variant are those of the object that holds it.
-     * The messages and groups of the value count towards the recursion limit with the messages the object is nested
-     * in, as if the extension were a field of the object. The decoder reads no other extensions.
+     * Sets the pool of the extensions that the decoder checks in addition to those of withExtensions(), see
+     * `ExtensionPool::register()`: when it decodes an object with an unknown field of a number of no extension found
+     * for the class yet, it asks the resolvers of the pool of the class for the extension of the number, keeps it if
+     * there is one, and reads it as withExtensions() describes. The extensions registered in the pool after the decoder
+     * is built are checked too. Null checks none but those of withExtensions(). The default is `ExtensionPool::global()`, in which generated code registers
+     * the extensions of a schema.
+     */
+    public function withExtensionPool(?ExtensionPool $pool): self
+    {
+        $builder = clone $this;
+        $builder->pool = $pool;
+
+        return $builder;
+    }
+
+    /**
+     * Registers extensions in the decoder, in addition to those registered before and to those of the pool (see
+     * withExtensionPool()): when it decodes an object of the class an extension extends, nested ones included, it
+     * reads the extension among the unknown fields of the object, if it is there, as `Extensions::get()` reads it, so
+     * that a malformed one, such as a string that is not valid UTF-8, fails the decoding with the exception get() would
+     * throw, the field numbers and the properties located from the object extended. The unknown fields of a oneof
+     * variant are those of the object that holds it. The messages and groups of the value count towards
+     * the recursion limit with the messages the object is nested in, as if the extension were a field of the object.
+     * The decoder reads no other extensions.
      *
      * The extensions stay among the unknown fields: the unknown handler gets them, `Extensions` reads and writes them
      * as without the registration, and the encoder writes them back. `Extensions` built by buildExtensions() of
@@ -133,10 +154,11 @@ final class Builder
      * An object of a class that no extension extends, or without unknown fields, costs nothing more to decode. An
      * extension extends a class as `Extensions` checks it, with `instanceof`.
      *
-     * @param Extension<mixed> ...$extensions an instance registered again is registered once
+     * @param Extension<mixed> ...$extensions an instance registered again is registered once, and so is one that
+     *        a resolver of the pool returns
      * @throws InvalidSchema if two different instances extend the same class with the same number; two that extend
-     *         a class and its parent, or an interface it implements, with the same number fail the decoding of
-     *         an object of the class instead
+     *         a class and its parent, or an interface it implements, with the same number, or one given and a different
+     *         one of the pool, fail the decoding of an object of the class that has the number instead
      */
     public function withExtensions(Extension ...$extensions): self
     {
@@ -214,12 +236,12 @@ final class Builder
     }
 
     /**
-     * Null if no extensions are registered: the decoders then read none.
+     * Null if no extensions are registered and there is no pool: the decoders then read none.
      */
     private function registry(): ?ExtensionRegistry
     {
-        return $this->extensions === []
+        return $this->extensions === [] && $this->pool === null
             ? null
-            : $this->registry ??= new ExtensionRegistry($this->extensions, $this->recursionLimit, $this->validateUtf8);
+            : $this->registry ??= new ExtensionRegistry($this->extensions, $this->recursionLimit, $this->validateUtf8, $this->pool);
     }
 }

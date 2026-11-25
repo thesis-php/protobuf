@@ -9,12 +9,16 @@ runner compares what it gets with what the reference implementation of C++ does.
   and a `ConformanceRequest`, and writes the `ConformanceResponse` to stdout the same way. It decodes with
   `UnknownFields::handler()`, so the unknown fields of the payload are written back. A failure to decode is a
   `parse_error`, a failure to encode is a `serialize_error`. It skips the tests of the JSON and the text format, which
-  the library does not support. It registers the extensions of the test messages in the decoder, so that it checks
-  them as the reference implementation does.
-- `extensions.php` describes those extensions by hand: thesis/protoc-plugin does not generate extensions yet, and
-  the code it generates for them is to replace the file. The extensions of the MessageSet `MessageSetCorrect` are not
-  there: the plugin does not mark its class with `Reflection\MessageSet`, so they would be read as fields of their
-  numbers instead of as items.
+  the library does not support. Its decoder is built as by default, so it checks the extensions of the test messages
+  registered in the global pool, `Reflection\ExtensionPool::global()`, as the reference implementation does.
+- `TestMessagesExtensions.php` declares those extensions by hand, a class for each `.proto` file with a static method
+  for each extension, and `extensions.php` registers them in the global pool with `register()`, a resolver for each
+  class extended that matches the number with the method, as the autoload file that thesis/protoc-plugin generates is
+  to do. `testee.php` loads the classes with an autoloader of its own, as Composer would load generated ones, so they
+  are loaded only when a resolver first calls a method: the plugin does not generate extensions yet, and the code it
+  generates for them is to replace both files. The extensions of the MessageSet `MessageSetCorrect` are not there:
+  the plugin does not mark its class with `Reflection\MessageSet`, so they would be read as fields of their numbers
+  instead of as items.
 - `generated/` holds the classes of `conformance.proto`, of `test_messages_proto3.proto` and
   `test_messages_proto2.proto`, of the same two written in editions (`test_messages_proto3_editions.proto`,
   `test_messages_proto2_editions.proto`) and of `test_messages_edition2023.proto`, written by [thesis/protoc-plugin](https://github.com/thesis-php/protoc-plugin). The well-known types they refer to are

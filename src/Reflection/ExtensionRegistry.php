@@ -6,15 +6,14 @@ namespace Thesis\Protobuf\Reflection;
 
 use Thesis\Protobuf\Exception\InvalidSchema;
 use Thesis\Protobuf\Internal\Extension\ExtensionChecker;
-use Thesis\Protobuf\Internal\Extension\ExtensionCodec;
 use Thesis\Protobuf\Internal\Extension\ExtensionValues;
 use Thesis\Protobuf\Serializer;
 
 /**
  * The extensions that a reflector reads among the unknown fields of each object it maps, of a class they extend, so
- * that a malformed one fails the mapping: see `Decoder\Builder::withExtensions()`, which registers them in a decoder.
- * It is given to `Reflector::build()` with the options the extensions are read with, those of the serializer
- * the messages mapped are read with.
+ * that a malformed one fails the mapping: those given and those of a pool, see `Decoder\Builder::withExtensions()` and
+ * `Decoder\Builder::withExtensionPool()`, which register them in a decoder. It is given to `Reflector::build()` with
+ * the options the extensions are read with, those of the serializer the messages mapped are read with.
  *
  * @api
  */
@@ -35,14 +34,18 @@ final readonly class ExtensionRegistry
      *        `Decoder\Builder::withRecursionLimit()`: those of the value of an extension count with the messages that
      *        hold the object extended
      * @param bool $validateUtf8 whether the strings of the extensions must be valid UTF-8
-     * @throws InvalidSchema if two different instances extend the same class with the same number; two that extend
-     *         a class and its parent, or an interface it implements, with the same number fail the mapping of
-     *         an object of the class instead
+     * @param ?ExtensionPool $pool the extensions read in addition to those given, see `ExtensionPool::register()`: its
+     *        resolvers are asked for the extension of a number when an object mapped first has an unknown field of it,
+     *        and the extensions registered in it later are read too; null reads none
+     * @throws InvalidSchema if two different instances given extend the same class with the same number; two that
+     *         extend a class and its parent, or an interface it implements, with the same number, or one given and
+     *         one of the pool, fail the mapping of an object of the class that has the number instead
      */
     public function __construct(
         array $extensions,
         private int $recursionLimit = Serializer::DEFAULT_RECURSION_LIMIT,
         private bool $validateUtf8 = true,
+        private ?ExtensionPool $pool = null,
     ) {
         $registered = [];
         $distinct = [];
@@ -73,7 +76,8 @@ final readonly class ExtensionRegistry
     {
         return new ExtensionChecker(
             $this->extensions,
-            new ExtensionCodec(new Serializer($this->recursionLimit, $this->validateUtf8), $reflector),
+            $this->pool ?? new ExtensionPool(),
+            $reflector,
             $this->recursionLimit,
             $this->validateUtf8,
             $this->values,

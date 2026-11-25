@@ -315,8 +315,9 @@ final class ExtensionRegistryTest extends TestCase
         $other = new Extension(ExtensionRegistryTestExtendable::class, 10, Reflection\Int32T::T);
         $decoder = self::builder(self::string(), $other)->build();
 
-        // An object without unknown fields reads no extensions.
+        // An object without unknown fields reads no extensions, nor does one without the number.
         self::assertEquals(new ExtensionRegistryTestHolder(1), $decoder->decode((string) hex2bin('0801'), ExtensionRegistryTestHolder::class));
+        self::assertEquals(new ExtensionRegistryTestHolder(), $decoder->decode((string) hex2bin('5801'), ExtensionRegistryTestHolder::class));
 
         self::assertEquals(
             new InvalidSchema(\sprintf(
@@ -325,7 +326,7 @@ final class ExtensionRegistryTest extends TestCase
                 ExtensionRegistryTestHolder::class,
                 ExtensionRegistryTestExtendable::class,
             )),
-            self::failure(static fn() => $decoder->decode((string) hex2bin('5801'), ExtensionRegistryTestHolder::class)),
+            self::failure(static fn() => $decoder->decode((string) hex2bin('5001'), ExtensionRegistryTestHolder::class)),
         );
     }
 

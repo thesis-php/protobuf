@@ -21,8 +21,18 @@
                 "\\$plans = self::\\$plans \\?\\?= new \\\\WeakMap\\(\\);",
                 // ExtensionCodec::plan() caches the types and the conversions of an extension: built again, they are the same.
                 "return \\$this->plans\\[\\$extension\\] \\?\\?= \\[",
-                // ExtensionChecker caches the extensions of a class: found again, they are the same.
-                "\\[\\$plain, \\$messageSet\\] = \\$this->classes\\[\\$object::class\\] \\?\\?= \\$this->extensionsOf\\(\\$object::class\\);",
+                // ExtensionChecker caches where the extensions of a class come from: found again, they are the same.
+                "\\[\\$given, \\$resolvers, \\$plain, \\$messageSet\\] = \\$this->classes\\[\\$object::class\\] \\?\\?= \\$this->sourcesOf\\(\\$object::class\\);",
+                // ExtensionChecker builds its codec once: built again, it reads the same.
+                "\\$codec = \\$this->codec \\?\\?= new ExtensionCodec\\(new Serializer\\(\\$this->recursionLimit, \\$this->validateUtf8\\), \\$this->reflector\\);",
+                // ExtensionChecker caches whether a class reaches extensions: found again, it is the same.
+                "if \\(\\$this->reaching\\[\\$class\\] \\?\\?= \\$any && \\$this->anyExtends\\(\\$this->reflector->classesHeld\\(\\$class\\)\\)\\) \\{",
+            ],
+        },
+        "Increment": {
+            "ignoreSourceCodeByRegex": [
+                // ExtensionPool::register(): the decoders only check whether the version changed, which it does either way.
+                "\\+\\+\\$this->version;",
             ],
         },
         "GreaterThan": {
@@ -44,6 +54,9 @@
                 // Message, MessageT and Reflector::type() only check these keys with isset(), which is true for false too.
                 "\\$seen\\[\\$field->num\\] = true;",
                 "\\$this->visited\\[\\$class\\] = true;",
+                // Reflector::classesHeld() only checks the classes found with isset(), which is true for false too.
+                "\\$found = \\[\\$class => true\\];",
+                "\\$found\\[\\$it\\] = true;",
             ],
         },
         "NullSafeMethodCall": {
