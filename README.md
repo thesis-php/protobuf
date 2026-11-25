@@ -705,21 +705,66 @@ throws `Exception\InvalidSchema` when it is read or written.
 
 #### Checking extensions when decoding
 
-Extensions registered in the builder with `withExtensions()` are checked by the decoder: when it decodes an object of
-the class an extension extends, nested objects and the objects of the values of extensions included, it reads
-the extension among the unknown fields of the object, if it is there, as `get()` reads it. A malformed extension, such
-as a string that is not valid UTF-8, then fails `decode()` with the exception `get()` would throw, the field numbers and
-the properties located from the object extended, as protobuf parsers do with the extensions they know:
+The decoder checks the extensions it knows: those registered in the global pool, `Reflection\ExtensionPool::global()`,
+where generated code registers the extensions of a schema, and those given to the builder with `withExtensions()`.
+When it decodes an object of the class an extension extends, nested objects and the objects of the values of
+extensions included, it reads the extension among the unknown fields of the object, if it is there, as `get()` reads
+it. A malformed extension, such as a string that is not valid UTF-8, then fails `decode()` with the exception `get()`
+would throw, the field numbers and the properties located from the object extended, as protobuf parsers do with
+the extensions they know.
+
+The extensions of a class are registered in a pool with a resolver, a callable that gets a field number and returns
+the extension of the class with the number, or null if there is none. Generated code registers one for each class
+extended:
+
+```php
+use Thesis\Protobuf\Reflection\Extension;
+use Thesis\Protobuf\Reflection\ExtensionPool;
+
+ExtensionPool::global()->register(
+    Request::class,
+    static fn(int $number): ?Extension => match ($number) {
+        100 => RequestExtensions::traceId(),
+        101 => RequestExtensions::shards(),
+        default => null,
+    },
+);
+```
+
+`register()` does no more than keep the resolver: it calls nothing, loads no class and checks nothing, so registering
+every extension of an application on each request costs nothing. The resolver is a closure with a `match` rather than
+a callable for each extension, such as `RequestExtensions::traceId(...)`: a first-class callable of a static method
+loads its class when it is created, and Rector rewrites `[RequestExtensions::class, 'traceId']` and
+`static fn() => RequestExtensions::traceId()` into one, while it leaves the `match` alone. A decoder asks the resolvers
+of a class for a number when it meets the number among the unknown fields of an object of the class, or of a class
+that extends it or implements it, or an item of the number in a MessageSet. It keeps the extension found for that class
+and number until the pool changes, but not a null, so that the numbers of the input do not grow its memory: for
+a number of no extension, the resolvers are called each time an object has it, and a resolver must be cheap, as
+a `match` on the number is. An extension that the input does not have is never created, nor its class loaded. A resolver must return the extension of the class it is registered for and of the number it gets,
+the same instance each time, or null; any other answer fails the decoding with `Exception\InvalidSchema`. A class may
+have several resolvers, from several `register()` calls and from its parents and interfaces. A decoder built before
+a registration checks the extensions registered after it too.
 
 ```php
 use Thesis\Protobuf\Decoder;
 
-$builder = new Decoder\Builder()->withExtensions(RequestExtensions::traceId(), RequestExtensions::shards());
+$builder = new Decoder\Builder();
 $decoder = $builder->build();
 $extensions = $builder->buildExtensions();
 
 $request = $decoder->decode($buffer, Request::class); // throws Exception\MalformedUtf8 for a trace_id that is not UTF-8
 $extensions->get($request, RequestExtensions::traceId()); // the value the decoder read, not decoded again
+```
+
+`withExtensions()` registers extensions in the builder alone, in addition to those of the pool and those registered
+before, and `withExtensionPool()` sets the pool the builder reads instead of the global one, a `new ExtensionPool()` of
+its own, for instance in tests, or null to read none and check only the extensions of `withExtensions()`:
+
+```php
+$decoder = new Decoder\Builder()
+    ->withExtensionPool(null)
+    ->withExtensions(RequestExtensions::traceId(), RequestExtensions::shards())
+    ->build();
 ```
 
 Nothing else changes: the extensions stay among the unknown fields, which the unknown handler gets, even when they are
@@ -731,20 +776,26 @@ number, but the message of an item of an extension that is not registered is not
 it, as without the registration. An extension extends a class as `Extensions` checks it, with `instanceof`. The messages
 and groups of the value count towards the recursion limit with the messages that hold the object, as if the extension
 were a field of the object, while `get()` counts them from the extension. An object without unknown fields, or of a
-class that no extension extends, costs nothing more to decode.
+class that no extension extends, costs nothing more to decode, and a message none of whose classes, those of its
+fields, list elements, map values and oneof variants included, has extensions is decoded as without the registration.
 
-`withExtensions()` adds to the extensions registered before, and an instance registered again is registered once. Two
-different instances that extend the same class with the same number throw `Exception\InvalidSchema`; two that extend
-a class and its parent, or an interface it implements, with the same number fail the decoding of an object of the
-class with it. An extension of a MessageSet that is not a message fails the decoding of an object with unknown fields.
+An extension is one instance for each class and number: the same instance registered again, whether in the pool, with
+`withExtensions()` or both, is registered once. Two different instances that `withExtensions()` gets for the same class
+and number throw `Exception\InvalidSchema` there. Any other two, of two resolvers, of a resolver and of `withExtensions()`,
+or of a class and its parent or an interface it implements, throw it when an object of the class that has the number
+among its unknown fields is decoded: code that decodes no such object is not affected. So does an extension of
+a MessageSet that is not a message: one of `withExtensions()` for an object with unknown fields, one of the pool for an
+object with its number.
 
 `Extensions` built by `buildExtensions()` of the same builder, without a provider, gets the values that the decoders of
-the builder read from then on, so `get()` does not decode them again; the values are kept in a `WeakMap` for as long as
-the object lives. A builder that a `with*()` method returns has values of its own, as its options may differ.
+the builder read from then on, those of the pool included, so `get()` does not decode them again; the values are kept
+in a `WeakMap` for as long as the object lives. A builder that a `with*()` method returns has values of its own, as its
+options may differ.
 
-The builder keeps the extensions in a `Reflection\ExtensionRegistry`, with the recursion limit and the UTF-8 check they
-are read with. Code that maps messages with `Reflector` itself gives one to `Reflector::build()`, as its `$extensions`
-argument, to have `Reflector::map()` check the extensions the same way.
+The builder keeps the extensions in a `Reflection\ExtensionRegistry`, with the pool, the recursion limit and the UTF-8
+check they are read with. Code that maps messages with `Reflector` itself gives one to `Reflector::build()`, as its
+`$extensions` argument, to have `Reflector::map()` check the extensions the same way; a registry reads a pool only if
+one is given to it, as its `$pool` argument.
 
 ### Performance
 

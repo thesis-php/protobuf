@@ -51,12 +51,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   wire type, is not an error. `Extensions` built by `buildExtensions()` of the same builder without a provider gets the
   values that its decoders read from then on instead of decoding them again. Two different instances that extend the
   same class with the same number throw `Exception\InvalidSchema`; an instance registered again is registered once. An
-  object without unknown fields, or of a class no registered extension extends, costs nothing more to decode, and the
-  decoder of a builder without extensions does not change.
+  object without unknown fields, or of a class no registered extension extends, costs nothing more to decode.
 - `Reflection\ExtensionRegistry` holds the extensions a decoder checks, with the recursion limit and the UTF-8 check
   they are read with: `Decoder\Builder::withExtensions()` builds it, and the new `$extensions` argument of
   `Reflector::build()` takes one, so that `Reflector::map()` checks the extensions of the objects it maps. It throws
   `Exception\InvalidSchema` for two different instances that extend the same class with the same number.
+- `Reflection\ExtensionPool` keeps extensions that the decoders check without listing them, registered with
+  `register(string $extendee, callable $resolver)`: the class they extend and a resolver, `callable(int): ?Extension`,
+  that returns the extension of the class with a number or null, such as a closure with a `match` on the number whose
+  arms call the static methods of a generated class, which loads no class until it is called. `ExtensionPool::global()`
+  is the pool the decoders read by default (see Changed), in which generated code is to register the extensions of
+  a schema; `new ExtensionPool()` makes one of its own. `register()` only keeps the resolver: it calls nothing, loads no
+  class and checks nothing. A decoder asks the resolvers of a class, of its parents and of the interfaces it implements
+  for a number when it meets the number among the unknown fields of an object of the class, or an item of the number
+  in a MessageSet, and keeps the extension found until the pool changes; for a number of no extension, nothing is kept
+  and the resolvers are called each time, so a resolver must be cheap, as a `match` on the number is. An extension
+  the input does not have is never created. A resolver that returns an extension of another class or number, or neither an extension
+  nor null, throws `Exception\InvalidSchema`. A decoder built before a registration checks the extensions registered
+  after it too. Two resolvers that return different instances for the same class and number, or for a class and its
+  parent or an interface it implements, and an instance of the pool and a different one of `withExtensions()`, throw
+  `Exception\InvalidSchema` when an object of the class with the number among its unknown fields is decoded, so code
+  that decodes no such object is not affected; the same instance from several of them is not an error. `Extensions`
+  built by `buildExtensions()` of the same builder gets the values of the extensions of the pool that its decoders
+  read, as of those of `withExtensions()`.
+- `Decoder\Builder::withExtensionPool(?ExtensionPool $pool)` sets the pool its decoders read in addition to
+  the extensions of `withExtensions()`: one of its own instead of the global one, or null to read none. The new last
+  argument of `Reflection\ExtensionRegistry`, `$pool`, gives the registry a pool to read, which `Reflector::map()`
+  then reads too.
 - `Decoder\Builder::withUnknownHandler()` accepts null, which drops the unknown fields (see Changed).
 - Groups: a message field written between a start group tag and an end group tag, i.e. a `group` field of proto2 and
   a field with `features.message_encoding = DELIMITED` of editions, is declared with the new `Reflection\GroupT`
@@ -120,6 +141,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   that does not start with a digit, `-` or `` ` `` is its own array key: setting an entry is about 20% faster and
   a map of 10 000 entries takes about 15% less memory. Its API, the order of its entries and which keys address the
   same entry do not change.
+- The decoder checks the extensions registered in the global pool, `Reflection\ExtensionPool::global()`, by default,
+  in addition to those of `Decoder\Builder::withExtensions()`: once generated code registers the extensions of
+  a schema there, a malformed one among the unknown fields of an object it extends fails `decode()`, as one given to
+  `withExtensions()` does, where it used to fail only when `Extensions::get()` read it. Build the decoder
+  `withExtensionPool(null)` to check only the extensions of `withExtensions()`. A message none of whose classes, those
+  of its fields, list elements, map values and oneof variants included, has registered extensions is decoded as without
+  them, which is found once for each class and each change of the pool; one that has is decoded as with
+  `withExtensions()`.
 
 ### Removed
 

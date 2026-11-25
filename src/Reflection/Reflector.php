@@ -44,12 +44,12 @@ final class Reflector
     /** Null if missing fields are not zero values. */
     private readonly ?ToZeroValueTypeVisitor $toZeroValue;
 
-    /** Null if no extensions are registered. */
+    /** Null if build() is given no registry of extensions. */
     private readonly ?ExtensionChecker $extensions;
 
     /**
-     * How many objects map() is mapping, one in another, while extensions are registered: the depth of the object
-     * mapped last, the top-level one being 1.
+     * How many objects map() and mapNested() are mapping, one in another, while map() reads extensions: the depth of
+     * the object mapped last, the top-level one being 1; 0 while it reads none.
      *
      * @var non-negative-int
      */
@@ -88,7 +88,8 @@ final class Reflector
      *        case for 0 or, failing that, the first case. A message field and an enum without cases have no zero
      *        value: they stay required. A oneof with no variant in the message is null either way
      * @param ?ExtensionRegistry $extensions the extensions that map() reads among the unknown fields of each object of
-     *        a class they extend, which fails if one is malformed, as `Decoder\Builder::withExtensions()` describes
+     *        a class they extend, which fails if one is malformed, as `Decoder\Builder::withExtensions()` describes, and
+     *        those of its pool, see `Decoder\Builder::withExtensionPool()`
      */
     public static function build(
         ?UnknownFields\Handler $unknowns = null,
@@ -216,15 +217,121 @@ final class Reflector
      */
     public function map(Message $message, string $class): object
     {
-        $object = $this->extensions === null
-            ? $this->mapFields($message, $class)
-            : $this->mapWithExtensions($message, $class, $this->extensions);
+        // A decoding that holds no object of a class with registered extensions reads none, and maps the objects as if
+        // none were registered, without counting how deep they are: see mapNested().
+        $extensions = $this->extensions;
+
+        if (
+            $extensions === null
+            || ($extensions->unreached[$class] ?? null) === $extensions->pool->version
+            || !$extensions->reaches($class)
+        ) {
+            $object = $this->mapFields($message, $class);
+        } else {
+            // Mapped from inside another decoding, by an unknown handler for instance, the object is the top-level
+            // one of its own.
+            $depth = $this->depth;
+            $this->depth = 1;
+
+            try {
+                $object = $this->mapFields($message, $class);
+
+                if ($message->unknowns !== []) {
+                    $extensions->check($object, $message->unknowns, 1);
+                }
+            } finally {
+                $this->depth = $depth;
+            }
+        }
 
         if ($message->unknowns !== []) {
             $this->unknowns?->handle($object, $message->unknowns);
         }
 
         return $object;
+    }
+
+    /**
+     * Maps an object nested in the one that map() maps, a field, an element, a map value or the value of an extension,
+     * as map() does. While map() reads extensions, each object counts how deep it is and its extensions are read;
+     * otherwise it costs no more than without extensions. A failure leaves the depth for map() to restore.
+     *
+     * @internal
+     * @template T of object
+     * @param class-string<T> $class
+     * @return T
+     * @throws \ReflectionException
+     * @throws ReflectionException
+     * @throws Protobuf\ProtobufException if an extension given to build() is malformed in the unknown fields of
+     *         an object
+     */
+    public function mapNested(Message $message, string $class): object
+    {
+        if ($this->depth === 0) {
+            $object = $this->mapFields($message, $class);
+        } else {
+            $depth = ++$this->depth;
+            $object = $this->mapFields($message, $class);
+
+            if ($message->unknowns !== []) {
+                // Only map() sets a depth, and only with extensions.
+                \assert($this->extensions !== null);
+                $this->extensions->check($object, $message->unknowns, $depth);
+            }
+
+            --$this->depth;
+        }
+
+        if ($message->unknowns !== []) {
+            $this->unknowns?->handle($object, $message->unknowns);
+        }
+
+        return $object;
+    }
+
+    /**
+     * The classes of the objects that an object of the class may hold, it included, one in another: those of its
+     * fields, list elements and map values, messages and groups, and of the variants of its oneofs, whose fields are
+     * those of the object. The values of extensions are not among them.
+     *
+     * @internal
+     * @param class-string $class
+     * @return non-empty-list<class-string>
+     * @throws \ReflectionException if a class does not exist
+     */
+    public function classesHeld(string $class): array
+    {
+        $found = [$class => true];
+        $classes = [$class];
+
+        for ($i = 0; isset($classes[$i]); ++$i) {
+            foreach ($this->classReflector->reflect($classes[$i])->properties as $property) {
+                $held = [];
+
+                if ($property->attributes->has(Field::class)) {
+                    $type = $property->attributes->get(Field::class)->type;
+
+                    while ($type instanceof ListT || $type instanceof MapT) {
+                        $type = $type instanceof ListT ? $type->element : $type->valueT;
+                    }
+
+                    if ($type instanceof ObjectT || $type instanceof GroupT) {
+                        $held[] = $type->class;
+                    }
+                } elseif ($property->attributes->has(OneOf::class)) {
+                    $held = $property->attributes->get(OneOf::class)->variants;
+                }
+
+                foreach ($held as $it) {
+                    if (!isset($found[$it])) {
+                        $found[$it] = true;
+                        $classes[] = $it;
+                    }
+                }
+            }
+        }
+
+        return $classes;
     }
 
     /**
@@ -302,35 +409,6 @@ final class Reflector
         }
 
         return $path;
-    }
-
-    /**
-     * Maps the fields of the message as mapFields() does and reads the registered extensions of the object among its
-     * unknown fields, those of the oneof variants it holds included: the unknown fields of a variant are those of
-     * the message of the object.
-     *
-     * @template T of object
-     * @param class-string<T> $class
-     * @return T
-     * @throws \ReflectionException
-     * @throws ReflectionException
-     * @throws Protobuf\ProtobufException if an extension is malformed
-     */
-    private function mapWithExtensions(Message $message, string $class, ExtensionChecker $extensions): object
-    {
-        ++$this->depth;
-
-        try {
-            $object = $this->mapFields($message, $class);
-
-            if ($message->unknowns !== []) {
-                $extensions->check($object, $message->unknowns, $this->depth);
-            }
-
-            return $object;
-        } finally {
-            --$this->depth;
-        }
     }
 
     /**

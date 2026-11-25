@@ -90,7 +90,7 @@ final readonly class ExtensionCodec
      */
     public static function isMessageSet(Extension $extension): bool
     {
-        if (new \ReflectionClass($extension->extendee)->getAttributes(MessageSet::class) === []) {
+        if (!self::isMessageSetClass($extension->extendee)) {
             return false;
         }
 
@@ -103,6 +103,16 @@ final readonly class ExtensionCodec
         }
 
         return true;
+    }
+
+    /**
+     * Whether the class is marked as a MessageSet, whose extensions are read as its items.
+     *
+     * @param class-string $class
+     */
+    public static function isMessageSetClass(string $class): bool
+    {
+        return new \ReflectionClass($class)->getAttributes(MessageSet::class) !== [];
     }
 
     /**

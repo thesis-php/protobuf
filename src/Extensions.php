@@ -16,7 +16,8 @@ use Thesis\Protobuf\Reflection\Reflector;
  * Reads and writes the extensions of objects; it is built by `Decoder\Builder::buildExtensions()`, with the options of
  * the decoder. An extension is a field among the unknown fields of the object, which is decoded when it is first asked
  * for, and which setting it replaces. The encoder knows no extensions, and neither does the decoder, but for those
- * registered in it with `Decoder\Builder::withExtensions()`, which it checks when it decodes an object.
+ * registered in its pool, `Reflection\ExtensionPool::global()` by default, and with `Decoder\Builder::withExtensions()`,
+ * which it checks when it decodes an object.
  *
  * The value read is kept for as long as both the object and the instance of the extension live, so the unknown fields
  * that the provider gives for an object must change only through set() and clear() of the same instance. The classes

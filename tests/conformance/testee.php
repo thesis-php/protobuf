@@ -20,13 +20,22 @@ use ProtobufTestMessages\Proto3\TestAllTypesProto3;
 use Thesis\Protobuf\Decoder;
 use Thesis\Protobuf\Encoder;
 use Thesis\Protobuf\ProtobufException;
-use Thesis\Protobuf\Reflection;
 use Thesis\Protobuf\UnknownFields;
 
 // stdout is for the responses only.
 ini_set('display_errors', 'stderr');
 
 require_once __DIR__ . '/../../vendor/autoload.php';
+// The classes of the extensions of the test messages are loaded when a resolver first calls one of their methods, as
+// Composer would load them were they generated: tests/conformance is not among the directories it loads classes from.
+spl_autoload_register(static function (string $class): void {
+    if (str_starts_with($class, __NAMESPACE__ . '\TestMessages')) {
+        require_once __DIR__ . '/TestMessagesExtensions.php';
+    }
+});
+// The registration of the extensions in the global pool, as the autoload file of thesis/protoc-plugin is to make it,
+// which loads none of those classes.
+require_once __DIR__ . '/extensions.php';
 
 /**
  * The messages the runner sends payloads of: those of proto3 and proto2, the same two written in editions, and the one
@@ -116,12 +125,10 @@ function describe(\Throwable $e): string
     return $e::class . ': ' . $e->getMessage();
 }
 
-// The decoder checks the extensions of the test messages, which it keeps among the unknown fields as without them.
-/** @var list<Reflection\Extension<mixed>> $extensions */
-$extensions = require __DIR__ . '/extensions.php';
+// The decoder checks the extensions of the test messages registered in the global pool, as by default, and keeps them
+// among the unknown fields as without them.
 $decoder = new Decoder\Builder()
     ->withUnknownHandler(UnknownFields::handler())
-    ->withExtensions(...$extensions)
     ->build();
 // The default encoder writes back the unknown fields the decoder keeps.
 $encoder = Encoder\Builder::buildDefault();
